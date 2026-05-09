@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\PermisosController;
+use App\Http\Controllers\SupervisorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,4 +73,40 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Guardar permisos de líneas de producción
     Route::post('/permissions/production-lines/{userId}', [PermisosController::class, 'saveProductionLinePermissions']);
+    
+       // ============================================
+    // MÓDULO SUPERVISOR
+    // ============================================
+    
+    // Auto-guardar producción individual (AJAX)
+    Route::post('/supervisor/production/auto-save', [SupervisorController::class, 'autoSaveProduction'])
+        ->name('supervisor.production.auto-save');
+    
+    // Guardar producción masiva (toda la tabla)
+    Route::post('/supervisor/production/save', [SupervisorController::class, 'saveProductionTable'])
+        ->name('supervisor.production.save');
+    
+    // Guardar programa diario
+    Route::post('/supervisor/daily-program', [SupervisorController::class, 'storeDailyProgram'])
+        ->name('supervisor.daily-program.store');
+    
+    // Registrar paro
+    Route::post('/supervisor/strikes', [SupervisorController::class, 'storeStrike'])
+        ->name('supervisor.strikes.store');
+    
+    // Finalizar paro
+    Route::put('/supervisor/strikes/{strike}/end', [SupervisorController::class, 'endStrike'])
+        ->name('supervisor.strikes.end');
+    
+    // 🔧 Obtener paros por programa diario - CORREGIDO
+    Route::get('/supervisor/strikes/{dailyProgramId}', [SupervisorController::class, 'getStrikesByProgram'])
+        ->name('supervisor.strikes.index');
+    
+    // Obtener datos para la vista de producción (AJAX)
+    Route::get('/supervisor/production/data', [SupervisorController::class, 'getProductionData'])
+        ->name('supervisor.production.data');
+    
+    // Actualizar producción por hora (individual)
+    Route::post('/supervisor/schedule/update', [SupervisorController::class, 'updateScheduleProduction'])
+        ->name('supervisor.schedule.update');
 });

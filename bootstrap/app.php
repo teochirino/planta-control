@@ -11,15 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Agregar Inertia al grupo web (para que funcione en todas las rutas web)
         $middleware->web(append: [
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\HandleInertiaRequests::class,  // Agregar Inertia aquí
         ]);
         
-        // Aplicar Inertia solo a rutas específicas (no a admin ni supervisor)
-        $middleware->group('inertia', [
-            \App\Http\Middleware\HandleInertiaRequests::class,
-        ]);
-
         // Registrar middlewares de perfiles
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,

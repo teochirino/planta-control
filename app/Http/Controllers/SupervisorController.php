@@ -10,6 +10,7 @@ use App\Models\Strike;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class SupervisorController extends Controller
 {
@@ -17,39 +18,23 @@ class SupervisorController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        
-        // Obtener centros de trabajo del supervisor
         $workCenters = $user->workCenters;
         
         if ($workCenters->isEmpty()) {
-            return view('supervisor.no-work-centers');
+            return Inertia::render('Supervisor/NoWorkCenters');
         }
         
-        // Centro de trabajo seleccionado (con persistencia en sesión)
+        // Centro de trabajo seleccionado
         $selectedWorkCenterId = $request->get('work_center_id');
-        
-        if ($selectedWorkCenterId) {
-            session(['selected_work_center_id' => $selectedWorkCenterId]);
-        } else {
-            $selectedWorkCenterId = session('selected_work_center_id', $workCenters->first()->id);
+        if (!$selectedWorkCenterId) {
+            $selectedWorkCenterId = $workCenters->first()->id;
         }
         
         $selectedWorkCenter = WorkCenter::with('productionLines')->findOrFail($selectedWorkCenterId);
         
-        // Fecha y turno seleccionados (también con persistencia)
-        $selectedDate = $request->get('date');
-        if ($selectedDate) {
-            session(['selected_date' => $selectedDate]);
-        } else {
-            $selectedDate = session('selected_date', now()->format('Y-m-d'));
-        }
-        
-        $selectedShift = $request->get('shift');
-        if ($selectedShift) {
-            session(['selected_shift' => $selectedShift]);
-        } else {
-            $selectedShift = session('selected_shift', 'matutino');
-        }
+        // 🔧 FORZAR FECHA ACTUAL - IGNORAR COMPLETAMENTE LA SESIÓN
+        $selectedDate = now()->format('Y-m-d');
+        $selectedShift = $request->get('shift', 'matutino');
         
         // Obtener programa diario del centro
         $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
@@ -58,20 +43,19 @@ class SupervisorController extends Controller
             ->where('shift', $selectedShift)
             ->first();
         
-        // Calcular KPIs del centro
         $kpis = null;
         if ($dailyProgram) {
             $kpis = $this->calculateCenterKPIs($dailyProgram, $selectedWorkCenter);
         }
         
-        return view('supervisor.dashboard', compact(
-            'workCenters',
-            'selectedWorkCenter',
-            'selectedDate',
-            'selectedShift',
-            'dailyProgram',
-            'kpis'
-        ));
+        return Inertia::render('Supervisor/Dashboard', [
+            'workCenters' => $workCenters,
+            'selectedWorkCenter' => $selectedWorkCenter,
+            'selectedDate' => $selectedDate,
+            'selectedShift' => $selectedShift,
+            'dailyProgram' => $dailyProgram,
+            'kpis' => $kpis,
+        ]);
     }
     
     // Registro diario de producción
@@ -80,22 +64,14 @@ class SupervisorController extends Controller
         $user = auth()->user();
         $workCenterId = $request->get('work_center_id');
         
-        // Si no se proporciona work_center_id, intentar recuperar de sesión
         if (!$workCenterId) {
-            $workCenterId = session('selected_work_center_id');
-            
-            if (!$workCenterId) {
-                $firstCenter = $user->workCenters->first();
-                if (!$firstCenter) {
-                    return redirect()->route('supervisor.dashboard')
-                        ->with('error', 'No tienes centros de trabajo asignados.');
-                }
-                $workCenterId = $firstCenter->id;
+            $firstCenter = $user->workCenters->first();
+            if (!$firstCenter) {
+                return redirect()->route('supervisor.dashboard')
+                    ->with('error', 'No tienes centros de trabajo asignados.');
             }
+            $workCenterId = $firstCenter->id;
         }
-        
-        // Guardar en sesión para mantener la selección
-        session(['selected_work_center_id' => $workCenterId]);
         
         // Verificar que el usuario tenga acceso a este centro
         if (!$user->canViewWorkCenter($workCenterId)) {
@@ -103,37 +79,21 @@ class SupervisorController extends Controller
                 ->with('error', 'No tienes acceso a este centro de trabajo.');
         }
         
-        // Fecha y turno con persistencia en sesión
-        $date = $request->get('date');
-        if ($date) {
-            session(['selected_date' => $date]);
-        } else {
-            $date = session('selected_date', now()->format('Y-m-d'));
-        }
-        
-        $shift = $request->get('shift');
-        if ($shift) {
-            session(['selected_shift' => $shift]);
-        } else {
-            $shift = session('selected_shift', 'matutino');
-        }
+        // 🔧 FORZAR FECHA ACTUAL - IGNORAR COMPLETAMENTE LA SESIÓN
+        $date = now()->format('Y-m-d');
+        $shift = $request->get('shift', 'matutino');
         
         $workCenter = WorkCenter::with('productionLines')->findOrFail($workCenterId);
         $productionLines = $workCenter->productionLines;
         
-        // Verificar que el centro tenga líneas de producción
-        if ($productionLines->isEmpty()) {
-            return redirect()->route('supervisor.dashboard')
-                ->with('error', 'Este centro de trabajo no tiene líneas de producción configuradas.');
-        }
-        
-        // Obtener o crear daily_program del centro (UNO solo por centro)
+        // Obtener o crear daily_program del centro
         $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
             ->where('date', $date)
             ->where('id_work_center', $workCenterId)
             ->where('shift', $shift)
             ->first();
         
+        // Si no existe programa, crear uno vacío
         if (!$dailyProgram) {
             $dailyProgram = DailyProgram::create([
                 'date' => $date,
@@ -156,19 +116,19 @@ class SupervisorController extends Controller
         // Obtener schedules existentes agrupados por hora y línea
         $schedules = Schedule::where('id_daily_program', $dailyProgram->id)
             ->get()
-            ->groupBy(function($schedule) {
+            ->keyBy(function($schedule) {
                 return $schedule->start_time . '-' . $schedule->id_production_line;
             });
         
-        return view('supervisor.daily-production', compact(
-            'workCenter',
-            'productionLines',
-            'dailyProgram',
-            'date',
-            'shift',
-            'hours',
-            'schedules'
-        ));
+        return Inertia::render('Supervisor/DailyProduction', [
+            'workCenter' => $workCenter,
+            'productionLines' => $productionLines,
+            'dailyProgram' => $dailyProgram,
+            'date' => $date,
+            'shift' => $shift,
+            'hours' => $hours,
+            'existingSchedules' => $schedules,
+        ]);
     }
     
     // Guardar programa diario del centro
@@ -297,6 +257,14 @@ class SupervisorController extends Controller
         ]);
         
         $strike->update(['end_time' => $request->end_time]);
+        
+        // Calcular minutos si hay inicio y fin
+        if ($strike->start_time && $strike->end_time) {
+            $start = Carbon::parse($strike->start_time);
+            $end = Carbon::parse($strike->end_time);
+            $minutes = $start->diffInMinutes($end);
+            $strike->update(['minutes' => $minutes]);
+        }
         
         return response()->json([
             'success' => true,
@@ -453,4 +421,14 @@ class SupervisorController extends Controller
             'installed_capacity' => $workCenter->installed_capacity,
         ];
     }
+
+    // Obtener paros por programa diario
+public function getStrikesByProgram($dailyProgramId)
+{
+    $strikes = Strike::with('productionLine')
+        ->where('id_daily_program', $dailyProgramId)
+        ->get();
+    
+    return response()->json($strikes);
+}
 }

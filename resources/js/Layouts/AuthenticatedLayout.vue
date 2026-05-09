@@ -1,4 +1,14 @@
 <script setup>
+
+import { usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+
+// Depuración - ver qué hay en las props
+console.log('Page props:', page.props);
+console.log('Auth:', page.props.auth);
+console.log('User:', page.props.auth?.user);
+
 import { ref } from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';

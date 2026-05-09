@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Inertia\Inertia;
 use App\Models\User;
 use App\Models\ItalianetUser;
 use App\Models\Profile;
@@ -13,11 +13,28 @@ use Illuminate\Support\Facades\Hash;
 class AdminController extends Controller
 {
     // Lista de usuarios del sistema planta_control
-    public function index()
-    {
-        $users = User::with(['profile', 'workCenters', 'productionLines'])->paginate(15);
-        return view('admin.users.index', compact('users'));
+   public function index()
+{
+    $users = User::with(['profile', 'workCenters', 'productionLines'])
+        ->paginate(15);
+    
+    // Forzar autenticación
+    if (!auth()->check()) {
+        return redirect()->route('login');
     }
+    
+    return Inertia::render('Admin/Users/Index', [
+        'users' => $users,
+        'auth' => [
+            'user' => auth()->user() ? [
+                'id' => auth()->user()->id,
+                'name' => auth()->user()->name,
+                'email' => auth()->user()->email,
+                'id_profile' => auth()->user()->id_profile,
+            ] : null,
+        ],
+    ]);
+}
     
     // Mostrar usuarios de italianet_users para importar
     public function importView(Request $request)

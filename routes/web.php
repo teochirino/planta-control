@@ -29,12 +29,27 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('operador.dashboard');
         }
         
-        return view('dashboard');
+        return Inertia::render('Dashboard');
     })->name('dashboard');
     
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // ============================================
+    // RUTAS INERTIA (VUE)
+    // ============================================
+    
+    // Andon Dashboard
+    Route::get('/andon', function () {
+        return Inertia::render('AndonDashboard');
+    })->name('andon');
+    
+    // Producción Diaria
+    Route::get('/produccion', [ProductionController::class, 'index'])->name('produccion');
+    
+    // Administración de Permisos
+    Route::get('/permisos', [PermisosController::class, 'index'])->name('permisos');
     
     // ============================================
     // MÓDULO ADMINISTRADOR
@@ -94,13 +109,8 @@ Route::middleware('auth')->group(function () {
     });
     
     // ============================================
-    // RUTAS LEGACY (mantener compatibilidad con Inertia)
+    // API ENDPOINTS (para Vue)
     // ============================================
-    Route::middleware('inertia')->group(function () {
-        Route::get('/produccion', [ProductionController::class, 'index'])->name('produccion');
-        Route::get('/permisos', [PermisosController::class, 'index'])->name('permisos');
-    });
-    
     Route::get('/api/permissions/data', function() {
         return response()->json([
             'users' => \App\Models\User::with('profile')->get(),

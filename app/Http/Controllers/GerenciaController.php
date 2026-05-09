@@ -9,6 +9,7 @@ use App\Models\Strike;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class GerenciaController extends Controller
 {
@@ -20,7 +21,8 @@ class GerenciaController extends Controller
         $workCenters = WorkCenter::with('productionLines')->get();
         
         if ($workCenters->isEmpty()) {
-            return view('gerencia.no-work-centers');
+            // Si no hay centros, redirigir a una vista de error en Vue
+            return Inertia::render('Gerencia/NoWorkCenters');
         }
         
         // Centro de trabajo seleccionado (con persistencia en sesión)
@@ -39,7 +41,6 @@ class GerenciaController extends Controller
         $selectedShift = $request->get('shift');
         
         // Obtener programa diario del centro
-        // Si no se especifica turno, buscar el primer programa disponible del día
         $dailyProgramQuery = DailyProgram::with(['schedules', 'strikes'])
             ->where('id_work_center', $selectedWorkCenterId)
             ->where('date', $selectedDate);
@@ -67,7 +68,6 @@ class GerenciaController extends Controller
             : ['total_strikes' => 0, 'strike_cost' => 0];
             
         $qualityMetrics = $this->calculateQualityMetrics($selectedWorkCenter);
-        $recentCompliance = [];
         
         // Obtener cumplimiento de los últimos 5 días
         $recentCompliance = $this->getRecentCompliance($selectedWorkCenterId, 5);
@@ -75,18 +75,29 @@ class GerenciaController extends Controller
         // Estado general del área
         $areaStatus = $this->calculateAreaStatus($dailyProgram, $selectedWorkCenter);
         
-        return view('gerencia.dashboard', compact(
-            'workCenters',
-            'selectedWorkCenter',
-            'selectedDate',
-            'selectedShift',
-            'dailyProgram',
-            'kpis',
-            'metrics',
-            'recentCompliance',
-            'qualityMetrics',
-            'areaStatus'
-        ));
+        // Agregar la clase de color CSS
+        $areaStatus['colorClass'] = $this->getColorClass($areaStatus['color'] ?? 'gray');
+        
+        return Inertia::render('Gerencia/Dashboard', [
+            'workCenters' => $workCenters,
+            'selectedWorkCenter' => $selectedWorkCenter,
+            'selectedShift' => $selectedShift,
+            'kpis' => $kpis,
+            'areaStatus' => $areaStatus,
+            'qualityMetrics' => $qualityMetrics,
+            'metrics' => $metrics,
+            'recentCompliance' => $recentCompliance,
+        ]);
+    }
+    
+    private function getColorClass($color)
+    {
+        switch ($color) {
+            case 'green': return 'bg-green-500';
+            case 'yellow': return 'bg-yellow-500';
+            case 'red': return 'bg-red-500';
+            default: return 'bg-gray-500';
+        }
     }
     
     private function getCurrentShift()
@@ -235,6 +246,7 @@ class GerenciaController extends Controller
                 'color' => 'gray',
                 'label' => 'Sin datos',
                 'time' => '00:00:00',
+                'message' => 'No hay programa diario registrado para este centro de trabajo y turno.',
             ];
         }
         
@@ -253,7 +265,7 @@ class GerenciaController extends Controller
                 'color' => 'red',
                 'label' => 'Rojo',
                 'time' => $duration->format('%H:%I:%S'),
-                'message' => 'La operación se mantiene dentro de los parámetros esperados, sin incidencias que afecten el rendimiento del área.',
+                'message' => 'Hay un paro activo en el área. Se requiere atención inmediata.',
             ];
         }
         
@@ -276,7 +288,7 @@ class GerenciaController extends Controller
                 'color' => 'yellow',
                 'label' => 'Amarillo',
                 'time' => now()->format('H:i:s'),
-                'message' => 'Operación con ligeras variaciones',
+                'message' => 'Operación con ligeras variaciones.',
             ];
         } else {
             return [
@@ -284,7 +296,7 @@ class GerenciaController extends Controller
                 'color' => 'red',
                 'label' => 'Rojo',
                 'time' => now()->format('H:i:s'),
-                'message' => 'Requiere atención inmediata',
+                'message' => 'El rendimiento está por debajo de lo esperado. Requiere atención.',
             ];
         }
     }
