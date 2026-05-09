@@ -1,0 +1,214 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use App\Models\ItalianetUser;
+use App\Models\Profile;
+use App\Models\WorkCenter;
+use App\Models\ProductionLine;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+
+class AdminController extends Controller
+{
+    // Lista de usuarios del sistema planta_control
+    public function index()
+    {
+        $users = User::with(['profile', 'workCenters', 'productionLines'])->paginate(15);
+        return view('admin.users.index', compact('users'));
+    }
+    
+    // Mostrar usuarios de italianet_users para importar
+    public function importView(Request $request)
+    {
+        $search = $request->input('search');
+        
+        $italianetUsers = ItalianetUser::activeWithEmail()
+            ->search($search)
+            ->paginate(15)
+            ->appends(['search' => $search]);
+            
+        $profiles = Profile::all();
+        $workCenters = WorkCenter::all();
+        $productionLines = ProductionLine::with('workCenter')->get();
+        
+        return view('admin.users.import', compact('italianetUsers', 'profiles', 'workCenters', 'productionLines', 'search'));
+    }
+    
+    // Importar usuario desde italianet_users
+    public function importUser(Request $request)
+    {
+        $request->validate([
+            'user_main_id' => 'required|exists:italianet_users.users,id',
+            'id_profile' => 'required|exists:profiles,id_profile',
+            'work_centers' => 'nullable|array',
+            'work_centers.*' => 'exists:work_centers,id',
+            'production_lines' => 'nullable|array',
+            'production_lines.*' => 'exists:production_lines,id'
+        ]);
+        
+        $italianetUser = ItalianetUser::find($request->user_main_id);
+        
+        // Verificar si ya existe
+        $existingUser = User::where('user_main_id', $italianetUser->id)->first();
+        if ($existingUser) {
+            return back()->with('error', 'Este usuario ya ha sido importado.');
+        }
+        
+        // Crear usuario en planta_control
+        $user = User::create([
+            'name' => $italianetUser->name,
+            'email' => $italianetUser->email,
+            'user_main_id' => $italianetUser->id,
+            'id_profile' => $request->id_profile,
+            'password' => Hash::make('password123'),
+        ]);
+        
+        // Asignar centros de trabajo si es supervisor
+        if ($request->id_profile == 5 && $request->work_centers) {
+            $user->workCenters()->attach($request->work_centers);
+        }
+        
+        // Asignar líneas de producción si es operador
+        if ($request->id_profile == 8 && $request->production_lines) {
+            foreach ($request->production_lines as $lineId) {
+                $user->productionLines()->attach($lineId, [
+                    'can_view' => true,
+                    'can_edit' => true,
+                    'can_delete' => false
+                ]);
+            }
+        }
+        
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Usuario importado correctamente.');
+    }
+    
+    // Editar usuario
+    public function edit(User $user)
+    {
+        $profiles = Profile::all();
+        $workCenters = WorkCenter::all();
+        $productionLines = ProductionLine::with('workCenter')->get();
+        
+        return view('admin.users.edit', compact('user', 'profiles', 'workCenters', 'productionLines'));
+    }
+    
+    // Actualizar usuario
+    public function update(Request $request, User $user)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'id_profile' => 'required|exists:profiles,id_profile',
+            'work_centers' => 'nullable|array',
+            'work_centers.*' => 'exists:work_centers,id',
+            'production_lines' => 'nullable|array',
+            'production_lines.*' => 'exists:production_lines,id'
+        ]);
+        
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'id_profile' => $request->id_profile,
+        ]);
+        
+        // Sincronizar centros de trabajo
+        if ($request->id_profile == 5) {
+            $user->workCenters()->sync($request->work_centers ?? []);
+        } else {
+            $user->workCenters()->detach();
+        }
+        
+        // Sincronizar líneas de producción
+        if ($request->id_profile == 8) {
+            $syncData = [];
+            foreach ($request->production_lines ?? [] as $lineId) {
+                $syncData[$lineId] = [
+                    'can_view' => true,
+                    'can_edit' => true,
+                    'can_delete' => false
+                ];
+            }
+            $user->productionLines()->sync($syncData);
+        } else {
+            $user->productionLines()->detach();
+        }
+        
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Usuario actualizado correctamente.');
+    }
+    
+    // Eliminar usuario
+    public function destroy(User $user)
+    {
+        $user->workCenters()->detach();
+        $user->productionLines()->detach();
+        $user->delete();
+        
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Usuario eliminado correctamente.');
+    }
+    
+    // Vista para asignar centros de trabajo
+    public function assignWorkCenters()
+    {
+        $supervisors = User::where('id_profile', 5)->with('workCenters')->get();
+        $workCenters = WorkCenter::all();
+        
+        return view('admin.users.assign-work-centers', compact('supervisors', 'workCenters'));
+    }
+    
+    // Actualizar centros de trabajo de un supervisor
+    public function updateWorkCenters(Request $request, User $user)
+    {
+        $request->validate([
+            'work_centers' => 'required|array',
+            'work_centers.*' => 'exists:work_centers,id'
+        ]);
+        
+        if ($user->id_profile != 5) {
+            return back()->with('error', 'Solo se pueden asignar centros a supervisores de área.');
+        }
+        
+        $user->workCenters()->sync($request->work_centers);
+        
+        return back()->with('success', 'Centros de trabajo actualizados correctamente.');
+    }
+    
+    // Vista para asignar líneas de producción
+    public function assignProductionLines()
+    {
+        $operadores = User::where('id_profile', 8)->with('productionLines')->get();
+        $productionLines = ProductionLine::with('workCenter')->get();
+        
+        return view('admin.users.assign-production-lines', compact('operadores', 'productionLines'));
+    }
+    
+    // Actualizar líneas de producción de un operador
+    public function updateProductionLines(Request $request, User $user)
+    {
+        $request->validate([
+            'production_lines' => 'required|array',
+            'production_lines.*' => 'exists:production_lines,id'
+        ]);
+        
+        if ($user->id_profile != 8) {
+            return back()->with('error', 'Solo se pueden asignar líneas a operadores de área.');
+        }
+        
+        $syncData = [];
+        foreach ($request->production_lines as $lineId) {
+            $syncData[$lineId] = [
+                'can_view' => true,
+                'can_edit' => true,
+                'can_delete' => false
+            ];
+        }
+        
+        $user->productionLines()->sync($syncData);
+        
+        return back()->with('success', 'Líneas de producción actualizadas correctamente.');
+    }
+}

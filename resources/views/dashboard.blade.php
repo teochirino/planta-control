@@ -1,0 +1,31 @@
+@extends('layouts.app')
+
+@section('title', 'Dashboard')
+
+@section('content')
+<div class="flex items-center justify-center min-h-[60vh]">
+    <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm p-8 max-w-md text-center">
+        <div class="text-6xl mb-4">👋</div>
+        <h2 class="text-2xl font-extrabold text-[#0b2a40] mb-3">Bienvenido al Sistema</h2>
+        <p class="text-[#4e6070] mb-6">
+            Has iniciado sesión correctamente.
+        </p>
+        
+        <div class="space-y-2">
+            @if(auth()->user()->isAdmin())
+                <a href="{{ route('admin.users.index') }}" 
+                   class="block px-6 py-3 bg-[#0b2a40] text-white rounded-md text-sm font-bold hover:opacity-85">
+                    Ir a Administración
+                </a>
+            @endif
+            
+            @if(auth()->user()->isSupervisor())
+                <a href="{{ route('supervisor.dashboard') }}" 
+                   class="block px-6 py-3 bg-[#0b2a40] text-white rounded-md text-sm font-bold hover:opacity-85">
+                    Ir a Dashboard Supervisor
+                </a>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection
