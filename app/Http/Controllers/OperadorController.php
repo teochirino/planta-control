@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\ProductionLine;
 use App\Models\DailyProgram;
 use App\Models\Schedule;
@@ -28,6 +29,7 @@ class OperadorController extends Controller
         $this->dailyProgramService = $dailyProgramService;
         $this->productionLineService = $productionLineService;
     }
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -35,7 +37,7 @@ class OperadorController extends Controller
         $productionLines = $this->productionLineService->getUserProductionLines($user);
         
         if ($productionLines->isEmpty()) {
-            return view('operador.no-production-lines');
+            return Inertia::render('Operador/NoProductionLines');
         }
         
         $selectedLineId = $request->get('production_line_id');
@@ -48,19 +50,9 @@ class OperadorController extends Controller
         
         $selectedLine = ProductionLine::with('workCenter')->findOrFail($selectedLineId);
         
-        $selectedDate = $request->get('date');
-        if ($selectedDate) {
-            session(['selected_date' => $selectedDate]);
-        } else {
-            $selectedDate = session('selected_date', now()->format('Y-m-d'));
-        }
-        
-        $selectedShift = $request->get('shift');
-        if ($selectedShift) {
-            session(['selected_shift' => $selectedShift]);
-        } else {
-            $selectedShift = session('selected_shift', 'matutino');
-        }
+        // Forzar fecha actual
+        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedShift = $request->get('shift', 'matutino');
         
         $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
             ->where('id_work_center', $selectedLine->id_work_center)
@@ -86,16 +78,16 @@ class OperadorController extends Controller
             $kpis = $this->kpiService->calculateLineKPIs($dailyProgram, $selectedLine, $schedules, $strikes);
         }
         
-        return view('operador.dashboard', compact(
-            'productionLines',
-            'selectedLine',
-            'selectedDate',
-            'selectedShift',
-            'dailyProgram',
-            'schedules',
-            'strikes',
-            'kpis'
-        ));
+        return Inertia::render('Operador/Dashboard', [
+            'productionLines' => $productionLines,
+            'selectedLine' => $selectedLine,
+            'selectedDate' => $selectedDate,
+            'selectedShift' => $selectedShift,
+            'dailyProgram' => $dailyProgram,
+            'schedules' => $schedules,
+            'strikes' => $strikes,
+            'kpis' => $kpis,
+        ]);
     }
     
     public function updateScheduleProduction(Request $request)
@@ -155,13 +147,26 @@ class OperadorController extends Controller
             return response()->json(['success' => false, 'message' => 'No tienes permiso para registrar paros en esta línea'], 403);
         }
         
+        // Asegurar formato HH:MM:SS
+        $startTime = $request->start_time;
+        if (strlen($startTime) == 5) {
+            $startTime = $startTime . ':00';
+        }
+        
+        $endTime = $request->end_time;
+        if ($endTime && strlen($endTime) == 5) {
+            $endTime = $endTime . ':00';
+        }
+        
         $strike = Strike::create([
             'id_production_lines' => $request->id_production_line,
             'id_daily_program' => $request->id_daily_program,
             'date' => $request->date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
             'description' => $request->description,
+            'minutes' => 0,
+            'cost' => 0
         ]);
         
         return response()->json([
@@ -171,25 +176,92 @@ class OperadorController extends Controller
         ]);
     }
     
-    public function endStrike(Request $request, Strike $strike)
+    public function endStrike(Request $request, $id)
     {
-        $request->validate([
-            'end_time' => 'required',
-        ]);
+        try {
+            $strike = Strike::findOrFail($id);
+            
+            $user = auth()->user();
+            
+            if (!$user->canEditProductionLine($strike->id_production_lines)) {
+                return response()->json(['success' => false, 'message' => 'No tienes permiso para finalizar este paro'], 403);
+            }
+            
+            $endTime = $request->end_time;
+            if (strlen($endTime) == 5) {
+                $endTime = $endTime . ':00';
+            }
+            
+            // Calcular minutos manualmente
+            $startParts = explode(':', $strike->start_time);
+            $endParts = explode(':', $endTime);
+            
+            $startMinutes = (int)$startParts[0] * 60 + (int)$startParts[1];
+            $endMinutes = (int)$endParts[0] * 60 + (int)$endParts[1];
+            
+            $minutes = $endMinutes - $startMinutes;
+            if ($minutes < 0) {
+                $minutes += 1440;
+            }
+            
+            // Calcular costo manualmente
+            $productionLine = ProductionLine::find($strike->id_production_lines);
+            $costoPorMinuto = $productionLine ? floatval($productionLine->cost) : 0;
+            $cost = $costoPorMinuto * $minutes;
+            
+            // Actualizar el strike con minutos, costo y end_time
+            $strike->update([
+                'end_time' => $endTime,
+                'minutes' => $minutes,
+                'cost' => $cost
+            ]);
+            
+            // Actualizar KPIs del programa diario
+            $this->dailyProgramService->updateTotalProduced($strike->id_daily_program);
+            
+            return response()->json([
+                'success' => true,
+                'strike' => $strike,
+                'minutes' => $minutes,
+                'cost' => $cost,
+                'message' => 'Paro finalizado correctamente'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function getStrikesByProgram($dailyProgramId)
+    {
+        $strikes = DB::table('strikes')
+            ->join('production_lines', 'strikes.id_production_lines', '=', 'production_lines.id')
+            ->select('strikes.*', 'production_lines.title as production_line_title')
+            ->where('id_daily_program', $dailyProgramId)
+            ->orderBy('start_time', 'desc')
+            ->get();
         
-        $user = auth()->user();
-        
-        if (!$user->canEditProductionLine($strike->id_production_lines)) {
-            return response()->json(['success' => false, 'message' => 'No tienes permiso para finalizar este paro'], 403);
+        // Asegurar que start_time y end_time sean solo hora
+        foreach ($strikes as $strike) {
+            if ($strike->start_time && strlen($strike->start_time) > 8) {
+                $strike->start_time = substr($strike->start_time, -8);
+            }
+            if ($strike->end_time && strlen($strike->end_time) > 8) {
+                $strike->end_time = substr($strike->end_time, -8);
+            }
+            // Asegurar formato HH:MM para mostrar
+            if ($strike->start_time && strlen($strike->start_time) >= 5) {
+                $strike->start_time = substr($strike->start_time, 0, 5);
+            }
+            if ($strike->end_time && strlen($strike->end_time) >= 5) {
+                $strike->end_time = substr($strike->end_time, 0, 5);
+            }
         }
         
-        $strike->update(['end_time' => $request->end_time]);
-        
-        return response()->json([
-            'success' => true,
-            'strike' => $strike,
-            'message' => 'Paro finalizado correctamente'
-        ]);
+        return response()->json($strikes);
     }
     
     public function getProductionData(Request $request)

@@ -83,6 +83,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [SupervisorController::class, 'index'])->name('dashboard');
         Route::get('/daily-production', [SupervisorController::class, 'dailyProduction'])->name('daily-production');
         
+        // 🔧 Ruta para obtener paros (GET)
+        Route::get('/strikes/{dailyProgramId}', [SupervisorController::class, 'getStrikesByProgram'])
+            ->name('strikes.index');
+        
         // API endpoints para AJAX
         Route::post('/daily-program', [SupervisorController::class, 'storeDailyProgram'])->name('daily-program.store');
         Route::post('/schedule/update', [SupervisorController::class, 'updateScheduleProduction'])->name('schedule.update');
@@ -105,7 +109,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/production/data', [OperadorController::class, 'getProductionData'])->name('production.data');
         
         Route::post('/strikes', [OperadorController::class, 'storeStrike'])->name('strikes.store');
-        Route::put('/strikes/{strike}/end', [OperadorController::class, 'endStrike'])->name('strikes.end');
+        Route::put('/strikes/{id}/end', [OperadorController::class, 'endStrike'])->name('strikes.end');
+        // Obtener paros por programa diario
+Route::get('/strikes/{dailyProgramId}', [OperadorController::class, 'getStrikesByProgram'])
+    ->name('strikes.index');
     });
     
     // ============================================

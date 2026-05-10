@@ -408,7 +408,8 @@ const guardarPrograma = async () => {
 const loadStrikes = async () => {
     if (!dailyProgramId.value) return
     try {
-        const res = await axios.get(route('supervisor.strikes.index', dailyProgramId.value))
+        // Usar la ruta con el prefijo supervisor
+        const res = await axios.get(`/supervisor/strikes/${dailyProgramId.value}`)
         strikesList.value = res.data || []
     } catch (error) {
         console.error('Error loading strikes:', error)
