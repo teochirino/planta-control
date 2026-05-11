@@ -73,8 +73,11 @@ Route::middleware('auth')->group(function () {
     // MÓDULO GERENCIA
     // ============================================
     Route::prefix('gerencia')->name('gerencia.')->middleware('gerencia')->group(function () {
-        Route::get('/dashboard', [GerenciaController::class, 'dashboard'])->name('dashboard');
-    });
+    Route::get('/dashboard', [GerenciaController::class, 'dashboard'])->name('dashboard');
+    Route::get('/monitoreo', [App\Http\Controllers\Gerencia\MonitoreoController::class, 'index'])->name('monitoreo');
+    Route::get('/monitoreo-data', [App\Http\Controllers\Gerencia\MonitoreoController::class, 'getData'])->name('monitoreo.data');
+});
+    
     
     // ============================================
     // MÓDULO SUPERVISOR
@@ -118,21 +121,22 @@ Route::get('/strikes/{dailyProgramId}', [OperadorController::class, 'getStrikesB
     // ============================================
     // API ENDPOINTS (para Vue)
     // ============================================
-    Route::get('/api/permissions/data', function() {
-        return response()->json([
-            'users' => \App\Models\User::with('profile')->get(),
-            'workCenters' => \App\Models\WorkCenter::all(),
-            'productionLines' => \App\Models\ProductionLine::with('workCenter')->get(),
-        ]);
-    });
+    // COMENTADO: Rutas movidas a routes/api.php para evitar duplicación
+    // Route::get('/api/permissions/data', function() {
+    //     return response()->json([
+    //         'users' => \App\Models\User::with('profile')->get(),
+    //         'workCenters' => \App\Models\WorkCenter::all(),
+    //         'productionLines' => \App\Models\ProductionLine::with('workCenter')->get(),
+    //     ]);
+    // });
     
-    Route::get('/api/permissions/user/{userId}', [PermisosController::class, 'getUserPermissions']);
-    Route::post('/api/permissions/work-centers/{userId}', [PermisosController::class, 'saveWorkCenterPermissions']);
-    Route::post('/api/permissions/production-lines/{userId}', [PermisosController::class, 'saveProductionLinePermissions']);
+    // Route::get('/api/permissions/user/{userId}', [PermisosController::class, 'getUserPermissions']);
+    // Route::post('/api/permissions/work-centers/{userId}', [PermisosController::class, 'saveWorkCenterPermissions']);
+    // Route::post('/api/permissions/production-lines/{userId}', [PermisosController::class, 'saveProductionLinePermissions']);
     
-    Route::get('/api/produccion/{date}', [ProductionController::class, 'getByDate']);
-    Route::get('/api/produccion-stats/{date}', [ProductionController::class, 'getStats']);
-    Route::put('/api/produccion-hora/{scheduleId}', [ProductionController::class, 'updateHour']);
+    // Route::get('/api/produccion/{date}', [ProductionController::class, 'getByDate']);
+    // Route::get('/api/produccion-stats/{date}', [ProductionController::class, 'getStats']);
+    // Route::put('/api/produccion-hora/{scheduleId}', [ProductionController::class, 'updateHour']);
 });
 
 require __DIR__.'/auth.php';
