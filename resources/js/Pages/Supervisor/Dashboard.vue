@@ -136,17 +136,25 @@
                     </div>
                 </div>
                 
-                <!-- Líneas de Producción -->
-                <div class="mt-6">
-                    <h3 class="text-sm font-bold text-[#0b2a40] mb-3">Líneas de Producción</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div v-for="line in (selectedWorkCenterData?.production_lines || [])" :key="line.id" class="p-3 border border-[#d4dee8] rounded-lg bg-white">
-                            <div class="font-bold text-[#0b2a40]">{{ line.title }}</div>
-                            <div class="text-xs text-[#6a8090] mt-1">
-                                Cap: {{ formatNumber(line.installed_capacity) }} pzs/h | 
-                                Costo: ${{ formatNumber(line.cost) }}/min
+                <!-- Líneas de Producción y Semáforos -->
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Líneas de Producción (2/3 del ancho) -->
+                    <div class="lg:col-span-2">
+                        <h3 class="text-sm font-bold text-[#0b2a40] mb-3">Líneas de Producción</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                            <div v-for="line in (selectedWorkCenterData?.production_lines || [])" :key="line.id" class="p-3 border border-[#d4dee8] rounded-lg bg-white">
+                                <div class="font-bold text-[#0b2a40]">{{ line.title }}</div>
+                                <div class="text-xs text-[#6a8090] mt-1">
+                                    Cap: {{ formatNumber(line.installed_capacity) }} pzs/h | 
+                                    Costo: ${{ formatNumber(line.cost) }}/min
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Semáforos del Área (1/3 del ancho) -->
+                    <div class="lg:col-span-1">
+                        <SemaforosArea :attributes="attributesData" />
                     </div>
                 </div>
             </div>
@@ -159,6 +167,7 @@ import { ref, computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Link } from '@inertiajs/vue3'
+import SemaforosArea from '@/Components/SemaforosArea.vue'
 
 // Props
 const props = defineProps({
@@ -185,6 +194,10 @@ const props = defineProps({
     kpis: {
         type: Object,
         default: null
+    },
+    attributes: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -196,6 +209,7 @@ const fechaActualStr = hoy.toISOString().split('T')[0]
 const workCentersData = ref(props.workCenters || [])
 const selectedWorkCenterData = ref(props.selectedWorkCenter || {})
 const kpisData = ref(props.kpis)
+const attributesData = ref(props.attributes || [])
 const selectedWorkCenterId = ref(props.selectedWorkCenter?.id || (props.workCenters?.[0]?.id))
 const fechaSeleccionada = ref(fechaActualStr)  // 🔧 FORZADO a fecha actual
 const turnoSeleccionado = ref(props.selectedShift || 'matutino')

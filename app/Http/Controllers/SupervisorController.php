@@ -30,7 +30,7 @@ class SupervisorController extends Controller
             $selectedWorkCenterId = $workCenters->first()->id;
         }
         
-        $selectedWorkCenter = WorkCenter::with('productionLines')->findOrFail($selectedWorkCenterId);
+        $selectedWorkCenter = WorkCenter::with(['productionLines', 'attributes'])->findOrFail($selectedWorkCenterId);
         
         // 🔧 FORZAR FECHA ACTUAL - IGNORAR COMPLETAMENTE LA SESIÓN
         $selectedDate = now()->format('Y-m-d');
@@ -55,6 +55,7 @@ class SupervisorController extends Controller
             'selectedShift' => $selectedShift,
             'dailyProgram' => $dailyProgram,
             'kpis' => $kpis,
+            'attributes' => $selectedWorkCenter->attributes,
         ]);
     }
     

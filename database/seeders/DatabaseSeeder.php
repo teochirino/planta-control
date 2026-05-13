@@ -19,8 +19,14 @@ class DatabaseSeeder extends Seeder
         
         echo "\n";
         
-        // 2. Crear usuarios y asignar centros de trabajo
-        echo "👥 Paso 2: Creando usuarios y asignando centros...\n";
+        // 2. Crear atributos para semáforos del área
+        echo "🚦 Paso 2: Creando atributos para semáforos del área...\n";
+        $this->call(AttributeSeeder::class);
+        
+        echo "\n";
+        
+        // 3. Crear usuarios y asignar centros de trabajo
+        echo "👥 Paso 3: Creando usuarios y asignando centros...\n";
         $this->call(UserWorkCenterSeeder::class);
         
         echo "\n";

@@ -54,4 +54,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/supervisor/strikes/{dailyProgramId}', [SupervisorController::class, 'getStrikesByProgram']);
     Route::get('/supervisor/production/data', [SupervisorController::class, 'getProductionData']);
     Route::post('/supervisor/schedule/update', [SupervisorController::class, 'updateScheduleProduction']);
+    
+    // Atributos - Semáforos del Área
+    Route::post('/attributes/{attribute}/change-color', [\App\Http\Controllers\AttributeController::class, 'changeColor']);
+    Route::get('/attributes/{attribute}/history', [\App\Http\Controllers\AttributeController::class, 'getHistory']);
 });

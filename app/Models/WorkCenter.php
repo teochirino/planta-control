@@ -34,4 +34,9 @@ class WorkCenter extends Model
             'user_id'
         )->withTimestamps();
     }
+    
+    public function attributes()
+    {
+        return $this->hasMany(Attribute::class, 'id_work_center')->orderBy('order');
+    }
 }

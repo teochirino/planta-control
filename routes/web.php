@@ -99,6 +99,11 @@ Route::middleware('auth')->group(function () {
         
         Route::post('/strikes', [SupervisorController::class, 'storeStrike'])->name('strikes.store');
         Route::put('/strikes/{strike}/end', [SupervisorController::class, 'endStrike'])->name('strikes.end');
+        
+        // Atributos - Semáforos del Área
+        Route::post('/attributes/{attribute}/change-color', [\App\Http\Controllers\AttributeController::class, 'changeColor'])->name('attributes.change-color');
+        Route::get('/attributes/{attribute}/history', [\App\Http\Controllers\AttributeController::class, 'getHistory'])->name('attributes.history');
+        Route::get('/attributes/recent-changes', [\App\Http\Controllers\AttributeController::class, 'getRecentChanges'])->name('attributes.recent-changes');
     });
     
     // ============================================
