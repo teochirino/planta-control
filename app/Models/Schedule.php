@@ -14,11 +14,16 @@ class Schedule extends Model
         'id_production_line',
         'start_time',
         'end_time',
-        'produced'
+        'produced',
+        'rejected',
+        'rejected_by',
+        'rejected_at'
     ];
     
     protected $casts = [
-        'produced' => 'integer'
+        'produced' => 'integer',
+        'rejected' => 'integer',
+        'rejected_at' => 'datetime'
     ];
     
     // Relación con DailyProgram
@@ -31,6 +36,12 @@ class Schedule extends Model
     public function productionLine()
     {
         return $this->belongsTo(ProductionLine::class, 'id_production_line');
+    }
+    
+    // Relación con el usuario que registró el rechazo
+    public function rejectedByUser()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
     
     // Accessor para start_time (formato HH:MM)

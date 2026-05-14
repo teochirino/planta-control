@@ -87,6 +87,12 @@ class User extends Authenticatable
         return $this->id_profile === 8;
     }
     
+    // Verificar si es operador de calidad
+    public function isCalidad()
+    {
+        return $this->id_profile === 4;
+    }
+    
     // Verificar si el usuario puede ver un centro de trabajo
     public function canViewWorkCenter($workCenterId)
     {

@@ -14,6 +14,7 @@ class DailyProgram extends Model
         'backwardness', 
         'advanced',
         'total_produced',
+        'total_rejected',
         'shift_hours'
     ];
     

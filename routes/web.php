@@ -27,6 +27,8 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('supervisor.dashboard');
         } elseif ($user->isOperador()) {
             return redirect()->route('operador.dashboard');
+        } elseif ($user->isCalidad()) {
+            return redirect()->route('calidad.registrar-rechazo');
         }
         
         return Inertia::render('Dashboard');
@@ -77,6 +79,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/monitoreo', [App\Http\Controllers\Gerencia\MonitoreoController::class, 'index'])->name('monitoreo');
     Route::get('/monitoreo-data', [App\Http\Controllers\Gerencia\MonitoreoController::class, 'getData'])->name('monitoreo.data');
 });
+    
+    // ============================================
+    // MÓDULO CALIDAD
+    // ============================================
+    Route::prefix('calidad')->name('calidad.')->middleware('calidad')->group(function () {
+        Route::get('/registrar-rechazo', [\App\Http\Controllers\CalidadController::class, 'registrarRechazo'])->name('registrar-rechazo');
+        Route::post('/store-rechazo', [\App\Http\Controllers\CalidadController::class, 'storeRechazo'])->name('store-rechazo');
+        Route::get('/rechazos', [\App\Http\Controllers\CalidadController::class, 'rechazos'])->name('rechazos');
+    });
     
     
     // ============================================

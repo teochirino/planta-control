@@ -45,6 +45,12 @@ class AuthenticatedSessionController extends Controller
         } elseif ($user->id_profile === 5) {
             // Supervisor
             return redirect()->route('supervisor.dashboard');
+        } elseif ($user->id_profile === 4) {
+            // Calidad
+            return redirect()->route('calidad.registrar-rechazo');
+        } elseif ($user->id_profile === 8) {
+            // Operador
+            return redirect()->route('operador.dashboard');
         }
 
         return redirect()->intended(route('dashboard', absolute: false));
