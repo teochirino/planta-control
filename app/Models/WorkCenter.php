@@ -8,7 +8,7 @@ use App\Models\ProductionLine;
 
 class WorkCenter extends Model
 {
-    protected $fillable = ['name', 'installed_capacity'];
+    protected $fillable = ['name', 'installed_capacity', 'phase'];
     
     public function productionLines()
     {
