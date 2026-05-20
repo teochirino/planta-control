@@ -23,6 +23,8 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('admin.users.index');
         } elseif ($user->id_profile === 1) {
             return redirect()->route('gerencia.dashboard');
+        } elseif ($user->isIngenieroProcesos()) {
+            return redirect()->route('ingeniero-procesos.index');
         } elseif ($user->isSupervisor()) {
             return redirect()->route('supervisor.dashboard');
         } elseif ($user->isOperador()) {
@@ -87,6 +89,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/registrar-rechazo', [\App\Http\Controllers\CalidadController::class, 'registrarRechazo'])->name('registrar-rechazo');
         Route::post('/store-rechazo', [\App\Http\Controllers\CalidadController::class, 'storeRechazo'])->name('store-rechazo');
         Route::get('/rechazos', [\App\Http\Controllers\CalidadController::class, 'rechazos'])->name('rechazos');
+    });
+    
+    // ============================================
+    // MÓDULO INGENIERO DE PROCESOS
+    // ============================================
+    Route::prefix('ingeniero-procesos')->name('ingeniero-procesos.')->middleware('ingeniero_procesos')->group(function () {
+        Route::get('/', [\App\Http\Controllers\IngenieroProcesosController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\IngenieroProcesosController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\IngenieroProcesosController::class, 'store'])->name('store');
+        Route::get('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'show'])->name('show');
     });
     
     

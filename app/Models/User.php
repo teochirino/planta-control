@@ -93,6 +93,12 @@ class User extends Authenticatable
         return $this->id_profile === 4;
     }
     
+    // Verificar si es ingeniero de procesos
+    public function isIngenieroProcesos()
+    {
+        return $this->id_profile === 6;
+    }
+    
     // Verificar si el usuario puede ver un centro de trabajo
     public function canViewWorkCenter($workCenterId)
     {

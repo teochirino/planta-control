@@ -19,7 +19,7 @@ class ProductSeeder extends Seeder
         echo "✅ Datos anteriores eliminados\n\n";
         echo "📝 Importando productos desde CSV...\n";
         
-        $csvFile = database_path('../referencia/productos.csv');
+        $csvFile = database_path('../referencia/productos2.csv');
         
         if (!file_exists($csvFile)) {
             echo "❌ Archivo CSV no encontrado: $csvFile\n";
