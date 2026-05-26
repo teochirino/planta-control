@@ -7,7 +7,7 @@ use Carbon\Carbon;
 
 class Program extends Model
 {
-    protected $fillable = ['codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4', 'created_by'];
+    protected $fillable = ['codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4', 'total_time', 'total_piezas', 'created_by'];
     
     public function details()
     {

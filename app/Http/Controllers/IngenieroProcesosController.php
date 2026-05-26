@@ -476,6 +476,26 @@ class IngenieroProcesosController extends Controller
             $codigo = \Carbon\Carbon::parse($fechaEntrega)->format('d-m-Y') . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
             \Log::info('Program code generated:', ['codigo' => $codigo]);
             
+            // Calcular total_time y total_piezas
+            $totalTime = 0;
+            $totalPiezas = 0;
+            
+            // Obtener TODOS los productos con los modelos del Excel (no usar keyBy porque hay múltiples por modelo)
+            $modelos = array_unique(array_column($request->data, 'modelo'));
+            $allProducts = \App\Models\Product::whereIn('modelo', $modelos)->get();
+            
+            // Para el cálculo de totales del programa, sumamos de TODOS los productos (independientemente del centro)
+            foreach ($request->data as $item) {
+                // Tomar el primer producto encontrado con ese modelo para el cálculo general
+                $product = $allProducts->where('modelo', $item['modelo'])->first();
+                if ($product) {
+                    $totalTime += $product->tiempo * $item['cantidad'];
+                    $totalPiezas += $product->piezas * $item['cantidad'];
+                }
+            }
+            
+            \Log::info('Totals calculated:', ['total_time' => $totalTime, 'total_piezas' => $totalPiezas]);
+            
             // Crear el programa
             $program = Program::create([
                 'codigo' => $codigo,
@@ -484,6 +504,8 @@ class IngenieroProcesosController extends Controller
                 'fecha_fase2' => $phaseDates['fase2']->format('Y-m-d'),
                 'fecha_fase3' => $phaseDates['fase3']->format('Y-m-d'),
                 'fecha_fase4' => $phaseDates['fase4']->format('Y-m-d'),
+                'total_time' => $totalTime,
+                'total_piezas' => $totalPiezas,
                 'created_by' => auth()->id(),
             ]);
             \Log::info('Program created:', ['id' => $program->id]);
@@ -497,6 +519,58 @@ class IngenieroProcesosController extends Controller
                 ]);
             }
             \Log::info('Program details created');
+            
+            // Crear daily_programs y schedules para cada fase
+            $phases = [
+                1 => $phaseDates['fase1']->format('Y-m-d'),
+                2 => $phaseDates['fase2']->format('Y-m-d'),
+                3 => $phaseDates['fase3']->format('Y-m-d'),
+                4 => $phaseDates['fase4']->format('Y-m-d'),
+            ];
+            
+            foreach ($phases as $phaseNumber => $phaseDate) {
+                \Log::info('Processing phase:', ['phase' => $phaseNumber, 'date' => $phaseDate]);
+                
+                // Obtener centros de trabajo de esta fase
+                $workCenters = \App\Models\WorkCenter::where('phase', $phaseNumber)->get();
+                \Log::info('Work centers for phase:', ['count' => $workCenters->count()]);
+                
+                foreach ($workCenters as $workCenter) {
+                    // Calcular sumatoria de piezas para este centro de trabajo
+                    $centerPiezas = 0;
+                    foreach ($request->data as $item) {
+                        // Obtener TODOS los productos con este modelo
+                        $productsForModel = $allProducts->where('modelo', $item['modelo']);
+                        // Sumar piezas de los productos que corresponden a este centro
+                        foreach ($productsForModel as $product) {
+                            if ($product->id_work_center == $workCenter->id) {
+                                $centerPiezas += $product->piezas * $item['cantidad'];
+                            }
+                        }
+                    }
+                    
+                    \Log::info('Center piezas:', ['center_id' => $workCenter->id, 'piezas' => $centerPiezas]);
+                    
+                    if ($centerPiezas > 0) {
+                        // Crear daily_program
+                        $dailyProgram = \App\Models\DailyProgram::create([
+                            'date' => $phaseDate,
+                            'id_work_center' => $workCenter->id,
+                            'shift' => 'matutino',
+                            'programmed' => $centerPiezas,
+                            'backwardness' => 0,
+                            'advanced' => 0,
+                            'shift_hours' => 9.0,
+                        ]);
+                        \Log::info('Daily program created:', ['id' => $dailyProgram->id]);
+                        
+                        // Generar schedules para todas las líneas del centro
+                        $productionLines = $workCenter->productionLines;
+                        $this->generateSchedulesForProgram($dailyProgram, $productionLines);
+                        \Log::info('Schedules generated for center:', ['center_id' => $workCenter->id]);
+                    }
+                }
+            }
             
             DB::commit();
             \Log::info('Transaction committed');
@@ -514,5 +588,44 @@ class IngenieroProcesosController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error al crear el programa: ' . $e->getMessage());
         }
+    }
+    
+    private function generateSchedulesForProgram(\App\Models\DailyProgram $program, $productionLines)
+    {
+        $startTime = $program->shift === 'matutino' ? '08:00' : 
+                    ($program->shift === 'vespertino' ? '16:00' : '00:00');
+        
+        $hours = $this->generateHourlySchedule($startTime, (int)$program->shift_hours);
+        
+        // Generar schedules para cada línea del centro
+        foreach ($productionLines as $line) {
+            foreach ($hours as $hour) {
+                \App\Models\Schedule::firstOrCreate(
+                    [
+                        'id_daily_program' => $program->id,
+                        'id_production_line' => $line->id,
+                        'start_time' => $hour['start'],
+                        'end_time' => $hour['end'],
+                    ],
+                    [
+                        'produced' => 0,
+                    ]
+                );
+            }
+        }
+    }
+    
+    private function generateHourlySchedule($startTime, $hours)
+    {
+        $schedule = [];
+        $current = \Carbon\Carbon::parse($startTime);
+        
+        for ($i = 0; $i < $hours; $i++) {
+            $start = $current->format('H:i');
+            $end = $current->addHour()->format('H:i');
+            $schedule[] = ['start' => $start, 'end' => $end];
+        }
+        
+        return $schedule;
     }
 }
