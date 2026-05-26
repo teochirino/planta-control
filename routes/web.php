@@ -98,6 +98,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\IngenieroProcesosController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\IngenieroProcesosController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\IngenieroProcesosController::class, 'store'])->name('store');
+        
+        // CRUD de Productos (rutas específicas primero)
+        Route::get('/productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'productsIndex'])->name('products.index');
+        Route::get('/productos/create', [\App\Http\Controllers\IngenieroProcesosController::class, 'productCreate'])->name('products.create');
+        Route::post('/productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'productStore'])->name('products.store');
+        Route::get('/productos/{modelo}/edit', [\App\Http\Controllers\IngenieroProcesosController::class, 'productEdit'])->name('products.edit');
+        Route::put('/productos/{modelo}', [\App\Http\Controllers\IngenieroProcesosController::class, 'productUpdate'])->name('products.update');
+        Route::delete('/productos/{modelo}', [\App\Http\Controllers\IngenieroProcesosController::class, 'productDestroy'])->name('products.destroy');
+        
+        // Importación de productos desde Excel
+        Route::get('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProductsView'])->name('import.products');
+        Route::post('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProducts'])->name('import.products.store');
+        Route::post('/crear-programa-excel', [\App\Http\Controllers\IngenieroProcesosController::class, 'createProgramFromExcel'])->name('import.products.create');
+        
+        // Ruta dinámica de programas (debe ir al final, después de las rutas específicas)
         Route::get('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'show'])->name('show');
     });
     
