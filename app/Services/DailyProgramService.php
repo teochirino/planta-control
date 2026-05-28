@@ -4,18 +4,30 @@ namespace App\Services;
 
 use App\Models\DailyProgram;
 use App\Models\WorkCenter;
+use App\Models\WorkCenterBalance;
 use App\Models\Schedule;
+use App\Models\RejectedPiece;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DailyProgramService
 {
+    protected $balanceService;
+
+    public function __construct(BalanceService $balanceService)
+    {
+        $this->balanceService = $balanceService;
+    }
+
     /**
      * Obtener o crear programa diario
      */
     public function getOrCreateDailyProgram(int $workCenterId, string $date, string $shift): DailyProgram
     {
-        return DailyProgram::firstOrCreate(
+        // Calcular balance del día anterior
+        $balance = $this->balanceService->calculatePreviousDayBalance($workCenterId, $date, $shift);
+        
+        $program = DailyProgram::firstOrCreate(
             [
                 'date' => $date,
                 'id_work_center' => $workCenterId,
@@ -23,11 +35,24 @@ class DailyProgramService
             ],
             [
                 'programmed' => 0,
-                'backwardness' => 0,
-                'advanced' => 0,
+                'backwardness' => $balance['backwardness'],
+                'advanced' => $balance['advanced'],
                 'shift_hours' => 9.0,
             ]
         );
+        
+        // Si se creó un nuevo programa, resetear el balance acumulado del centro
+        if ($program->wasRecentlyCreated) {
+            $centerBalance = WorkCenterBalance::where('id_work_center', $workCenterId)->first();
+            if ($centerBalance) {
+                $centerBalance->update([
+                    'accumulated_backwardness' => 0,
+                    'accumulated_advanced' => 0,
+                ]);
+            }
+        }
+        
+        return $program;
     }
 
     /**

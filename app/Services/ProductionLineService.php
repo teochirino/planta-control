@@ -12,7 +12,11 @@ class ProductionLineService
      */
     public function getUserProductionLines(User $user)
     {
-        return $user->productionLines()->with('workCenter')->get();
+        //return $user->productionLines()->with('workCenter')->get();
+        return $user->productionLines()
+    ->wherePivot('can_view', true)
+    ->with('workCenter')
+    ->get();
     }
 
     /**

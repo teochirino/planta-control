@@ -314,4 +314,33 @@ class OperadorController extends Controller
             'strikes' => $strikes,
         ]);
     }
+    
+    // Cerrar turno (operador)
+    public function closeShift(Request $request)
+    {
+        $request->validate([
+            'daily_program_id' => 'required|exists:daily_programs,id',
+        ]);
+        
+        $dailyProgram = DailyProgram::findOrFail($request->daily_program_id);
+        
+        // Verificar que el operador tenga acceso al centro de trabajo
+        $user = auth()->user();
+        if (!$user->workCenters()->where('work_center_id', $dailyProgram->id_work_center)->exists()) {
+            return response()->json(['success' => false, 'message' => 'No tienes acceso a este centro de trabajo'], 403);
+        }
+        
+        // Marcar como cerrado por operador
+        $dailyProgram->update([
+            'operator_closed' => true,
+            'operator_closed_at' => now(),
+            'operator_closed_by' => $user->id,
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Turno cerrado correctamente. El supervisor revisará el balance.',
+            'daily_program' => $dailyProgram->fresh(),
+        ]);
+    }
 }

@@ -6,6 +6,7 @@ use App\Models\ProductionLine;
 use App\Models\DailyProgram;
 use App\Models\Schedule;
 use App\Models\WorkCenter;
+use App\Models\RejectedPiece;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -70,6 +71,7 @@ class CalidadController extends Controller
         $request->validate([
             'schedule_id' => 'required|exists:schedules,id',
             'rejected' => 'required|integer|min:0',
+            'rejection_reason' => 'nullable|string',
         ]);
         
         DB::beginTransaction();
@@ -91,6 +93,19 @@ class CalidadController extends Controller
             
             $dailyProgram->update([
                 'total_rejected' => $totalRejected,
+            ]);
+            
+            // Crear registro de seguimiento en rejected_pieces
+            RejectedPiece::create([
+                'id_schedule' => $schedule->id,
+                'id_daily_program' => $dailyProgram->id,
+                'id_work_center' => $dailyProgram->id_work_center,
+                'id_production_line' => $schedule->id_production_line,
+                'quantity' => $request->rejected,
+                'rejection_reason' => $request->rejection_reason ?? 'Rechazo de calidad',
+                'rejected_by' => auth()->id(),
+                'rejected_at' => now(),
+                'resolution_status' => 'pendiente',
             ]);
             
             DB::commit();

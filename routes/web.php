@@ -7,6 +7,7 @@ use App\Http\Controllers\OperadorController;
 use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RejectedPieceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -89,6 +90,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/registrar-rechazo', [\App\Http\Controllers\CalidadController::class, 'registrarRechazo'])->name('registrar-rechazo');
         Route::post('/store-rechazo', [\App\Http\Controllers\CalidadController::class, 'storeRechazo'])->name('store-rechazo');
         Route::get('/rechazos', [\App\Http\Controllers\CalidadController::class, 'rechazos'])->name('rechazos');
+        
+        // Bitácora de piezas rechazadas
+        Route::get('/rejected-pieces', [RejectedPieceController::class, 'index'])->name('rejected-pieces.index');
+        Route::post('/rejected-pieces/{id}/repaired', [RejectedPieceController::class, 'markAsRepaired'])->name('rejected-pieces.repaired');
+        Route::post('/rejected-pieces/{id}/replaced', [RejectedPieceController::class, 'markAsReplaced'])->name('rejected-pieces.replaced');
+        Route::post('/rejected-pieces/{id}/discarded', [RejectedPieceController::class, 'markAsDiscarded'])->name('rejected-pieces.discarded');
+        Route::get('/rejected-pieces/schedules', [RejectedPieceController::class, 'getSchedulesForReplacement'])->name('rejected-pieces.schedules');
     });
     
     // ============================================
@@ -138,6 +146,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/strikes', [SupervisorController::class, 'storeStrike'])->name('strikes.store');
         Route::put('/strikes/{strike}/end', [SupervisorController::class, 'endStrike'])->name('strikes.end');
         
+        // Balance y correcciones
+        Route::post('/correct-operator-data', [SupervisorController::class, 'correctOperatorData'])->name('correct-operator-data');
+        Route::post('/process-balance', [SupervisorController::class, 'processShiftBalance'])->name('process-balance');
+        Route::post('/manual-adjustment', [SupervisorController::class, 'registerManualAdjustment'])->name('manual-adjustment');
+        Route::get('/adjustments-history', [SupervisorController::class, 'getAdjustmentsHistory'])->name('adjustments-history');
+        
         // Atributos - Semáforos del Área
         Route::post('/attributes/{attribute}/change-color', [\App\Http\Controllers\AttributeController::class, 'changeColor'])->name('attributes.change-color');
         Route::get('/attributes/{attribute}/history', [\App\Http\Controllers\AttributeController::class, 'getHistory'])->name('attributes.history');
@@ -153,6 +167,7 @@ Route::middleware('auth')->group(function () {
         // API endpoints para AJAX
         Route::post('/schedule/update', [OperadorController::class, 'updateScheduleProduction'])->name('schedule.update');
         Route::get('/production/data', [OperadorController::class, 'getProductionData'])->name('production.data');
+        Route::post('/close-shift', [OperadorController::class, 'closeShift'])->name('close-shift');
         
         Route::post('/strikes', [OperadorController::class, 'storeStrike'])->name('strikes.store');
         Route::put('/strikes/{id}/end', [OperadorController::class, 'endStrike'])->name('strikes.end');

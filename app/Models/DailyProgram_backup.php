@@ -15,13 +15,7 @@ class DailyProgram extends Model
         'advanced',
         'total_produced',
         'total_rejected',
-        'shift_hours',
-        'operator_closed',
-        'operator_closed_at',
-        'operator_closed_by',
-        'balance_processed',
-        'balance_processed_at',
-        'balance_processed_by'
+        'shift_hours'
     ];
     
     protected $casts = [
@@ -50,26 +44,6 @@ class DailyProgram extends Model
         return max($this->programmed + $this->backwardness - $this->advanced, 0);
     }
     
-    // Calcular piezas válidas (considerando reparaciones y reemplazos de rechazos)
-    public function getValidPiecesAttribute()
-    {
-        $totalProduced = $this->total_produced ?? 0;
-        $totalRejected = $this->total_rejected ?? 0;
-        
-        // Obtener resoluciones de rechazos
-        $resolvedPieces = \App\Models\RejectedPiece::where('id_daily_program', $this->id)
-            ->where('resolution_status', '!=', 'pendiente')
-            ->get();
-        
-        $repairedCount = $resolvedPieces->where('resolution_status', 'reparada')->sum('quantity');
-        $replacedCount = $resolvedPieces->where('resolution_status', 'reemplazada')->sum('new_pieces_quantity');
-        
-        // Piezas válidas = producidas - rechazadas + reparadas + reemplazadas
-        $validPieces = $totalProduced - $totalRejected + $repairedCount + $replacedCount;
-        
-        return max($validPieces, 0);
-    }
-    
     // Calcular producción esperada por hora
     public function getExpectedPerHourAttribute()
     {
@@ -83,10 +57,10 @@ class DailyProgram extends Model
         return round(($this->total_produced / $this->total_to_produce) * 100, 2);
     }
     
-    // Calcular diferencia (basado en piezas válidas)
+    // Calcular diferencia
     public function getDifferenceAttribute()
     {
-        return $this->valid_pieces - $this->total_to_produce;
+        return $this->total_produced - $this->total_to_produce;
     }
     
     // Obtener color del semáforo

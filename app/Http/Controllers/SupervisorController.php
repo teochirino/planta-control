@@ -7,6 +7,8 @@ use App\Models\ProductionLine;
 use App\Models\DailyProgram;
 use App\Models\Schedule;
 use App\Models\Strike;
+use App\Models\ProductionAdjustment;
+use App\Services\BalanceService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +16,13 @@ use Inertia\Inertia;
 
 class SupervisorController extends Controller
 {
+    protected $balanceService;
+
+    public function __construct(BalanceService $balanceService)
+    {
+        $this->balanceService = $balanceService;
+    }
+
     // Dashboard principal del supervisor
     public function index(Request $request)
     {
@@ -432,4 +441,125 @@ public function getStrikesByProgram($dailyProgramId)
     
     return response()->json($strikes);
 }
+    
+    // Corregir datos del operador
+    public function correctOperatorData(Request $request)
+    {
+        $request->validate([
+            'schedule_id' => 'required|exists:schedules,id',
+            'corrected_produced' => 'required|integer|min:0',
+            'correction_reason' => 'required|string',
+        ]);
+        
+        DB::beginTransaction();
+        try {
+            $schedule = Schedule::findOrFail($request->schedule_id);
+            $oldValue = $schedule->produced;
+            
+            // Actualizar el valor corregido
+            $schedule->update(['produced' => $request->corrected_produced]);
+            
+            // Registrar la corrección
+            ProductionAdjustment::create([
+                'id_daily_program' => $schedule->id_daily_program,
+                'id_work_center' => $schedule->dailyProgram->id_work_center,
+                'adjustment_type' => 'correction',
+                'previous_value' => $oldValue,
+                'new_value' => $request->corrected_produced,
+                'difference' => $request->corrected_produced - $oldValue,
+                'reason' => $request->correction_reason,
+                'adjusted_by' => auth()->id(),
+                'reference_type' => 'schedule',
+                'reference_id' => $schedule->id,
+            ]);
+            
+            // Recalcular totales automáticamente
+            $this->updateDailyProgramTotal($schedule->id_daily_program);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Corrección aplicada y balances recalculados',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    
+    // Procesar balance del turno
+    public function processShiftBalance(Request $request)
+    {
+        $request->validate([
+            'daily_program_id' => 'required|exists:daily_programs,id',
+        ]);
+        
+        // Verificar que sea supervisor
+        if (!auth()->user()->isSupervisor()) {
+            return response()->json(['success' => false, 'message' => 'Solo supervisores pueden procesar balances'], 403);
+        }
+        
+        $dailyProgram = DailyProgram::findOrFail($request->daily_program_id);
+        
+        // Procesar balance
+        $result = $this->balanceService->processEndOfShiftBalance($dailyProgram);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Balance procesado correctamente',
+            'backwardness' => $result->accumulated_backwardness,
+            'advanced' => $result->accumulated_advanced,
+        ]);
+    }
+    
+    // Registrar ajuste manual
+    public function registerManualAdjustment(Request $request)
+    {
+        $request->validate([
+            'daily_program_id' => 'required|exists:daily_programs,id',
+            'adjustment_type' => 'required|in:manual_count,quality_rejection,transfer,correction',
+            'previous_value' => 'required|integer',
+            'new_value' => 'required|integer',
+            'reason' => 'required|string',
+            'notes' => 'nullable|string',
+        ]);
+        
+        $dailyProgram = DailyProgram::findOrFail($request->daily_program_id);
+        
+        try {
+            $adjustment = $this->balanceService->registerManualAdjustment($dailyProgram->id, [
+                'id_work_center' => $dailyProgram->id_work_center,
+                'adjustment_type' => $request->adjustment_type,
+                'previous_value' => $request->previous_value,
+                'new_value' => $request->new_value,
+                'reason' => $request->reason,
+                'notes' => $request->notes,
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Ajuste manual registrado correctamente',
+                'adjustment' => $adjustment,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+    
+    // Obtener historial de ajustes
+    public function getAdjustmentsHistory(Request $request)
+    {
+        $workCenterId = $request->get('work_center_id');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+        
+        if (!$workCenterId) {
+            return response()->json(['error' => 'Se requiere work_center_id'], 400);
+        }
+        
+        $adjustments = $this->balanceService->getAdjustmentsHistory($workCenterId, $startDate, $endDate);
+        
+        return response()->json($adjustments);
+    }
 }
