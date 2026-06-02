@@ -137,34 +137,10 @@ SELECT * FROM rejected_pieces WHERE id = <ID del rechazo>;
 1. **Iniciar sesión** como usuario con perfil Operador
 2. **Ir a:** `/operador/dashboard`
 3. **Registrar producción** en las horas del turno
-4. **Probar el endpoint de cierre de turno:**
-
-**Opción A - Usando Postman/Insomnia:**
-- **Método:** POST
-- **URL:** `http://tu-dominio/operador/close-shift`
-- **Headers:**
-  - `Content-Type: application/json`
-  - `X-CSRF-TOKEN: <token de la página>`
-- **Body:**
-  ```json
-  {
-    "daily_program_id": <ID del programa diario actual>
-  }
-  ```
-
-**Opción B - Usando consola del navegador:**
-```javascript
-fetch('/operador/close-shift', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-  },
-  body: JSON.stringify({
-    daily_program_id: <ID del programa diario>
-  })
-}).then(r => r.json()).then(console.log);
-```
+4. **Desplazarse al final de la página** donde está la sección "🔒 Cierre de Turno"
+5. **Clic en el botón "Cerrar Turno"**
+6. **Confirmar** en el diálogo de confirmación
+7. **Verificar** que el botón desaparece y muestra el mensaje "Turno cerrado el [fecha y hora]"
 
 ### 4.2 Verificar en base de datos
 
@@ -179,44 +155,22 @@ SELECT * FROM daily_programs WHERE id = <ID del programa>;
 
 ---
 
-## FASE 5: Prueba de Correcciones del Supervisor
+## FASE 5: Prueba de Ajustes Manuales del Supervisor
 
 ### 5.1 Como usuario Supervisor (id_profile=5)
 
 1. **Iniciar sesión** como usuario con perfil Supervisor
 2. **Ir a:** `/supervisor/daily-production`
-3. **Probar el endpoint de corrección:**
-
-**Opción A - Usando Postman/Insomnia:**
-- **Método:** POST
-- **URL:** `http://tu-dominio/supervisor/correct-operator-data`
-- **Headers:**
-  - `Content-Type: application/json`
-  - `X-CSRF-TOKEN: <token>`
-- **Body:**
-  ```json
-  {
-    "schedule_id": <ID del schedule a corregir>,
-    "corrected_produced": <nuevo valor, ej: 150>,
-    "correction_reason": "Error de registro del operador"
-  }
-  ```
-
-**Opción B - Usando consola del navegador:**
-```javascript
-fetch('/supervisor/correct-operator-data', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-  },
-  body: JSON.stringify({
-    schedule_id: <ID>,
-    corrected_produced: 150,
-    correction_reason: "Error de registro"
-  })
-}).then(r => r.json()).then(console.log);
-```
+3. **Desplazarse a la sección "⚙️ Acciones del Supervisor"** (al final de la página)
+4. **Clic en el botón "Realizar Ajuste"** en la tarjeta "✏️ Ajuste Manual"
+5. **Completar el formulario:**
+   - Tipo de Ajuste: seleccionar "Conteo Físico", "Corrección de Datos" o "Ajuste de Inventario"
+   - Valor Anterior: valor original (prellenado con producción actual)
+   - Valor Nuevo: nuevo valor corregido
+   - Motivo: descripción del ajuste (ej: "Conteo físico adicional")
+   - Notas: comentarios opcionales
+6. **Clic en "Guardar Ajuste"**
+7. **Verificar** que se muestra el mensaje de éxito y la página se recarga
 
 ### 5.2 Verificar en base de datos
 
@@ -242,34 +196,13 @@ SELECT * FROM schedules WHERE id = <ID del schedule>;
 
 ### 6.1 Como Supervisor
 
-**Probar el endpoint de procesamiento de balance:**
-
-**Opción A - Usando Postman/Insomnia:**
-- **Método:** POST
-- **URL:** `http://tu-dominio/supervisor/process-balance`
-- **Headers:**
-  - `Content-Type: application/json`
-  - `X-CSRF-TOKEN: <token>`
-- **Body:**
-  ```json
-  {
-    "daily_program_id": <ID del programa diario>
-  }
-  ```
-
-**Opción B - Usando consola del navegador:**
-```javascript
-fetch('/supervisor/process-balance', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-  },
-  body: JSON.stringify({
-    daily_program_id: <ID>
-  })
-}).then(r => r.json()).then(console.log);
-```
+1. **Iniciar sesión** como usuario con perfil Supervisor
+2. **Ir a:** `/supervisor/daily-production`
+3. **Desplazarse a la sección "⚙️ Acciones del Supervisor"** (al final de la página)
+4. **Clic en el botón "Procesar Balance"** en la tarjeta "📊 Procesar Balance"
+5. **Confirmar** en el diálogo de confirmación
+6. **Verificar** que el botón cambia a "✓ Balance Procesado" y muestra la fecha y hora
+7. **Verificar** que el estado del turno muestra "✓ Cerrado por operador" (si el operador ya cerró el turno)
 
 ### 6.2 Verificar en base de datos
 
@@ -293,39 +226,25 @@ SELECT * FROM daily_programs WHERE id = <ID del programa>;
 
 ---
 
-## FASE 7: Prueba de Ajuste Manual
+## FASE 7: Prueba de Historial de Ajustes
 
 ### 7.1 Como Supervisor
 
-**Probar el endpoint de ajuste manual:**
+1. **Iniciar sesión** como usuario con perfil Supervisor
+2. **Ir a:** `/supervisor/daily-production`
+3. **Desplazarse a la sección "⚙️ Acciones del Supervisor"** (al final de la página)
+4. **Clic en el botón "Ver Historial"** en la tarjeta "📜 Historial de Ajustes"
+5. **Verificar** que se abre una nueva pestaña con la vista de historial
+6. **Verificar** que se muestran los ajustes realizados en el mes actual
+7. **Cambiar las fechas** para filtrar por un período específico
+8. **Clic en "Actualizar"** para recargar los datos
 
-**Opción A - Usando Postman/Insomnia:**
-- **Método:** POST
-- **URL:** `http://tu-dominio/supervisor/manual-adjustment`
-- **Headers:**
-  - `Content-Type: application/json`
-  - `X-CSRF-TOKEN: <token>`
-- **Body:**
-  ```json
-  {
-    "daily_program_id": <ID>,
-    "adjustment_type": "manual_count",
-    "previous_value": 100,
-    "new_value": 105,
-    "reason": "Conteo físico adicional",
-    "notes": "Piezas encontradas en inventario"
-  }
-  ```
-
-### 7.2 Verificar en base de datos
-
-```sql
-SELECT * FROM production_adjustments ORDER BY id DESC LIMIT 1;
-```
+### 7.2 Verificar en la vista
 
 **Resultado esperado:**
-- `adjustment_type` debe ser `'manual_count'`
-- Debe tener los valores y el motivo registrados
+- Debe mostrarse una tabla con todos los ajustes
+- Cada ajuste debe mostrar: fecha, tipo, valor anterior, valor nuevo, diferencia, motivo y usuario
+- Los resúmenes en la parte superior deben mostrar el conteo por tipo de ajuste
 
 ---
 
@@ -476,16 +395,15 @@ fetch('/supervisor/adjustments-history?work_center_id=<ID>&start_date=2026-05-01
 
 ## 📝 Notas Importantes
 
-1. **Los endpoints de frontend (botones en las vistas) aún no están implementados.** Por ahora, las pruebas deben hacerse usando Postman, Insomnia o la consola del navegador.
+1. **Las vistas de frontend YA están implementadas.** Ya no es necesario usar Postman o la consola del navegador para las pruebas. Todas las funcionalidades tienen botones y modales en las interfaces.
 
-2. **Para obtener el CSRF-TOKEN:** Abre la consola del navegador (F12) y ejecuta:
-   ```javascript
-   document.querySelector('meta[name="csrf-token"]').content
-   ```
+2. **Para obtener IDs:** Revisa la base de datos o usa las vistas existentes para identificar los IDs de programas, schedules, etc.
 
-3. **Para obtener IDs:** Revisa la base de datos o usa las vistas existentes para identificar los IDs de programas, schedules, etc.
-
-4. **Después de las pruebas exitosas:** Se debe implementar la interfaz de frontend (botones, modales) para que los usuarios puedan usar estas funcionalidades sin necesidad de usar herramientas técnicas.
+3. **Vistas implementadas:**
+   - **Operador/Dashboard.vue:** Botón "Cerrar Turno" visible al final de la página
+   - **Supervisor/DailyProduction.vue:** Sección "Acciones del Supervisor" con botones para procesar balance, ajuste manual y ver historial
+   - **Supervisor/AdjustmentsHistory.vue:** Vista completa de historial de ajustes
+   - **RejectedPieces/Index.vue:** Bitácora de piezas rechazadas con modales para resolución
 
 ---
 
@@ -509,8 +427,13 @@ fetch('/supervisor/adjustments-history?work_center_id=<ID>&start_date=2026-05-01
 - **Nuevo:** `RejectedPieceController.php`
 - **Modificados:** `CalidadController.php`, `OperadorController.php`, `SupervisorController.php`
 
-### Vistas (1 nueva)
-- **Nueva:** `RejectedPieces/Index.vue` (bitácora de piezas rechazadas)
+### Vistas (2 nuevas, 2 modificadas)
+- **Nuevas:**
+  - `RejectedPieces/Index.vue` (bitácora de piezas rechazadas)
+  - `Supervisor/AdjustmentsHistory.vue` (historial de ajustes)
+- **Modificadas:**
+  - `Operador/Dashboard.vue` (agregado botón "Cerrar Turno")
+  - `Supervisor/DailyProduction.vue` (agregada sección "Acciones del Supervisor" con procesamiento de balance, ajuste manual y acceso a historial)
 
 ### Rutas
 - Agregadas rutas para bitácora de rechazos (módulo Calidad)
@@ -519,4 +442,6 @@ fetch('/supervisor/adjustments-history?work_center_id=<ID>&start_date=2026-05-01
 
 ---
 
-**¡Espero que te mejores pronto!** Cuando estés listo para continuar, avísame y podemos implementar las vistas de frontend para hacer estas funcionalidades accesibles a los usuarios finales.
+**✅ Sistema de Cuadre de Producción completamente implementado con interfaces de frontend.**
+
+Todas las funcionalidades están listas para ser probadas directamente desde las interfaces de usuario sin necesidad de herramientas técnicas.

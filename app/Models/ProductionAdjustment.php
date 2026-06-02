@@ -40,7 +40,13 @@ class ProductionAdjustment extends Model
     {
         return $this->belongsTo(User::class, 'adjusted_by');
     }
-    
+
+    // Accessor para el nombre del usuario que hizo el ajuste
+    public function getAdjustedByNameAttribute()
+    {
+        return $this->adjustedBy ? $this->adjustedBy->name : null;
+    }
+
     // Scope para ajustes por tipo
     public function scopeByType($query, $type)
     {

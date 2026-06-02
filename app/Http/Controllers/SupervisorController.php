@@ -129,7 +129,12 @@ class SupervisorController extends Controller
             ->keyBy(function($schedule) {
                 return $schedule->start_time . '-' . $schedule->id_production_line;
             });
-        
+
+        // Obtener líneas cerradas por el operador
+        $closedLines = \App\Models\OperatorLineClosure::where('id_daily_program', $dailyProgram->id)
+            ->with('productionLine', 'closedBy')
+            ->get();
+
         return Inertia::render('Supervisor/DailyProduction', [
             'workCenter' => $workCenter,
             'productionLines' => $productionLines,
@@ -138,6 +143,7 @@ class SupervisorController extends Controller
             'shift' => $shift,
             'hours' => $hours,
             'existingSchedules' => $schedules,
+            'closedLines' => $closedLines,
         ]);
     }
     
@@ -153,9 +159,31 @@ class SupervisorController extends Controller
             'advanced' => 'nullable|integer|min:0',
             'shift_hours' => 'nullable|numeric|min:1',
         ]);
-        
+
         DB::beginTransaction();
         try {
+            // Verificar si el programa ya existe
+            $existingProgram = DailyProgram::where('date', $request->date)
+                ->where('id_work_center', $request->id_work_center)
+                ->where('shift', $request->shift)
+                ->first();
+
+            // Calcular valores de backwardness y advanced
+            if ($existingProgram) {
+                // Si el programa ya existe, SIEMPRE calcular balance del día anterior
+                $previousBalance = $this->balanceService->calculatePreviousDayBalance(
+                    $request->id_work_center,
+                    $request->date,
+                    $request->shift
+                );
+                $backwardness = $previousBalance['backwardness'];
+                $advanced = $previousBalance['advanced'];
+            } else {
+                // Si es un programa nuevo, usar los valores del formulario (0 por defecto)
+                $backwardness = $request->backwardness ?? 0;
+                $advanced = $request->advanced ?? 0;
+            }
+
             $program = DailyProgram::updateOrCreate(
                 [
                     'date' => $request->date,
@@ -164,16 +192,16 @@ class SupervisorController extends Controller
                 ],
                 [
                     'programmed' => $request->programmed,
-                    'backwardness' => $request->backwardness ?? 0,
-                    'advanced' => $request->advanced ?? 0,
+                    'backwardness' => $backwardness,
+                    'advanced' => $advanced,
                     'shift_hours' => $request->shift_hours ?? 9.0,
                 ]
             );
-            
+
             // Generar schedules para todas las líneas del centro
             $workCenter = WorkCenter::with('productionLines')->findOrFail($request->id_work_center);
             $this->generateSchedulesForProgram($program, $workCenter->productionLines);
-            
+
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Programa guardado correctamente']);
         } catch (\Exception $e) {
@@ -557,9 +585,22 @@ public function getStrikesByProgram($dailyProgramId)
         if (!$workCenterId) {
             return response()->json(['error' => 'Se requiere work_center_id'], 400);
         }
-        
+
         $adjustments = $this->balanceService->getAdjustmentsHistory($workCenterId, $startDate, $endDate);
-        
-        return response()->json($adjustments);
+
+        // Si es una petición AJAX, devolver JSON
+        if ($request->expectsJson()) {
+            return response()->json($adjustments);
+        }
+
+        // Si es una petición de navegador, devolver vista Inertia
+        $workCenter = WorkCenter::findOrFail($workCenterId);
+
+        return Inertia::render('Supervisor/AdjustmentsHistory', [
+            'workCenter' => $workCenter,
+            'adjustments' => $adjustments,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
     }
 }

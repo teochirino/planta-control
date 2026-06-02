@@ -159,6 +159,30 @@
                         <p class="text-sm text-[#0b8a3d] font-semibold">No hay paros registrados</p>
                     </div>
                 </div>
+
+                <!-- Botón Cerrar Turno -->
+                <div v-if="dailyProgramId" class="mt-6 p-4 bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-[#0b2a40]">🔒 Cierre de Turno - {{ selectedLineData?.title || 'Línea seleccionada' }}</h3>
+                            <p class="text-xs text-[#6a8090] mt-1">
+                                <span v-if="isLineClosed" class="text-[#0b8a3d] font-semibold">
+                                    ✓ Línea cerrada el {{ formatDateTime(lineClosedAt) }}
+                                </span>
+                                <span v-else>
+                                    Esta línea aún no ha sido cerrada. Cierra el turno cuando termines tu jornada en esta línea.
+                                </span>
+                            </p>
+                        </div>
+                        <button
+                            v-if="!isLineClosed"
+                            @click="cerrarTurno"
+                            :disabled="cerrandoTurno"
+                            class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85 transition disabled:opacity-50">
+                            {{ cerrandoTurno ? 'Cerrando...' : 'Cerrar Turno' }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -234,6 +258,10 @@ const props = defineProps({
     kpis: {
         type: Object,
         default: null
+    },
+    lineClosure: {
+        type: Object,
+        default: null
     }
 })
 
@@ -266,6 +294,9 @@ const nuevoParo = ref({
     description: ''
 })
 
+// Cierre de turno
+const cerrandoTurno = ref(false)
+
 // Timer para actualizar minutos transcurridos
 let timerInterval = null
 
@@ -280,6 +311,9 @@ const fechaFormateada = computed(() => {
     const [year, month, day] = fechaSeleccionada.value.split('-')
     return `${parseInt(day)}/${parseInt(month)}/${year}`
 })
+
+const isLineClosed = computed(() => props.lineClosure !== null)
+const lineClosedAt = computed(() => props.lineClosure?.closed_at || null)
 
 const strikeMinutesClass = computed(() => {
     const minutes = kpisData.value?.strike_minutes || 0
@@ -305,6 +339,18 @@ const formatNumber = (num) => {
 const formatTime = (time) => {
     if (!time) return '-'
     return time.substring(0, 5)
+}
+
+const formatDateTime = (datetime) => {
+    if (!datetime) return '-'
+    const date = new Date(datetime)
+    return date.toLocaleString('es-MX', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
 }
 
 const calcularDuracion = (strike) => {
@@ -483,6 +529,48 @@ const finalizarParo = async (strike) => {
         } else {
             alert('Error de conexión: ' + error.message)
         }
+    }
+}
+
+// Cerrar turno
+const cerrarTurno = async () => {
+    if (!dailyProgramId.value) {
+        alert('No hay programa diario para cerrar')
+        return
+    }
+
+    if (!selectedLineId.value) {
+        alert('No hay línea de producción seleccionada')
+        return
+    }
+
+    if (!confirm('¿Estás seguro de cerrar el turno de esta línea? Esta acción notificará al supervisor para que procese el balance.')) {
+        return
+    }
+
+    cerrandoTurno.value = true
+    try {
+        const response = await axios.post('/operador/close-shift', {
+            daily_program_id: dailyProgramId.value,
+            production_line_id: selectedLineId.value
+        })
+
+        if (response.data.success) {
+            const message = response.data.all_closed
+                ? 'Todas las líneas cerradas correctamente. El supervisor revisará el balance.'
+                : `Línea cerrada correctamente (${response.data.closed_lines} de ${response.data.total_lines} líneas cerradas).`
+
+            alert(message)
+            // Recargar la página para actualizar el estado
+            router.reload()
+        } else {
+            alert('Error: ' + response.data.message)
+        }
+    } catch (error) {
+        console.error('Error al cerrar turno:', error)
+        alert('Error al cerrar el turno')
+    } finally {
+        cerrandoTurno.value = false
     }
 }
 

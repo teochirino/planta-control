@@ -43,7 +43,12 @@ class DailyProgram extends Model
     {
         return $this->hasMany(Strike::class, 'id_daily_program');
     }
-    
+
+    public function operatorLineClosures()
+    {
+        return $this->hasMany(\App\Models\OperatorLineClosure::class, 'id_daily_program');
+    }
+
     // Calcular total a producir
     public function getTotalToProduceAttribute()
     {

@@ -54,30 +54,35 @@ class OperadorController extends Controller
         $selectedDate = $request->get('date', now()->format('Y-m-d'));
         $selectedShift = $request->get('shift', 'matutino');
         
-        $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
+        $dailyProgram = DailyProgram::with(['schedules', 'strikes', 'operatorLineClosures'])
             ->where('id_work_center', $selectedLine->id_work_center)
             ->where('date', $selectedDate)
             ->where('shift', $selectedShift)
             ->first();
-        
+
         $kpis = null;
         $schedules = collect();
         $strikes = collect();
-        
+        $lineClosure = null;
+
         if ($dailyProgram) {
             $schedules = $dailyProgram->schedules()
                 ->where('id_production_line', $selectedLineId)
                 ->orderBy('start_time')
                 ->get();
-            
+
             $strikes = $dailyProgram->strikes()
                 ->where('id_production_lines', $selectedLineId)
                 ->orderBy('start_time')
                 ->get();
-            
+
+            $lineClosure = $dailyProgram->operatorLineClosures()
+                ->where('id_production_line', $selectedLineId)
+                ->first();
+
             $kpis = $this->kpiService->calculateLineKPIs($dailyProgram, $selectedLine, $schedules, $strikes);
         }
-        
+
         return Inertia::render('Operador/Dashboard', [
             'productionLines' => $productionLines,
             'selectedLine' => $selectedLine,
@@ -87,6 +92,7 @@ class OperadorController extends Controller
             'schedules' => $schedules,
             'strikes' => $strikes,
             'kpis' => $kpis,
+            'lineClosure' => $lineClosure,
         ]);
     }
     
@@ -320,27 +326,63 @@ class OperadorController extends Controller
     {
         $request->validate([
             'daily_program_id' => 'required|exists:daily_programs,id',
+            'production_line_id' => 'required|exists:production_lines,id',
         ]);
-        
+
         $dailyProgram = DailyProgram::findOrFail($request->daily_program_id);
-        
-        // Verificar que el operador tenga acceso al centro de trabajo
+        $productionLine = ProductionLine::findOrFail($request->production_line_id);
+
+        // Verificar que el operador tenga acceso a esta línea de producción
         $user = auth()->user();
-        if (!$user->workCenters()->where('work_center_id', $dailyProgram->id_work_center)->exists()) {
-            return response()->json(['success' => false, 'message' => 'No tienes acceso a este centro de trabajo'], 403);
+        $hasAccess = $user->productionLines()
+            ->where('production_lines.id', $productionLine->id)
+            ->exists();
+
+        if (!$hasAccess) {
+            return response()->json(['success' => false, 'message' => 'No tienes acceso a esta línea de producción'], 403);
         }
-        
-        // Marcar como cerrado por operador
-        $dailyProgram->update([
-            'operator_closed' => true,
-            'operator_closed_at' => now(),
-            'operator_closed_by' => $user->id,
+
+        // Verificar que la línea pertenezca al centro de trabajo del programa
+        if ($productionLine->id_work_center != $dailyProgram->id_work_center) {
+            return response()->json(['success' => false, 'message' => 'La línea no pertenece al centro de trabajo del programa'], 403);
+        }
+
+        // Verificar si ya está cerrada
+        $existingClosure = \App\Models\OperatorLineClosure::where('id_daily_program', $dailyProgram->id)
+            ->where('id_production_line', $productionLine->id)
+            ->first();
+
+        if ($existingClosure) {
+            return response()->json(['success' => false, 'message' => 'Esta línea ya está cerrada'], 400);
+        }
+
+        // Guardar cierre de línea
+        \App\Models\OperatorLineClosure::create([
+            'id_daily_program' => $dailyProgram->id,
+            'id_production_line' => $productionLine->id,
+            'closed_by' => $user->id,
+            'closed_at' => now(),
         ]);
-        
+
+        // Verificar si todas las líneas del programa están cerradas
+        $totalLines = ProductionLine::where('id_work_center', $dailyProgram->id_work_center)->count();
+        $closedLines = \App\Models\OperatorLineClosure::where('id_daily_program', $dailyProgram->id)->count();
+
+        // Si todas las líneas están cerradas, marcar el programa como cerrado
+        if ($closedLines >= $totalLines) {
+            $dailyProgram->update([
+                'operator_closed' => true,
+                'operator_closed_at' => now(),
+                'operator_closed_by' => $user->id,
+            ]);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Turno cerrado correctamente. El supervisor revisará el balance.',
-            'daily_program' => $dailyProgram->fresh(),
+            'message' => 'Línea cerrada correctamente. El supervisor revisará el balance.',
+            'closed_lines' => $closedLines,
+            'total_lines' => $totalLines,
+            'all_closed' => $closedLines >= $totalLines,
         ]);
     }
 }

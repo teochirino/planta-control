@@ -168,6 +168,71 @@
                     <div v-if="strikesList.length === 0" class="text-center py-6 text-[#6a8090]">No hay paros registrados</div>
                 </div>
             </div>
+
+            <!-- Acciones del Supervisor -->
+            <div v-if="dailyProgramId" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-extrabold text-[#0b2a40]">⚙️ Acciones del Supervisor</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Procesar Balance -->
+                    <div class="p-4 bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
+                        <h3 class="text-sm font-bold text-[#0b2a40] mb-2">📊 Procesar Balance</h3>
+                        <p class="text-xs text-[#6a8090] mb-3">Calcula y guarda el balance de atrasos/adelantos para el siguiente día.</p>
+                        <button 
+                            @click="procesarBalance"
+                            :disabled="procesandoBalance || props.dailyProgram?.balance_processed"
+                            class="w-full px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85 transition disabled:opacity-50">
+                            {{ procesandoBalance ? 'Procesando...' : (props.dailyProgram?.balance_processed ? '✓ Balance Procesado' : 'Procesar Balance') }}
+                        </button>
+                        <p v-if="props.dailyProgram?.balance_processed" class="text-xs text-[#0b8a3d] mt-2">
+                            Procesado el {{ formatDateTime(props.dailyProgram.balance_processed_at) }}
+                        </p>
+                    </div>
+
+                    <!-- Ajuste Manual -->
+                    <div class="p-4 bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
+                        <h3 class="text-sm font-bold text-[#0b2a40] mb-2">✏️ Ajuste Manual</h3>
+                        <p class="text-xs text-[#6a8090] mb-3">Realiza ajustes manuales a la producción (conteos físicos, correcciones, etc.).</p>
+                        <button 
+                            @click="abrirModalAjusteManual"
+                            class="w-full px-4 py-2 bg-[#f59e0b] text-white rounded-md text-xs font-bold hover:opacity-85 transition">
+                            Realizar Ajuste
+                        </button>
+                    </div>
+
+                    <!-- Historial de Ajustes -->
+                    <div class="p-4 bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
+                        <h3 class="text-sm font-bold text-[#0b2a40] mb-2">📜 Historial de Ajustes</h3>
+                        <p class="text-xs text-[#6a8090] mb-3">Ver todos los ajustes y correcciones realizados en este programa.</p>
+                        <button 
+                            @click="verHistorialAjustes"
+                            class="w-full px-4 py-2 bg-[#6a8090] text-white rounded-md text-xs font-bold hover:opacity-85 transition">
+                            Ver Historial
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estado de Cierre de Turno -->
+                <div class="mt-4 p-3 border rounded-lg" :class="allLinesClosed ? 'bg-[#e4f5ec] border-[#aadcc4]' : 'bg-[#fff6da] border-[#e8d488]'">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <span class="text-xs font-bold text-[#4e6070]">Estado del Turno:</span>
+                            <span v-if="allLinesClosed" class="ml-2 text-xs font-bold text-[#0b8a3d]">
+                                ✓ Todas las líneas cerradas ({{ closedLinesCount }}/{{ totalLinesCount }})
+                            </span>
+                            <span v-else class="ml-2 text-xs font-bold text-[#f59e0b]">
+                                ⏳ {{ closedLinesCount }} de {{ totalLinesCount }} líneas cerradas
+                            </span>
+                        </div>
+                    </div>
+                    <div v-if="closedLinesCount > 0" class="space-y-1">
+                        <div v-for="closure in props.closedLines" :key="closure.id" class="text-xs text-[#6a8090]">
+                            ✓ {{ closure.production_line?.title || 'Línea ' + closure.id_production_line }} - Cerrado por {{ closure.closed_by?.name || 'Usuario ' + closure.closed_by }} el {{ formatDateTime(closure.closed_at) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Modal Paro -->
@@ -202,6 +267,47 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal Ajuste Manual -->
+        <div v-if="modalAjusteVisible" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+                <div class="px-6 py-4 border-b border-[#d4dee8]">
+                    <h3 class="text-lg font-extrabold text-[#0b2a40]">Ajuste Manual de Producción</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Tipo de Ajuste</label>
+                        <select v-model="ajusteManual.adjustment_type" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1">
+                            <option value="manual_count">Conteo Físico</option>
+                            <option value="correction">Corrección de Datos</option>
+                            <option value="inventory_adjustment">Ajuste de Inventario</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Valor Anterior</label>
+                        <input type="number" v-model.number="ajusteManual.previous_value" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Valor Nuevo</label>
+                        <input type="number" v-model.number="ajusteManual.new_value" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Motivo</label>
+                        <input type="text" v-model="ajusteManual.reason" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1" placeholder="Ej: Conteo físico adicional">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Notas (opcional)</label>
+                        <textarea v-model="ajusteManual.notes" rows="2" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1"></textarea>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-[#d4dee8] flex gap-2 justify-end">
+                    <button @click="cerrarModalAjuste" class="px-4 py-2 bg-[#f4f7fa] text-[#4e6070] border border-[#d4dee8] rounded-md text-xs font-bold">Cancelar</button>
+                    <button @click="guardarAjusteManual" :disabled="guardandoAjuste" class="px-4 py-2 bg-[#f59e0b] text-white rounded-md text-xs font-bold hover:opacity-85 disabled:opacity-50">
+                        {{ guardandoAjuste ? 'Guardando...' : 'Guardar Ajuste' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </AuthenticatedLayout>
 </template>
 
@@ -217,6 +323,7 @@ const props = page.props
 // DATOS DEL SERVIDOR
 const workCenter = ref(props.workCenter || {})
 const lineas = ref(props.productionLines || [])
+const closedLinesData = ref(props.closedLines || [])
 const horasBase = ref(props.hours || [
     { start: '08:00', end: '09:00' }, { start: '09:00', end: '10:00' }, 
     { start: '10:00', end: '11:00' }, { start: '11:00', end: '12:00' },
@@ -259,6 +366,18 @@ const nuevoParo = ref({
     description: ''
 })
 
+// Ajuste manual
+const modalAjusteVisible = ref(false)
+const guardandoAjuste = ref(false)
+const procesandoBalance = ref(false)
+const ajusteManual = ref({
+    adjustment_type: 'manual_count',
+    previous_value: 0,
+    new_value: 0,
+    reason: '',
+    notes: ''
+})
+
 const getKey = (lineId, hourStart) => `${lineId}-${hourStart}`
 
 const horas = computed(() => horasBase.value)
@@ -278,6 +397,10 @@ const formattedDateLong = computed(() => {
     const fecha = new Date(`${year}-${month}-${day}T12:00:00`)
     return fecha.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 })
+
+const closedLinesCount = computed(() => closedLinesData.value.length)
+const totalLinesCount = computed(() => lineas.value.length)
+const allLinesClosed = computed(() => closedLinesCount.value >= totalLinesCount.value && totalLinesCount.value > 0)
 
 const hourTotals = computed(() => {
     const totals = {}
@@ -332,6 +455,18 @@ const kpis = computed(() => {
 })
 
 const formatNumber = (num) => (num || 0).toLocaleString('es-MX')
+
+const formatDateTime = (datetime) => {
+    if (!datetime) return '-'
+    const date = new Date(datetime)
+    return date.toLocaleString('es-MX', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
+}
 
 const initProduction = () => {
     for (const line of lineas.value) {
@@ -475,6 +610,93 @@ const cambiarTurno = () => {
         date: selectedDate.value,
         shift: selectedShift.value
     })
+}
+
+// Métodos de ajuste manual
+const abrirModalAjusteManual = () => {
+    ajusteManual.value = {
+        adjustment_type: 'manual_count',
+        previous_value: kpis.value?.fabricated || 0,
+        new_value: kpis.value?.fabricated || 0,
+        reason: '',
+        notes: ''
+    }
+    modalAjusteVisible.value = true
+}
+
+const cerrarModalAjuste = () => {
+    modalAjusteVisible.value = false
+}
+
+const guardarAjusteManual = async () => {
+    if (!ajusteManual.value.reason) {
+        alert('Por favor ingresa el motivo del ajuste')
+        return
+    }
+
+    guardandoAjuste.value = true
+    try {
+        await axios.post('/supervisor/manual-adjustment', {
+            daily_program_id: dailyProgramId.value,
+            adjustment_type: ajusteManual.value.adjustment_type,
+            previous_value: ajusteManual.value.previous_value,
+            new_value: ajusteManual.value.new_value,
+            reason: ajusteManual.value.reason,
+            notes: ajusteManual.value.notes
+        })
+
+        alert('Ajuste registrado correctamente')
+        cerrarModalAjuste()
+        router.reload()
+    } catch (error) {
+        console.error('Error al guardar ajuste:', error)
+        alert('Error al guardar el ajuste: ' + (error.response?.data?.message || error.message))
+    } finally {
+        guardandoAjuste.value = false
+    }
+}
+
+// Procesar balance
+const procesarBalance = async () => {
+    if (!dailyProgramId.value) {
+        alert('No hay programa diario para procesar')
+        return
+    }
+
+    if (!confirm('¿Estás seguro de procesar el balance? Esto calculará los atrasos/adelantos para el siguiente día.')) {
+        return
+    }
+
+    procesandoBalance.value = true
+    try {
+        const response = await axios.post('/supervisor/process-balance', {
+            daily_program_id: dailyProgramId.value
+        })
+
+        if (response.data.success) {
+            alert('Balance procesado correctamente')
+            router.reload()
+        } else {
+            alert('Error: ' + response.data.message)
+        }
+    } catch (error) {
+        console.error('Error al procesar balance:', error)
+        alert('Error al procesar el balance')
+    } finally {
+        procesandoBalance.value = false
+    }
+}
+
+// Ver historial de ajustes
+const verHistorialAjustes = () => {
+    const startDate = new Date(selectedDate.value)
+    startDate.setDate(1) // Primer día del mes
+    const endDate = new Date(selectedDate.value)
+    endDate.setMonth(endDate.getMonth() + 1)
+    endDate.setDate(0) // Último día del mes
+
+    const url = `/supervisor/adjustments-history?work_center_id=${workCenter.value.id}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`
+    window.open(url, '_blank')
 }
 
 // Watcher para sincronizar si props.date cambia después
