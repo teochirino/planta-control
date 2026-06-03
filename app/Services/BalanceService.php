@@ -78,13 +78,30 @@ class BalanceService
         // Obtener o crear balance del centro
         $balance = WorkCenterBalance::getOrCreateForWorkCenter($program->id_work_center);
         
-        // Actualizar balance acumulado
-        if ($difference < 0) {
-            $balance->accumulated_backwardness += abs($difference);
-        } elseif ($difference > 0) {
-            $balance->accumulated_advanced += $difference;
-        }
+        // Nueva lógica de cálculo de balance acumulado
+        // Calcular cuánto del atraso inicial se cumplió hoy (exceso de producción sobre lo programado)
+        $excessProduction = max(0, $netProduced - $program->programmed);
         
+        // Nuevo atraso acumulado = atraso inicial - exceso de producción
+        $newAccumulatedBackwardness = max(0, $balance->accumulated_backwardness - $excessProduction);
+        
+        // Si aún falta producción después de cubrir el atraso inicial, agregarlo
+        $remainingShortfall = max(0, $totalToProduce - $netProduced);
+        $newAccumulatedBackwardness += $remainingShortfall;
+        
+        // Calcular cuánto del adelanto inicial se consumió hoy (déficit de producción sobre lo programado)
+        $productionDeficit = max(0, $program->programmed - $netProduced);
+        
+        // Nuevo adelanto acumulado = adelanto inicial - déficit de producción
+        $newAccumulatedAdvanced = max(0, $balance->accumulated_advanced - $productionDeficit);
+        
+        // Si hay exceso de producción después de consumir el adelanto inicial, agregarlo
+        $remainingExcess = max(0, $netProduced - $totalToProduce);
+        $newAccumulatedAdvanced += $remainingExcess;
+        
+        // Actualizar balance acumulado
+        $balance->accumulated_backwardness = $newAccumulatedBackwardness;
+        $balance->accumulated_advanced = $newAccumulatedAdvanced;
         $balance->last_calculated_at = now();
         $balance->save();
         

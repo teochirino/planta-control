@@ -103,6 +103,11 @@ class SupervisorController extends Controller
             ->where('shift', $shift)
             ->first();
         
+        // Obtener balance acumulado del centro de trabajo
+        $workCenterBalance = \App\Models\WorkCenterBalance::where('id_work_center', $workCenterId)->first();
+        $accumulatedBackwardness = $workCenterBalance ? $workCenterBalance->accumulated_backwardness : 0;
+        $accumulatedAdvanced = $workCenterBalance ? $workCenterBalance->accumulated_advanced : 0;
+        
         // Si no existe programa, crear uno vacío
         if (!$dailyProgram) {
             $dailyProgram = DailyProgram::create([
@@ -110,10 +115,18 @@ class SupervisorController extends Controller
                 'id_work_center' => $workCenterId,
                 'shift' => $shift,
                 'programmed' => 0,
-                'backwardness' => 0,
-                'advanced' => 0,
+                'backwardness' => $accumulatedBackwardness,
+                'advanced' => $accumulatedAdvanced,
                 'shift_hours' => 9.0,
             ]);
+        } else {
+            // Si el programa ya existe pero no ha sido procesado, actualizar con el balance acumulado
+            if (!$dailyProgram->balance_processed) {
+                $dailyProgram->update([
+                    'backwardness' => $accumulatedBackwardness,
+                    'advanced' => $accumulatedAdvanced,
+                ]);
+            }
         }
         
         // Generar horarios (8:00 a 17:00 por defecto para turno matutino)
@@ -170,18 +183,26 @@ class SupervisorController extends Controller
 
             // Calcular valores de backwardness y advanced
             if ($existingProgram) {
-                // Si el programa ya existe, SIEMPRE calcular balance del día anterior
-                $previousBalance = $this->balanceService->calculatePreviousDayBalance(
-                    $request->id_work_center,
-                    $request->date,
-                    $request->shift
-                );
-                $backwardness = $previousBalance['backwardness'];
-                $advanced = $previousBalance['advanced'];
+                // Si el programa ya existe pero no ha sido procesado, usar el balance acumulado del centro
+                if (!$existingProgram->balance_processed) {
+                    $workCenterBalance = \App\Models\WorkCenterBalance::where('id_work_center', $request->id_work_center)->first();
+                    $backwardness = $workCenterBalance ? $workCenterBalance->accumulated_backwardness : 0;
+                    $advanced = $workCenterBalance ? $workCenterBalance->accumulated_advanced : 0;
+                } else {
+                    // Si ya fue procesado, calcular balance del día anterior
+                    $previousBalance = $this->balanceService->calculatePreviousDayBalance(
+                        $request->id_work_center,
+                        $request->date,
+                        $request->shift
+                    );
+                    $backwardness = $previousBalance['backwardness'];
+                    $advanced = $previousBalance['advanced'];
+                }
             } else {
-                // Si es un programa nuevo, usar los valores del formulario (0 por defecto)
-                $backwardness = $request->backwardness ?? 0;
-                $advanced = $request->advanced ?? 0;
+                // Si es un programa nuevo, usar el balance acumulado del centro de trabajo
+                $workCenterBalance = \App\Models\WorkCenterBalance::where('id_work_center', $request->id_work_center)->first();
+                $backwardness = $workCenterBalance ? $workCenterBalance->accumulated_backwardness : 0;
+                $advanced = $workCenterBalance ? $workCenterBalance->accumulated_advanced : 0;
             }
 
             $program = DailyProgram::updateOrCreate(
