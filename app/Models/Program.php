@@ -8,7 +8,45 @@ use Carbon\Carbon;
 class Program extends Model
 {
     protected $fillable = ['codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4', 'total_time', 'total_piezas', 'created_by'];
-    
+
+    protected $dates = [
+        'fecha_entrega',
+        'fecha_fase1',
+        'fecha_fase2',
+        'fecha_fase3',
+        'fecha_fase4',
+    ];
+
+    protected $appends = ['fecha_fase1_formatted', 'fecha_fase2_formatted', 'fecha_fase3_formatted', 'fecha_fase4_formatted'];
+
+    public function getFechaFase1FormattedAttribute()
+    {
+        if (!$this->fecha_fase1) return null;
+        if (is_string($this->fecha_fase1)) return $this->fecha_fase1;
+        return $this->fecha_fase1->format('Y-m-d');
+    }
+
+    public function getFechaFase2FormattedAttribute()
+    {
+        if (!$this->fecha_fase2) return null;
+        if (is_string($this->fecha_fase2)) return $this->fecha_fase2;
+        return $this->fecha_fase2->format('Y-m-d');
+    }
+
+    public function getFechaFase3FormattedAttribute()
+    {
+        if (!$this->fecha_fase3) return null;
+        if (is_string($this->fecha_fase3)) return $this->fecha_fase3;
+        return $this->fecha_fase3->format('Y-m-d');
+    }
+
+    public function getFechaFase4FormattedAttribute()
+    {
+        if (!$this->fecha_fase4) return null;
+        if (is_string($this->fecha_fase4)) return $this->fecha_fase4;
+        return $this->fecha_fase4->format('Y-m-d');
+    }
+
     public function details()
     {
         return $this->hasMany(ProgramDetail::class);

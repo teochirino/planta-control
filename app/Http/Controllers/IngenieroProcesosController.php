@@ -561,6 +561,7 @@ class IngenieroProcesosController extends Controller
                             'backwardness' => 0,
                             'advanced' => 0,
                             'shift_hours' => 9.0,
+                            'program_id' => $program->id,
                         ]);
                         \Log::info('Daily program created:', ['id' => $dailyProgram->id]);
                         
@@ -619,13 +620,214 @@ class IngenieroProcesosController extends Controller
     {
         $schedule = [];
         $current = \Carbon\Carbon::parse($startTime);
-        
+
         for ($i = 0; $i < $hours; $i++) {
             $start = $current->format('H:i');
             $end = $current->addHour()->format('H:i');
             $schedule[] = ['start' => $start, 'end' => $end];
         }
-        
+
         return $schedule;
+    }
+
+    // ============================================
+    // AJUSTES DE PRODUCCIÓN
+    // ============================================
+
+    public function registerAdjustmentsView()
+    {
+        $programs = Program::select('id', 'codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4')
+            ->orderBy('fecha_entrega', 'desc')
+            ->get();
+        $workCenters = WorkCenter::orderBy('name')->get();
+
+        return Inertia::render('IngenieroProcesos/RegisterAdjustments', [
+            'programs' => $programs,
+            'workCenters' => $workCenters,
+        ]);
+    }
+
+    public function loadDailyProgramsForAdjustment(Request $request)
+    {
+        $request->validate([
+            'program_id' => 'required|exists:programs,id',
+            'work_center_id' => 'required|exists:work_centers,id',
+            'phase_date' => 'required|date',
+        ]);
+
+        // Buscar daily programs por fecha y centro (sin filtrar por program_id por ahora)
+        $dailyPrograms = \App\Models\DailyProgram::with(['workCenter', 'program'])
+            ->where('date', $request->phase_date)
+            ->where('id_work_center', $request->work_center_id)
+            ->orderBy('shift')
+            ->get();
+
+        return Inertia::render('IngenieroProcesos/RegisterAdjustments', [
+            'programs' => Program::select('id', 'codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4')
+                ->orderBy('fecha_entrega', 'desc')
+                ->get(),
+            'workCenters' => WorkCenter::orderBy('name')->get(),
+            'dailyPrograms' => $dailyPrograms,
+        ]);
+    }
+
+    public function productionAdjustments(Request $request)
+    {
+        $query = \App\Models\ProductionAdjustment::with(['dailyProgram', 'workCenter', 'adjustedBy', 'sourceProgram', 'targetProgram']);
+
+        // Filtro por centro de trabajo
+        if ($request->has('work_center_id') && $request->work_center_id) {
+            $query->where('id_work_center', $request->work_center_id);
+        }
+
+        // Filtros de fecha
+        if ($request->has('date_from') && $request->date_from) {
+            $query->where('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->where('created_at', '<=', $request->date_to);
+        }
+
+        $adjustments = $query->orderBy('created_at', 'desc')->paginate(50);
+        $workCenters = WorkCenter::orderBy('name')->get();
+
+        return Inertia::render('IngenieroProcesos/ProductionAdjustments', [
+            'adjustments' => $adjustments,
+            'filters' => $request->only(['work_center_id', 'date_from', 'date_to']),
+            'workCenters' => $workCenters,
+        ]);
+    }
+
+    public function editDailyProgram($id)
+    {
+        $dailyProgram = \App\Models\DailyProgram::with(['workCenter', 'program', 'schedules'])->findOrFail($id);
+
+        return Inertia::render('IngenieroProcesos/EditDailyProgram', [
+            'dailyProgram' => $dailyProgram,
+        ]);
+    }
+
+    public function updateDailyProgram(Request $request, $id)
+    {
+        $request->validate([
+            'programmed' => 'required|integer|min:0',
+            'backwardness' => 'required|integer|min:0',
+            'advanced' => 'required|integer|min:0',
+            'total_produced' => 'required|integer|min:0',
+            'total_rejected' => 'required|integer|min:0',
+            'reason' => 'required|string',
+        ]);
+
+        $dailyProgram = \App\Models\DailyProgram::findOrFail($id);
+
+        DB::beginTransaction();
+
+        try {
+            // Guardar valores anteriores
+            $previousProgrammed = $dailyProgram->programmed;
+            $previousBackwardness = $dailyProgram->backwardness;
+            $previousAdvanced = $dailyProgram->advanced;
+            $previousProduced = $dailyProgram->total_produced;
+            $previousRejected = $dailyProgram->total_rejected;
+
+            // Actualizar el daily program
+            $dailyProgram->update([
+                'programmed' => $request->programmed,
+                'backwardness' => $request->backwardness,
+                'advanced' => $request->advanced,
+                'total_produced' => $request->total_produced,
+                'total_rejected' => $request->total_rejected,
+            ]);
+
+            // Registrar ajustes si hubo cambios
+            if ($previousProgrammed != $request->programmed) {
+                \App\Models\ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'programmed',
+                    'previous_value' => $previousProgrammed,
+                    'new_value' => $request->programmed,
+                    'difference' => $request->programmed - $previousProgrammed,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            if ($previousBackwardness != $request->backwardness) {
+                \App\Models\ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'backwardness',
+                    'previous_value' => $previousBackwardness,
+                    'new_value' => $request->backwardness,
+                    'difference' => $request->backwardness - $previousBackwardness,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            if ($previousAdvanced != $request->advanced) {
+                \App\Models\ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'advanced',
+                    'previous_value' => $previousAdvanced,
+                    'new_value' => $request->advanced,
+                    'difference' => $request->advanced - $previousAdvanced,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            if ($previousProduced != $request->total_produced) {
+                \App\Models\ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'total_produced',
+                    'previous_value' => $previousProduced,
+                    'new_value' => $request->total_produced,
+                    'difference' => $request->total_produced - $previousProduced,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            if ($previousRejected != $request->total_rejected) {
+                \App\Models\ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'total_rejected',
+                    'previous_value' => $previousRejected,
+                    'new_value' => $request->total_rejected,
+                    'difference' => $request->total_rejected - $previousRejected,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'Ajuste registrado exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al registrar el ajuste: ' . $e->getMessage());
+        }
     }
 }

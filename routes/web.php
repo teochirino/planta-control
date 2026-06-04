@@ -119,7 +119,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProductsView'])->name('import.products');
         Route::post('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProducts'])->name('import.products.store');
         Route::post('/crear-programa-excel', [\App\Http\Controllers\IngenieroProcesosController::class, 'createProgramFromExcel'])->name('import.products.create');
-        
+
+        // Ajustes de producción
+        Route::get('/ajustes-produccion', [\App\Http\Controllers\IngenieroProcesosController::class, 'productionAdjustments'])->name('production-adjustments');
+        Route::get('/registrar-ajustes', [\App\Http\Controllers\IngenieroProcesosController::class, 'registerAdjustmentsView'])->name('register-adjustments');
+        Route::get('/registrar-ajustes/load', [\App\Http\Controllers\IngenieroProcesosController::class, 'loadDailyProgramsForAdjustment'])->name('register-adjustments.load');
+        Route::get('/daily-programs/{id}/edit', [\App\Http\Controllers\IngenieroProcesosController::class, 'editDailyProgram'])->name('daily-programs.edit');
+        Route::put('/daily-programs/{id}', [\App\Http\Controllers\IngenieroProcesosController::class, 'updateDailyProgram'])->name('daily-programs.update');
+
         // Ruta dinámica de programas (debe ir al final, después de las rutas específicas)
         Route::get('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'show'])->name('show');
     });

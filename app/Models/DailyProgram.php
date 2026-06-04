@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class DailyProgram extends Model
 {
     protected $fillable = [
-        'date', 
-        'id_work_center', 
-        'shift', 
-        'programmed', 
-        'backwardness', 
+        'date',
+        'id_work_center',
+        'shift',
+        'programmed',
+        'backwardness',
         'advanced',
         'total_produced',
         'total_rejected',
@@ -21,7 +21,8 @@ class DailyProgram extends Model
         'operator_closed_by',
         'balance_processed',
         'balance_processed_at',
-        'balance_processed_by'
+        'balance_processed_by',
+        'program_id'
     ];
     
     protected $casts = [
@@ -33,7 +34,12 @@ class DailyProgram extends Model
     {
         return $this->belongsTo(WorkCenter::class, 'id_work_center');
     }
-    
+
+    public function program()
+    {
+        return $this->belongsTo(Program::class, 'program_id');
+    }
+
     public function schedules()
     {
         return $this->hasMany(Schedule::class, 'id_daily_program');
