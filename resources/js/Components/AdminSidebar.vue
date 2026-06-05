@@ -74,6 +74,21 @@
                                 <span>Asignar Líneas</span>
                             </Link>
                         </div>
+
+                        <!-- Sección Notificaciones -->
+                        <div class="mb-4">
+                            <p class="text-xs font-semibold uppercase tracking-wider mb-2 px-4" style="color: #6a8090;">Notificaciones</p>
+                            <Link 
+                                :href="route('admin.notification-recipients.index')" 
+                                class="sidebar-link"
+                                :class="{ 'active': route().current('admin.notification-recipients.*') }"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <span>Destinatarios</span>
+                            </Link>
+                        </div>
                     </nav>
 
                     <div class="p-4 border-t" style="border-color: #174060;">

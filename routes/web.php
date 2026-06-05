@@ -8,6 +8,7 @@ use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RejectedPieceController;
+use App\Http\Controllers\NotificationRecipientController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -72,6 +73,14 @@ Route::middleware('auth')->group(function () {
         
         Route::get('/production-lines/assign', [AdminController::class, 'assignProductionLines'])->name('production-lines.assign');
         Route::post('/users/{user}/production-lines', [AdminController::class, 'updateProductionLines'])->name('users.production-lines.update');
+        
+        // Destinatarios de notificaciones
+        Route::get('/notification-recipients', [NotificationRecipientController::class, 'index'])->name('notification-recipients.index');
+        Route::get('/notification-recipients/create', [NotificationRecipientController::class, 'create'])->name('notification-recipients.create');
+        Route::post('/notification-recipients', [NotificationRecipientController::class, 'store'])->name('notification-recipients.store');
+        Route::get('/notification-recipients/{notificationRecipient}/edit', [NotificationRecipientController::class, 'edit'])->name('notification-recipients.edit');
+        Route::put('/notification-recipients/{notificationRecipient}', [NotificationRecipientController::class, 'update'])->name('notification-recipients.update');
+        Route::delete('/notification-recipients/{notificationRecipient}', [NotificationRecipientController::class, 'destroy'])->name('notification-recipients.destroy');
     });
     
     // ============================================
