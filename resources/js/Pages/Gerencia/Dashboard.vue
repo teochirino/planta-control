@@ -3,7 +3,7 @@
     <div class="min-h-screen bg-gray-900">
         <GerenciaSidebar />
         
-        <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <div class="container mx-auto px-4 py-6 pt-16 max-w-7xl">
             <!-- Header -->
             <div class="flex justify-between items-center mb-6">
                 <div>

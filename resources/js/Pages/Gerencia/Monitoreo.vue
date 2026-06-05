@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-gray-100">
         <GerenciaSidebar />
         
-        <div class="p-4 md:p-8">
+        <div class="p-4 md:p-8 ml-16 pt-16">
             <h1 class="text-2xl font-bold text-gray-800 mb-4">Monitoreo General de Producción</h1>
             
             <!-- Selector de fecha -->

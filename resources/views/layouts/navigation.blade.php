@@ -2,7 +2,7 @@
     <div class="px-4 py-3">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-6">
-                <div>
+                <div class="flex flex-col">
                     <span class="text-[10px] font-bold tracking-widest uppercase text-[#174060]">Sistema Control de Planta</span>
                     <h1 class="text-2xl font-extrabold text-[#0b2a40] leading-none">{{ config('app.name', 'Planta Control') }}</h1>
                 </div>
