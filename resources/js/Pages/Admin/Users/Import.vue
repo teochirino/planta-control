@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import AdminSidebar from '@/Components/AdminSidebar.vue';
 
 const props = defineProps({
     italianetUsers: Object,
@@ -10,6 +11,13 @@ const props = defineProps({
     productionLines: Array,
     search: String,
 });
+
+// Depuración
+console.log('Props recibidas:', props);
+console.log('ItalianetUsers:', props.italianetUsers);
+console.log('ItalianetUsers data:', props.italianetUsers?.data);
+console.log('ItalianetUsers data length:', props.italianetUsers?.data?.length);
+console.log('Primer usuario:', props.italianetUsers?.data?.[0]);
 
 const searchForm = useForm({
     search: props.search || '',
@@ -68,8 +76,10 @@ const clearSearch = () => {
 <template>
     <Head title="Importar Usuario" />
 
-    <AuthenticatedLayout>
-        <div class="flex flex-col gap-2.5">
+    <AdminLayout>
+        <AdminSidebar />
+        
+        <div class="flex flex-col gap-2.5 p-6 ml-16">
             <!-- Header -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <div class="px-4 py-3 flex items-center justify-between">
@@ -138,7 +148,7 @@ const clearSearch = () => {
                                     </button>
                                 </td>
                             </tr>
-                            <tr v-if="italianetUsers.data.length === 0">
+                            <tr v-if="!italianetUsers.data || italianetUsers.data.length === 0">
                                 <td colspan="4" class="px-4 py-8 text-center text-[#6a8090]">
                                     No hay usuarios disponibles en italianet_users
                                 </td>
@@ -148,20 +158,24 @@ const clearSearch = () => {
                 </div>
                 
                 <!-- Paginación -->
-                <div v-if="italianetUsers.links.length > 3" class="px-4 py-3 border-t border-[#d4dee8]">
+                <div v-if="italianetUsers.links && italianetUsers.links.length > 3" class="px-4 py-3 border-t border-[#d4dee8]">
                     <div class="flex gap-1">
-                        <Link v-for="(link, index) in italianetUsers.links" :key="index"
-                              :href="link.url"
-                              :class="[
-                                  'px-3 py-1 text-xs font-bold rounded',
-                                  link.active 
-                                      ? 'bg-[#0b2a40] text-white' 
-                                      : 'bg-white text-[#4e6070] border border-[#d4dee8] hover:bg-[#f4f7fa]',
-                                  !link.url && 'opacity-50 cursor-not-allowed'
-                              ]"
-                              :disabled="!link.url"
-                              v-html="link.label">
-                        </Link>
+                        <template v-for="(link, index) in italianetUsers.links" :key="index">
+                            <Link v-if="link.url"
+                                  :href="link.url"
+                                  :class="[
+                                      'px-3 py-1 text-xs font-bold rounded',
+                                      link.active 
+                                          ? 'bg-[#0b2a40] text-white' 
+                                          : 'bg-white text-[#4e6070] border border-[#d4dee8] hover:bg-[#f4f7fa]',
+                                  ]"
+                                  v-html="link.label">
+                            </Link>
+                            <span v-else
+                                  class="px-3 py-1 text-xs font-bold rounded bg-white text-[#4e6070] border border-[#d4dee8] opacity-50 cursor-not-allowed"
+                                  v-html="link.label">
+                            </span>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -246,5 +260,5 @@ const clearSearch = () => {
                 </form>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

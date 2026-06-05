@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import AdminSidebar from '@/Components/AdminSidebar.vue';
 
 const props = defineProps({
     users: Object,
@@ -18,29 +19,16 @@ const deleteUser = (user) => {
 <template>
     <Head title="Gestión de Usuarios" />
 
-    <AuthenticatedLayout>
-        <div class="flex flex-col gap-2.5">
+    <AdminLayout>
+        <AdminSidebar />
+        
+        <div class="flex flex-col gap-2.5 p-6 ml-16">
             <!-- Header -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <div class="px-4 py-3 flex items-center justify-between">
                     <div>
                         <span class="text-[10px] font-bold tracking-widest uppercase text-[#174060]">Módulo Administrador</span>
                         <h1 class="text-2xl font-extrabold text-[#0b2a40] leading-none">Gestión de Usuarios</h1>
-                    </div>
-                    
-                    <div class="flex gap-2">
-                        <Link :href="route('admin.users.import')" 
-                              class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85">
-                            ➕ Importar Usuario
-                        </Link>
-                        <Link :href="route('admin.work-centers.assign')" 
-                              class="px-4 py-2 bg-[#174060] text-white rounded-md text-xs font-bold hover:opacity-85">
-                            🏭 Asignar Centros
-                        </Link>
-                        <Link :href="route('admin.production-lines.assign')" 
-                              class="px-4 py-2 bg-[#0b8a3d] text-white rounded-md text-xs font-bold hover:opacity-85">
-                            📊 Asignar Líneas
-                        </Link>
                     </div>
                 </div>
             </div>
@@ -86,12 +74,12 @@ const deleteUser = (user) => {
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-center gap-2">
-                                        <Link :href="route('admin.users.edit', user.id)" 
-                                              class="px-3 py-1 bg-[#174060] text-white rounded text-xs font-bold hover:opacity-85">
+                                        <Link :href="route('admin.users.edit', user.id)"
+                                              class="px-3 py-1.5 bg-[#174060] text-white border border-[#174060] rounded text-xs font-bold hover:opacity-85">
                                             ✏️ Editar
                                         </Link>
                                         <button @click="deleteUser(user)"
-                                                class="px-3 py-1 bg-[#fce9e8] text-[#ba2418] border border-[#ebbab8] rounded text-xs font-bold hover:bg-[#ba2418] hover:text-white">
+                                                class="px-3 py-1.5 bg-[#f4f7fa] text-[#ba2418] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#ba2418] hover:text-white hover:border-[#ba2418]">
                                             🗑️ Eliminar
                                         </button>
                                     </div>
@@ -130,5 +118,5 @@ const deleteUser = (user) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>

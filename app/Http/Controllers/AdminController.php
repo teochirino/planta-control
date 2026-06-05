@@ -50,7 +50,13 @@ class AdminController extends Controller
         $workCenters = WorkCenter::all();
         $productionLines = ProductionLine::with('workCenter')->get();
         
-        return view('admin.users.import', compact('italianetUsers', 'profiles', 'workCenters', 'productionLines', 'search'));
+        return Inertia::render('Admin/Users/Import', [
+            'italianetUsers' => $italianetUsers,
+            'profiles' => $profiles,
+            'workCenters' => $workCenters,
+            'productionLines' => $productionLines,
+            'search' => $search,
+        ]);
     }
     
     // Importar usuario desde italianet_users
@@ -70,7 +76,8 @@ class AdminController extends Controller
         // Verificar si ya existe
         $existingUser = User::where('user_main_id', $italianetUser->id)->first();
         if ($existingUser) {
-            return back()->with('error', 'Este usuario ya ha sido importado.');
+            return redirect()->route('admin.users.import')
+                ->with('error', 'Este usuario ya ha sido importado.');
         }
         
         // Crear usuario en planta_control
@@ -109,7 +116,12 @@ class AdminController extends Controller
         $workCenters = WorkCenter::all();
         $productionLines = ProductionLine::with('workCenter')->get();
         
-        return view('admin.users.edit', compact('user', 'profiles', 'workCenters', 'productionLines'));
+        return Inertia::render('Admin/Users/Edit', [
+            'user' => $user,
+            'profiles' => $profiles,
+            'workCenters' => $workCenters,
+            'productionLines' => $productionLines,
+        ]);
     }
     
     // Actualizar usuario
@@ -174,7 +186,10 @@ class AdminController extends Controller
         $supervisors = User::where('id_profile', 5)->with('workCenters')->get();
         $workCenters = WorkCenter::all();
         
-        return view('admin.users.assign-work-centers', compact('supervisors', 'workCenters'));
+        return Inertia::render('Admin/Users/AssignWorkCenters', [
+            'supervisors' => $supervisors,
+            'workCenters' => $workCenters,
+        ]);
     }
     
     // Actualizar centros de trabajo de un supervisor
@@ -186,12 +201,14 @@ class AdminController extends Controller
         ]);
         
         if ($user->id_profile != 5) {
-            return back()->with('error', 'Solo se pueden asignar centros a supervisores de área.');
+            return redirect()->route('admin.work-centers.assign')
+                ->with('error', 'Solo se pueden asignar centros a supervisores de área.');
         }
         
         $user->workCenters()->sync($request->work_centers);
         
-        return back()->with('success', 'Centros de trabajo actualizados correctamente.');
+        return redirect()->route('admin.work-centers.assign')
+            ->with('success', 'Centros de trabajo actualizados correctamente.');
     }
     
     // Vista para asignar líneas de producción
@@ -200,7 +217,10 @@ class AdminController extends Controller
         $operadores = User::where('id_profile', 8)->with('productionLines')->get();
         $productionLines = ProductionLine::with('workCenter')->get();
         
-        return view('admin.users.assign-production-lines', compact('operadores', 'productionLines'));
+        return Inertia::render('Admin/Users/AssignProductionLines', [
+            'operadores' => $operadores,
+            'productionLines' => $productionLines,
+        ]);
     }
     
     // Actualizar líneas de producción de un operador
@@ -212,7 +232,8 @@ class AdminController extends Controller
         ]);
         
         if ($user->id_profile != 8) {
-            return back()->with('error', 'Solo se pueden asignar líneas a operadores de área.');
+            return redirect()->route('admin.production-lines.assign')
+                ->with('error', 'Solo se pueden asignar líneas a operadores de área.');
         }
         
         $syncData = [];
@@ -226,6 +247,7 @@ class AdminController extends Controller
         
         $user->productionLines()->sync($syncData);
         
-        return back()->with('success', 'Líneas de producción actualizadas correctamente.');
+        return redirect()->route('admin.production-lines.assign')
+            ->with('success', 'Líneas de producción actualizadas correctamente.');
     }
 }

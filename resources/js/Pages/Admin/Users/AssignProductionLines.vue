@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
+import AdminSidebar from '@/Components/AdminSidebar.vue';
 
 const props = defineProps({
     operadores: Array,
@@ -25,8 +26,10 @@ const submit = (operador) => {
 <template>
     <Head title="Asignar Líneas de Producción" />
 
-    <AuthenticatedLayout>
-        <div class="flex flex-col gap-2.5">
+    <AdminLayout>
+        <AdminSidebar />
+        
+        <div class="flex flex-col gap-2.5 p-6 ml-16">
             <!-- Header -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <div class="px-4 py-3 flex items-center justify-between">
@@ -94,5 +97,5 @@ const submit = (operador) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AdminLayout>
 </template>
