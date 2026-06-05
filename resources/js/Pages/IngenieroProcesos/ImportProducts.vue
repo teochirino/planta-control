@@ -1,26 +1,27 @@
 <template>
-    <div class="min-h-screen bg-gray-900 flex">
+    <div class="min-h-screen" style="background: #eaf0f5;">
         <IngenieroProcesosSidebar />
         
-        <div class="flex-1 p-6">
+        <div class="p-6 ml-16">
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-white">Importar Productos desde Excel</h1>
-                <p class="text-gray-400 mt-2">Sube un archivo Excel (.xlsx) para validar los modelos de productos contra la base de datos.</p>
+                <h1 class="text-3xl font-bold" style="color: #0b2a40;">Importar Productos desde Excel</h1>
+                <p class="mt-2" style="color: #6a8090;">Sube un archivo Excel (.xlsx) para validar los modelos de productos contra la base de datos.</p>
             </div>
             
             <!-- Formulario de carga -->
-            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <div class="rounded-lg p-6 mb-6" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
                 <form @submit.prevent="submit" enctype="multipart/form-data">
                     <div class="mb-4">
-                        <label class="block text-white mb-2">Archivo Excel (.xlsx)</label>
+                        <label class="block font-semibold mb-2" style="color: #4e6070; letter-spacing: 0.1em; text-transform: uppercase;">Archivo Excel (.xlsx)</label>
                         <input 
                             type="file" 
                             ref="fileInput"
                             @change="handleFileChange"
                             accept=".xlsx,.xls"
-                            class="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                            class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
+                            style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;"
                         >
-                        <p class="text-gray-400 text-sm mt-2">
+                        <p class="text-sm mt-2" style="color: #6a8090;">
                             El archivo debe tener los modelos en la columna G, cantidad en la columna H y las fechas de vencimiento en la columna P (desde fila 2).
                         </p>
                     </div>
@@ -28,7 +29,8 @@
                     <button 
                         type="submit" 
                         :disabled="!file || processing"
-                        class="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg transition"
+                        class="px-6 py-2 rounded-lg transition font-semibold text-sm disabled:opacity-50"
+                        style="background: #0a7c3e; color: #fff;"
                     >
                         {{ processing ? 'Procesando...' : 'Validar Archivo' }}
                     </button>
@@ -38,46 +40,46 @@
             <!-- Resultados de la validación -->
             <div v-if="importData" class="space-y-6">
                 <!-- Resumen -->
-                <div class="bg-gray-800 rounded-lg p-6">
-                    <h2 class="text-xl font-bold text-white mb-4">Resumen de Validación</h2>
+                <div class="rounded-lg p-6" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
+                    <h2 class="text-xl font-bold mb-4" style="color: #0b2a40;">Resumen de Validación</h2>
                     <div class="grid grid-cols-3 gap-4">
-                        <div class="bg-gray-700 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-white">{{ importData.total }}</p>
-                            <p class="text-gray-400">Total Registros</p>
+                        <div class="rounded-lg p-4 text-center" style="background: #f4f7fa; border: 1px solid #e8eff4;">
+                            <p class="text-3xl font-bold" style="color: #0b2a40;">{{ importData.total }}</p>
+                            <p style="color: #6a8090;">Total Registros</p>
                         </div>
-                        <div class="bg-green-900 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-green-400">{{ importData.coincidencias }}</p>
-                            <p class="text-gray-400">Coincidencias</p>
+                        <div class="rounded-lg p-4 text-center" style="background: #e4f5ec; border: 1px solid #aadcc4;">
+                            <p class="text-3xl font-bold" style="color: #0a7c3e;">{{ importData.coincidencias }}</p>
+                            <p style="color: #6a8090;">Coincidencias</p>
                         </div>
-                        <div class="bg-red-900 rounded-lg p-4 text-center">
-                            <p class="text-3xl font-bold text-red-400">{{ importData.no_coincidencias }}</p>
-                            <p class="text-gray-400">No Coinciden</p>
+                        <div class="rounded-lg p-4 text-center" style="background: #fce9e8; border: 1px solid #ebbab8;">
+                            <p class="text-3xl font-bold" style="color: #ba2418;">{{ importData.no_coincidencias }}</p>
+                            <p style="color: #6a8090;">No Coinciden</p>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Modelos que no existen -->
-                <div v-if="importData.modelos_no_existentes.length > 0" class="bg-gray-800 rounded-lg p-6">
-                    <h2 class="text-xl font-bold text-white mb-4">Modelos que NO existen en la base de datos</h2>
-                    <p class="text-yellow-400 mb-4">
+                <div v-if="importData.modelos_no_existentes.length > 0" class="rounded-lg p-6" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
+                    <h2 class="text-xl font-bold mb-4" style="color: #0b2a40;">Modelos que NO existen en la base de datos</h2>
+                    <p class="mb-4 font-semibold" style="color: #a87000;">
                         Estos modelos deben ser insertados usando la opción "Nuevo Producto":
                     </p>
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-700">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Fila</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Modelo</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Cantidad</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Fecha Vencimiento</th>
+                            <thead>
+                                <tr style="background: #0b2a40;">
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Fila</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Modelo</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Cantidad</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Fecha Vencimiento</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-700">
-                                <tr v-for="item in importData.modelos_no_existentes" :key="item.row" class="hover:bg-gray-750">
-                                    <td class="px-4 py-3 text-white">{{ item.row }}</td>
-                                    <td class="px-4 py-3 text-red-400 font-bold">{{ item.modelo }}</td>
-                                    <td class="px-4 py-3 text-white">{{ item.cantidad }}</td>
-                                    <td class="px-4 py-3 text-white">{{ item.fecha_vencimiento }}</td>
+                            <tbody>
+                                <tr v-for="item in importData.modelos_no_existentes" :key="item.row" style="border-bottom: 1px solid #e8eff4;">
+                                    <td class="px-4 py-3" style="color: #0c1c28; font-weight: 600;">{{ item.row }}</td>
+                                    <td class="px-4 py-3 font-bold" style="color: #ba2418;">{{ item.modelo }}</td>
+                                    <td class="px-4 py-3" style="color: #0c1c28; font-weight: 600;">{{ item.cantidad }}</td>
+                                    <td class="px-4 py-3" style="color: #0c1c28; font-weight: 600;">{{ item.fecha_vencimiento }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -85,59 +87,61 @@
                 </div>
                 
                 <!-- Botón Crear Programa (solo si todos los productos existen) -->
-                <div v-if="importData.no_coincidencias === 0" class="bg-gray-800 rounded-lg p-6">
-                    <h2 class="text-xl font-bold text-white mb-4">Todos los productos existen en la base de datos</h2>
-                    <p class="text-green-400 mb-4">
+                <div v-if="importData.no_coincidencias === 0" class="rounded-lg p-6" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
+                    <h2 class="text-xl font-bold mb-4" style="color: #0b2a40;">Todos los productos existen en la base de datos</h2>
+                    <p class="mb-4 font-semibold" style="color: #0a7c3e;">
                         Puedes crear un programa con estos productos usando la fecha de vencimiento como fecha de entrega.
                     </p>
                     <button 
                         @click="createProgram"
                         :disabled="creatingProgram"
-                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg transition"
+                        class="px-6 py-2 rounded-lg transition font-semibold text-sm disabled:opacity-50"
+                        style="background: #0b2a40; color: #fff;"
                     >
                         {{ creatingProgram ? 'Creando programa...' : 'Crear Programa' }}
                     </button>
                 </div>
                 
                 <!-- Mensaje de programa creado -->
-                <div v-if="programCreated" class="bg-green-800 rounded-lg p-6">
-                    <h2 class="text-xl font-bold text-white mb-4">Programa Creado Exitosamente</h2>
-                    <p class="text-green-400 mb-4">
+                <div v-if="programCreated" class="rounded-lg p-6" style="background: #e4f5ec; border: 1px solid #aadcc4;">
+                    <h2 class="text-xl font-bold mb-4" style="color: #0a7c3e;">Programa Creado Exitosamente</h2>
+                    <p class="mb-4 font-semibold" style="color: #0a7c3e;">
                         Código del programa: <span class="font-bold">{{ programCreated.codigo }}</span>
                     </p>
                     <Link 
                         :href="route('ingeniero-procesos.show', programCreated.id)"
-                        class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition inline-block"
+                        class="px-6 py-2 rounded-lg transition font-semibold text-sm inline-block"
+                        style="background: #0a7c3e; color: #fff;"
                     >
                         Ver Programa
                     </Link>
                 </div>
                 
                 <!-- Todos los datos (opcional) -->
-                <details class="bg-gray-800 rounded-lg p-6">
-                    <summary class="text-white font-bold cursor-pointer">Ver todos los datos procesados</summary>
+                <details class="rounded-lg p-6" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
+                    <summary class="font-bold cursor-pointer" style="color: #0b2a40;">Ver todos los datos procesados</summary>
                     <div class="mt-4 overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-gray-700">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Fila</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Modelo</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Cantidad</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Fecha Vencimiento</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase">Estado</th>
+                            <thead>
+                                <tr style="background: #0b2a40;">
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Fila</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Modelo</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Cantidad</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Fecha Vencimiento</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Estado</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-700">
-                                <tr v-for="item in importData.data" :key="item.row" class="hover:bg-gray-750">
-                                    <td class="px-4 py-3 text-white">{{ item.row }}</td>
-                                    <td class="px-4 py-3 text-white">{{ item.modelo }}</td>
-                                    <td class="px-4 py-3 text-white">{{ item.cantidad }}</td>
-                                    <td class="px-4 py-3 text-white">{{ item.fecha_vencimiento }}</td>
+                            <tbody>
+                                <tr v-for="item in importData.data" :key="item.row" style="border-bottom: 1px solid #e8eff4;">
+                                    <td class="px-4 py-3" style="color: #0c1c28; font-weight: 600;">{{ item.row }}</td>
+                                    <td class="px-4 py-3" style="color: #0c1c28; font-weight: 600;">{{ item.modelo }}</td>
+                                    <td class="px-4 py-3" style="color: #0c1c28; font-weight: 600;">{{ item.cantidad }}</td>
+                                    <td class="px-4 py-3" style="color: #0c1c28; font-weight: 600;">{{ item.fecha_vencimiento }}</td>
                                     <td class="px-4 py-3">
-                                        <span v-if="item.existe" class="px-2 py-1 bg-green-600 text-white rounded text-sm">
+                                        <span v-if="item.existe" class="px-2 py-1 rounded text-sm font-semibold" style="background: #e4f5ec; color: #0a7c3e; border: 1px solid #aadcc4;">
                                             Existe
                                         </span>
-                                        <span v-else class="px-2 py-1 bg-red-600 text-white rounded text-sm">
+                                        <span v-else class="px-2 py-1 rounded text-sm font-semibold" style="background: #fce9e8; color: #ba2418; border: 1px solid #ebbab8;">
                                             No existe
                                         </span>
                                     </td>

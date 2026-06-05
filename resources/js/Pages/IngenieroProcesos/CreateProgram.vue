@@ -1,29 +1,31 @@
 <template>
-    <div class="min-h-screen bg-gray-900 flex">
+    <div class="min-h-screen" style="background: #eaf0f5;">
         <IngenieroProcesosSidebar />
         
-        <div class="flex-1 p-6">
-            <h1 class="text-3xl font-bold text-white mb-6">Crear Nuevo Programa</h1>
+        <div class="p-6 ml-16">
+            <h1 class="text-3xl font-bold mb-6" style="color: #0b2a40;">Crear Nuevo Programa</h1>
             
-            <form @submit.prevent="submit" class="bg-gray-800 rounded-lg p-6">
+            <form @submit.prevent="submit" class="rounded-lg p-6" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
                 <!-- Fecha de Entrega -->
                 <div class="mb-6">
-                    <label class="block text-gray-300 text-sm font-medium mb-2">Fecha de Entrega</label>
+                    <label class="block text-sm font-semibold mb-2" style="color: #4e6070; letter-spacing: 0.1em; text-transform: uppercase;">Fecha de Entrega</label>
                     <input type="date" 
                            v-model="form.fecha_entrega" 
                            :min="minDeliveryDate"
-                           class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-                    <p v-if="errors.fecha_entrega" class="text-red-400 text-sm mt-1">{{ errors.fecha_entrega }}</p>
-                    <p class="text-gray-400 text-sm mt-1">Mínimo: {{ formatDate(minDeliveryDate) }}</p>
+                           class="w-full rounded-lg px-4 py-2 font-semibold focus:outline-none"
+                           style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
+                    <p v-if="errors.fecha_entrega" class="text-sm mt-1 font-semibold" style="color: #ba2418;">{{ errors.fecha_entrega }}</p>
+                    <p class="text-sm mt-1" style="color: #6a8090;">Mínimo: {{ formatDate(minDeliveryDate) }}</p>
                 </div>
                 
                 <!-- Productos -->
                 <div class="mb-6">
-                    <label class="block text-gray-300 text-sm font-medium mb-2">Productos</label>
+                    <label class="block text-sm font-semibold mb-2" style="color: #4e6070; letter-spacing: 0.1em; text-transform: uppercase;">Productos</label>
                     
                     <div v-for="(product, index) in form.productos" :key="index" class="flex gap-4 mb-4">
                         <select v-model="product.modelo" 
-                                class="flex-1 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                class="flex-1 rounded-lg px-4 py-2 font-semibold focus:outline-none"
+                                style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
                             <option value="">Seleccionar modelo</option>
                             <option v-for="model in Object.keys(products)" :key="model" :value="model">
                                 {{ model }}
@@ -34,19 +36,22 @@
                                v-model="product.cantidad" 
                                min="1"
                                placeholder="Cantidad"
-                               class="w-32 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                               class="w-32 rounded-lg px-4 py-2 font-semibold focus:outline-none"
+                               style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
                         
                         <button type="button" 
                                 @click="removeProduct(index)"
                                 v-if="form.productos.length > 1"
-                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
+                                class="px-4 py-2 rounded-lg transition font-semibold text-sm"
+                                style="background: #fce9e8; color: #ba2418; border: 1px solid #ebbab8;">
                             Eliminar
                         </button>
                     </div>
                     
                     <button type="button" 
                             @click="addProduct"
-                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+                            class="px-4 py-2 rounded-lg transition font-semibold text-sm"
+                            style="background: #0b2a40; color: #fff;">
                         + Agregar Producto
                     </button>
                 </div>
@@ -55,12 +60,14 @@
                 <div class="flex gap-4">
                     <button type="submit" 
                             :disabled="form.processing"
-                            class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition disabled:opacity-50">
+                            class="px-6 py-2 rounded-lg transition font-semibold text-sm disabled:opacity-50"
+                            style="background: #0a7c3e; color: #fff;">
                         {{ form.processing ? 'Guardando...' : 'Crear Programa' }}
                     </button>
                     
                     <Link :href="route('ingeniero-procesos.index')" 
-                          class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
+                          class="px-6 py-2 rounded-lg transition font-semibold text-sm"
+                          style="background: #fff; color: #0b2a40; border: 1px solid #d4dee8;">
                         Cancelar
                     </Link>
                 </div>
