@@ -1,8 +1,8 @@
 <template>
-    <AuthenticatedLayout>
+    <CalidadLayout>
         <CalidadSidebar />
         
-        <div class="flex flex-col gap-2.5">
+        <div class="flex flex-col gap-2.5 p-6 ml-16">
             <!-- Encabezado -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <div class="px-4 py-3">
@@ -136,13 +136,13 @@
                 </p>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </CalidadLayout>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
 import { router } from '@inertiajs/vue3'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import CalidadLayout from '@/Layouts/CalidadLayout.vue'
 import CalidadSidebar from '@/Components/CalidadSidebar.vue'
 import axios from 'axios'
 
