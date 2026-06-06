@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RejectedPieceController;
 use App\Http\Controllers\NotificationRecipientController;
+use App\Http\Controllers\ProductionLineController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -123,7 +124,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/productos/{modelo}/edit', [\App\Http\Controllers\IngenieroProcesosController::class, 'productEdit'])->name('products.edit');
         Route::put('/productos/{modelo}', [\App\Http\Controllers\IngenieroProcesosController::class, 'productUpdate'])->name('products.update');
         Route::delete('/productos/{modelo}', [\App\Http\Controllers\IngenieroProcesosController::class, 'productDestroy'])->name('products.destroy');
-        
+
+        // CRUD de Líneas de Producción
+        Route::get('/production-lines', [ProductionLineController::class, 'index'])->name('production-lines.index');
+        Route::get('/production-lines/create', [ProductionLineController::class, 'create'])->name('production-lines.create');
+        Route::post('/production-lines', [ProductionLineController::class, 'store'])->name('production-lines.store');
+        Route::get('/production-lines/{productionLine}/edit', [ProductionLineController::class, 'edit'])->name('production-lines.edit');
+        Route::put('/production-lines/{productionLine}', [ProductionLineController::class, 'update'])->name('production-lines.update');
+        Route::delete('/production-lines/{productionLine}', [ProductionLineController::class, 'destroy'])->name('production-lines.destroy');
+
         // Importación de productos desde Excel
         Route::get('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProductsView'])->name('import.products');
         Route::post('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProducts'])->name('import.products.store');
