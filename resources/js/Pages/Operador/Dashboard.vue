@@ -96,7 +96,7 @@
                                         <input type="number" 
                                                min="0" 
                                                v-model="produccionValues[schedule.id]"
-                                               @blur="guardarProduccion(schedule.id)"
+                                               @input="guardarProduccion(schedule.id)"
                                                class="w-24 px-3 py-2 border border-[#d4dee8] rounded-md text-center font-bold text-[#0b2a40] focus:outline-none focus:border-[#174060]">
                                     </td>
                                 </tr>
