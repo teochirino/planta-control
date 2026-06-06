@@ -1,6 +1,9 @@
 <template>
-    <AuthenticatedLayout>
-        <div class="flex flex-col gap-2.5">
+    <div class="min-h-screen" style="background: #eaf0f5;">
+        <SupervisorSidebar />
+        
+        <div class="p-6 ml-16">
+            <div class="flex flex-col gap-2.5">
             <!-- Top Bar -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <div class="px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
@@ -17,6 +20,9 @@
                             <option value="nocturno">Nocturno</option>
                         </select>
                         <div class="px-3 py-2 rounded-full bg-[#0b2a40] text-white text-xs font-bold">{{ currentTime }}</div>
+                        <Link :href="route('supervisor.dashboard')" class="px-4 py-2 bg-[#174060] text-white rounded-md text-xs font-bold hover:opacity-85">
+                            Principal
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -70,39 +76,29 @@
                 <div class="text-6xl mb-4">📋</div>
                 <h3 class="text-lg font-bold text-[#0b2a40] mb-2">No hay programa diario registrado</h3>
                 <p class="text-sm text-[#6a8090] mb-4">No existe un programa para <strong>{{ workCenter?.name }}</strong> en el turno <strong>{{ shiftLabel }}</strong> del <strong>{{ formattedDateLong }}</strong>.</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-lg mx-auto mb-6">
-                    <div>
-                        <label class="text-xs font-bold text-[#4e6070]">Programado</label>
-                        <input type="number" v-model.number="nuevoPrograma.programmed" min="0" class="w-full border rounded px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-[#4e6070]">Atraso</label>
-                        <input type="number" v-model.number="nuevoPrograma.backwardness" min="0" class="w-full border rounded px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-[#4e6070]">Adelanto</label>
-                        <input type="number" v-model.number="nuevoPrograma.advanced" min="0" class="w-full border rounded px-3 py-2">
-                    </div>
-                </div>
-                <button @click="crearPrograma" :disabled="creandoPrograma" class="px-6 py-3 bg-[#0b2a40] text-white rounded-md text-sm font-bold hover:opacity-85">{{ creandoPrograma ? 'Creando...' : '➕ Crear Programa Diario' }}</button>
+                <!-- Comentado: Los supervisores no pueden crear programas -->
             </div>
 
             <!-- Formulario de Programa (cuando ya existe) -->
             <div v-else class="bg-white border border-[#d4dee8] rounded-xl shadow-sm p-4">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-extrabold text-[#0b2a40]">Encabezado de Turno</h2>
-                    <button @click="guardarPrograma" :disabled="savingProgram" class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85 disabled:opacity-50">💾 Guardar Programa</button>
+                    <!-- Comentado: Los supervisores no pueden guardar programas -->
+                    <!-- <button @click="guardarPrograma" :disabled="savingProgram" class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85 disabled:opacity-50">💾 Guardar Programa</button> -->
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div>
-                        <label class="text-[10px] font-bold tracking-widest uppercase text-[#4e6070]">Fecha</label>
-                        <input type="text" :value="formattedDate" readonly class="w-full px-3 py-2 border border-[#d4dee8] rounded text-sm font-semibold bg-[#f4f7fa]">
+                    <div class="col-span-2 flex items-end space-x-4">
+                        <div>
+                            <label class="text-[10px] font-bold tracking-widest uppercase text-[#4e6070]">Fecha</label>
+                            <input type="text" :value="formattedDate" readonly class="w-full px-3 py-2 border border-[#d4dee8] rounded text-sm font-semibold bg-[#f4f7fa]">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold tracking-widest uppercase text-[#4e6070]">Turno</label>
+                            <input type="text" :value="shiftLabel" readonly class="w-full px-3 py-2 border border-[#d4dee8] rounded text-sm font-semibold bg-[#f4f7fa]">
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-[10px] font-bold tracking-widest uppercase text-[#4e6070]">Turno</label>
-                        <input type="text" :value="shiftLabel" readonly class="w-full px-3 py-2 border border-[#d4dee8] rounded text-sm font-semibold bg-[#f4f7fa]">
-                    </div>
-                    <div>
+                    <!-- Comentado: Los supervisores no pueden editar estos campos -->
+                    <!-- <div>
                         <label class="text-[10px] font-bold tracking-widest uppercase text-[#4e6070]">Programado</label>
                         <input type="number" v-model.number="programData.programmed" min="0" class="w-full px-3 py-2 border border-[#d4dee8] rounded text-sm font-semibold">
                     </div>
@@ -113,7 +109,7 @@
                     <div>
                         <label class="text-[10px] font-bold tracking-widest uppercase text-[#4e6070]">Adelantadas</label>
                         <input type="number" v-model.number="programData.advanced" min="0" class="w-full px-3 py-2 border border-[#d4dee8] rounded text-sm font-semibold">
-                    </div>
+                    </div> -->
                 </div>
             </div>
 
@@ -308,14 +304,15 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+        </div>
+    </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { router, usePage } from '@inertiajs/vue3'
+import { router, usePage, Link } from '@inertiajs/vue3'
 import axios from 'axios'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
 
 const page = usePage()
 const props = page.props

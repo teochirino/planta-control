@@ -168,6 +168,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/manual-adjustment', [SupervisorController::class, 'registerManualAdjustment'])->name('manual-adjustment');
         Route::get('/adjustments-history', [SupervisorController::class, 'getAdjustmentsHistory'])->name('adjustments-history');
         
+        // Ajustes de producción (vistas)
+        Route::get('/production-adjustments', [SupervisorController::class, 'productionAdjustments'])->name('production-adjustments');
+        Route::get('/register-adjustments', [SupervisorController::class, 'registerAdjustmentsView'])->name('register-adjustments');
+        Route::get('/register-adjustments/load', [SupervisorController::class, 'loadDailyProgramsForAdjustment'])->name('register-adjustments.load');
+        Route::put('/daily-programs/{id}', [SupervisorController::class, 'updateDailyProgram'])->name('daily-programs.update');
+        
         // Atributos - Semáforos del Área
         Route::post('/attributes/{attribute}/change-color', [\App\Http\Controllers\AttributeController::class, 'changeColor'])->name('attributes.change-color');
         Route::get('/attributes/{attribute}/history', [\App\Http\Controllers\AttributeController::class, 'getHistory'])->name('attributes.history');

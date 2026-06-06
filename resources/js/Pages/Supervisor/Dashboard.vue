@@ -1,6 +1,9 @@
 <template>
-    <AuthenticatedLayout>
-        <div class="flex flex-col gap-2.5">
+    <div class="min-h-screen" style="background: #eaf0f5;">
+        <SupervisorSidebar />
+        
+        <div class="p-6 ml-16">
+            <div class="flex flex-col gap-2.5">
             <!-- Selector de Centro de Trabajo -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <div class="px-4 py-3 flex items-center gap-4 flex-wrap">
@@ -26,10 +29,14 @@
                     </div>
                     
                     <div class="flex gap-2">
-                        <Link :href="route('supervisor.daily-production', { work_center_id: selectedWorkCenterId, date: fechaSeleccionada, shift: turnoSeleccionado })" 
+                        <Link v-if="kpisData" :href="route('supervisor.daily-production', { work_center_id: selectedWorkCenterId, date: fechaSeleccionada, shift: turnoSeleccionado })"
                               class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85 transition">
                             📝 Registro Diario de Producción
                         </Link>
+                        <button v-else disabled
+                                class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md text-xs font-bold cursor-not-allowed">
+                            📝 Registro Diario de Producción
+                        </button>
                     </div>
                 </div>
             </div>
@@ -109,10 +116,12 @@
                     <p class="text-sm text-[#6a8090] mb-4">
                         No existe un programa para <strong>{{ selectedWorkCenterData?.name }}</strong> en el turno <strong>{{ turnoLabel }}</strong> del <strong>{{ fechaFormateada }}</strong>.
                     </p>
+                    <!-- Comentado: Los supervisores no pueden crear programas
                     <Link :href="route('supervisor.daily-production', { work_center_id: selectedWorkCenterId, date: fechaSeleccionada, shift: turnoSeleccionado })" 
                           class="inline-block px-6 py-3 bg-[#0b2a40] text-white rounded-md text-sm font-bold hover:opacity-85 transition">
                         ➕ Crear Programa Diario
                     </Link>
+                    -->
                 </div>
                 
                 <!-- Estadísticas generales -->
@@ -159,14 +168,15 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+        </div>
+    </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { router } from '@inertiajs/vue3'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Link } from '@inertiajs/vue3'
+import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
 import SemaforosArea from '@/Components/SemaforosArea.vue'
 
 // Props

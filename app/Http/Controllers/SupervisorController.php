@@ -8,6 +8,7 @@ use App\Models\DailyProgram;
 use App\Models\Schedule;
 use App\Models\Strike;
 use App\Models\ProductionAdjustment;
+use App\Models\Program;
 use App\Services\BalanceService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -623,5 +624,246 @@ public function getStrikesByProgram($dailyProgramId)
             'start_date' => $startDate,
             'end_date' => $endDate,
         ]);
+    }
+
+    // ============================================
+    // AJUSTES DE PRODUCCIÓN (VISTAS)
+    // ============================================
+
+    public function registerAdjustmentsView()
+    {
+        $user = auth()->user();
+        $workCenters = $user->workCenters()->orderBy('work_centers.name')->get();
+        $programs = Program::select('id', 'codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4')
+            ->orderBy('fecha_entrega', 'desc')
+            ->get();
+
+        // Formatear fechas para la vista
+        $programs->transform(function ($program) {
+            $program->fecha_entrega_formatted = $program->fecha_entrega ? Carbon::parse($program->fecha_entrega)->format('d/m/Y') : null;
+            $program->fecha_fase1_formatted = $program->fecha_fase1 ? Carbon::parse($program->fecha_fase1)->format('d/m/Y') : null;
+            $program->fecha_fase2_formatted = $program->fecha_fase2 ? Carbon::parse($program->fecha_fase2)->format('d/m/Y') : null;
+            $program->fecha_fase3_formatted = $program->fecha_fase3 ? Carbon::parse($program->fecha_fase3)->format('d/m/Y') : null;
+            $program->fecha_fase4_formatted = $program->fecha_fase4 ? Carbon::parse($program->fecha_fase4)->format('d/m/Y') : null;
+            return $program;
+        });
+
+        return Inertia::render('Supervisor/RegisterAdjustments', [
+            'workCenters' => $workCenters,
+            'programs' => $programs,
+        ]);
+    }
+
+    public function loadDailyProgramsForAdjustment(Request $request)
+    {
+        $request->validate([
+            'program_id' => 'required|exists:programs,id',
+            'work_center_id' => 'required|exists:work_centers,id',
+            'phase_date' => 'required|date',
+        ]);
+
+        // Verificar que el supervisor tiene acceso a este centro de trabajo
+        $user = auth()->user();
+        if (!$user->workCenters()->where('work_centers.id', $request->work_center_id)->exists()) {
+            return back()->with('error', 'No tienes permiso para ver programas de este centro.');
+        }
+
+        // Buscar daily programs por fecha y centro
+        $dailyPrograms = DailyProgram::with(['workCenter', 'program'])
+            ->where('date', $request->phase_date)
+            ->where('id_work_center', $request->work_center_id)
+            ->orderBy('shift')
+            ->get();
+
+        $user = auth()->user();
+        $workCenters = $user->workCenters()->orderBy('work_centers.name')->get();
+        $programs = Program::select('id', 'codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4')
+            ->orderBy('fecha_entrega', 'desc')
+            ->get();
+
+        // Formatear fechas para la vista
+        $programs->transform(function ($program) {
+            $program->fecha_entrega_formatted = $program->fecha_entrega ? Carbon::parse($program->fecha_entrega)->format('d/m/Y') : null;
+            $program->fecha_fase1_formatted = $program->fecha_fase1 ? Carbon::parse($program->fecha_fase1)->format('d/m/Y') : null;
+            $program->fecha_fase2_formatted = $program->fecha_fase2 ? Carbon::parse($program->fecha_fase2)->format('d/m/Y') : null;
+            $program->fecha_fase3_formatted = $program->fecha_fase3 ? Carbon::parse($program->fecha_fase3)->format('d/m/Y') : null;
+            $program->fecha_fase4_formatted = $program->fecha_fase4 ? Carbon::parse($program->fecha_fase4)->format('d/m/Y') : null;
+            return $program;
+        });
+
+        return Inertia::render('Supervisor/RegisterAdjustments', [
+            'workCenters' => $workCenters,
+            'programs' => $programs,
+            'dailyPrograms' => $dailyPrograms,
+        ]);
+    }
+
+    public function productionAdjustments(Request $request)
+    {
+        $user = auth()->user();
+        $workCenterIds = $user->workCenters()->pluck('work_centers.id')->toArray();
+
+        // Si no hay centros asignados, retornar vacío
+        if (empty($workCenterIds)) {
+            return Inertia::render('Supervisor/ProductionAdjustments', [
+                'adjustments' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 50, 1),
+                'filters' => $request->only(['work_center_id', 'date_from', 'date_to']),
+                'workCenters' => [],
+            ]);
+        }
+
+        $query = ProductionAdjustment::with(['dailyProgram', 'workCenter', 'adjustedBy', 'sourceProgram', 'targetProgram'])
+            ->whereIn('id_work_center', $workCenterIds);
+
+        // Filtro por centro de trabajo
+        if ($request->has('work_center_id') && $request->work_center_id) {
+            $query->where('id_work_center', $request->work_center_id);
+        }
+
+        // Filtros de fecha
+        if ($request->has('date_from') && $request->date_from) {
+            $query->where('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->where('created_at', '<=', $request->date_to);
+        }
+
+        $adjustments = $query->orderBy('created_at', 'desc')->paginate(50);
+        $workCenters = $user->workCenters()->orderBy('work_centers.name')->get();
+
+        return Inertia::render('Supervisor/ProductionAdjustments', [
+            'adjustments' => $adjustments,
+            'filters' => $request->only(['work_center_id', 'date_from', 'date_to']),
+            'workCenters' => $workCenters,
+        ]);
+    }
+
+    public function updateDailyProgram(Request $request, $id)
+    {
+        $request->validate([
+            'programmed' => 'required|integer|min:0',
+            'backwardness' => 'required|integer|min:0',
+            'advanced' => 'required|integer|min:0',
+            'total_produced' => 'required|integer|min:0',
+            'total_rejected' => 'required|integer|min:0',
+            'reason' => 'required|string',
+        ]);
+
+        $dailyProgram = DailyProgram::findOrFail($id);
+
+        // Verificar que el supervisor tiene acceso a este centro de trabajo
+        $user = auth()->user();
+        if (!$user->workCenters()->where('work_centers.id', $dailyProgram->id_work_center)->exists()) {
+            return back()->with('error', 'No tienes permiso para editar este programa.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Guardar valores anteriores
+            $previousProgrammed = $dailyProgram->programmed;
+            $previousBackwardness = $dailyProgram->backwardness;
+            $previousAdvanced = $dailyProgram->advanced;
+            $previousProduced = $dailyProgram->total_produced;
+            $previousRejected = $dailyProgram->total_rejected;
+
+            // Actualizar el daily program
+            $dailyProgram->update([
+                'programmed' => $request->programmed,
+                'backwardness' => $request->backwardness,
+                'advanced' => $request->advanced,
+                'total_produced' => $request->total_produced,
+                'total_rejected' => $request->total_rejected,
+            ]);
+
+            // Registrar ajustes si hubo cambios
+            if ($previousProgrammed != $request->programmed) {
+                ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'programmed',
+                    'previous_value' => $previousProgrammed,
+                    'new_value' => $request->programmed,
+                    'difference' => $request->programmed - $previousProgrammed,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            if ($previousBackwardness != $request->backwardness) {
+                ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'backwardness',
+                    'previous_value' => $previousBackwardness,
+                    'new_value' => $request->backwardness,
+                    'difference' => $request->backwardness - $previousBackwardness,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            if ($previousAdvanced != $request->advanced) {
+                ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'advanced',
+                    'previous_value' => $previousAdvanced,
+                    'new_value' => $request->advanced,
+                    'difference' => $request->advanced - $previousAdvanced,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            if ($previousProduced != $request->total_produced) {
+                ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'total_produced',
+                    'previous_value' => $previousProduced,
+                    'new_value' => $request->total_produced,
+                    'difference' => $request->total_produced - $previousProduced,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            if ($previousRejected != $request->total_rejected) {
+                ProductionAdjustment::create([
+                    'id_daily_program' => $dailyProgram->id,
+                    'id_work_center' => $dailyProgram->id_work_center,
+                    'adjustment_type' => 'correction',
+                    'field_adjusted' => 'total_rejected',
+                    'previous_value' => $previousRejected,
+                    'new_value' => $request->total_rejected,
+                    'difference' => $request->total_rejected - $previousRejected,
+                    'adjustment_category' => 'correction',
+                    'reason' => $request->reason,
+                    'adjusted_by' => auth()->id(),
+                    'notes' => $request->notes,
+                ]);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'Programa actualizado correctamente');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al actualizar el programa: ' . $e->getMessage());
+        }
     }
 }
