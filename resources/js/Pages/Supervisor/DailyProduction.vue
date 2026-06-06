@@ -124,22 +124,38 @@
                         <thead>
                             <tr class="bg-[#0b2a40] text-white">
                                 <th class="px-3 py-3 text-left text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">Hora</th>
+                                <th class="px-3 py-3 text-center text-[11px] font-bold tracking-widest uppercase whitespace-nowrap bg-[#174060]">Producción Esperada</th>
                                 <th v-for="line in lineas" :key="line.id" class="px-3 py-3 text-center text-[11px] font-bold tracking-widest uppercase whitespace-nowrap">{{ line.title }}</th>
                                 <th class="px-3 py-3 text-center text-[11px] font-bold tracking-widest uppercase bg-[#174060] whitespace-nowrap">PPH</th>
+                                <th class="px-3 py-3 text-center text-[11px] font-bold tracking-widest uppercase bg-[#174060] whitespace-nowrap">Cumplimiento %</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="hora in horas" :key="hora.start" class="border-b border-[#e8eff4] hover:bg-[#eef5fa]">
                                 <td class="px-3 py-2 font-bold text-sm text-[#0c1c28] whitespace-nowrap">{{ hora.start }} - {{ hora.end }}</td>
+                                <td class="px-3 py-2 text-center font-bold text-sm text-[#174060] bg-[#f4f7fa] whitespace-nowrap">{{ expectedProductionPerHour }}</td>
                                 <td v-for="line in lineas" :key="line.id" class="px-2 py-2">
-                                    <input type="number" v-model="productionValues[getKey(line.id, hora.start)]" @blur="autoSave(line.id, hora.start)" min="0" class="w-full px-2 py-1 border border-[#d4dee8] rounded text-center text-sm font-semibold focus:border-[#174060] focus:outline-none">
+                                    <input type="number" v-model="productionValues[getKey(line.id, hora.start)]" @input="autoSave(line.id, hora.start)" min="0" class="w-full px-2 py-1 border border-[#d4dee8] rounded text-center text-sm font-semibold focus:border-[#174060] focus:outline-none">
                                 </td>
                                 <td class="px-3 py-2 text-center font-extrabold text-[#0b2a40] bg-[#f4f7fa]">{{ formatNumber(hourTotals[hora.start]) }}</td>
+                                <td class="px-3 py-2 text-center font-bold text-sm bg-[#f4f7fa] whitespace-nowrap">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: getComplianceColor(hourCompliance[hora.start]) }"></span>
+                                        <span>{{ hourCompliance[hora.start] }}%</span>
+                                    </div>
+                                </td>
                             </tr>
                             <tr class="bg-[#0c1c28] text-white font-extrabold">
                                 <td class="px-3 py-3 text-sm tracking-widest uppercase">Total</td>
+                                <td class="px-3 py-3 text-center text-sm text-[#8ba4b8]">-</td>
                                 <td v-for="line in lineas" :key="line.id" class="px-3 py-3 text-center text-lg">{{ formatNumber(lineTotals[line.id]) }}</td>
                                 <td class="px-3 py-3 text-center text-xl bg-[#174060]">{{ formatNumber(grandTotalValue) }}</td>
+                                <td class="px-3 py-3 text-center bg-[#174060]">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <span class="w-3 h-3 rounded-full" :style="{ backgroundColor: getComplianceColor(averageCompliance) }"></span>
+                                        <span>{{ averageCompliance }}%</span>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -449,6 +465,37 @@ const kpis = computed(() => {
         strike_minutes: strikesList.value.reduce((sum, s) => sum + (s.minutes || 0), 0),
         hours_active: 9
     }
+})
+
+const expectedProductionPerHour = computed(() => {
+    const hours = kpis.value.hours_active || 9
+    const total = kpis.value.total_to_produce || 0
+    return hours > 0 ? (total / hours).toFixed(2) : '0.00'
+})
+
+const hourCompliance = computed(() => {
+    const compliance = {}
+    const expected = parseFloat(expectedProductionPerHour.value) || 0
+    for (const hora of horas.value) {
+        const pph = hourTotals.value[hora.start] || 0
+        const value = expected > 0 ? ((pph / expected) * 100).toFixed(1) : '0.0'
+        compliance[hora.start] = value
+    }
+    return compliance
+})
+
+const getComplianceColor = (value) => {
+    const num = parseFloat(value) || 0
+    if (num >= 90) return '#0b8a3d'
+    if (num >= 70) return '#f59e0b'
+    return '#ba2418'
+}
+
+const averageCompliance = computed(() => {
+    const values = Object.values(hourCompliance.value).map(v => parseFloat(v) || 0)
+    if (values.length === 0) return '0.0'
+    const sum = values.reduce((a, b) => a + b, 0)
+    return (sum / values.length).toFixed(1)
 })
 
 const formatNumber = (num) => (num || 0).toLocaleString('es-MX')

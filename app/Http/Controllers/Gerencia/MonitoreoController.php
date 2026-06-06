@@ -70,6 +70,7 @@ class MonitoreoController extends Controller
                 'advanced' => $totalAdvanced,
                 'produced' => $totalProduced,
                 'efficiency' => $efficiency,
+                'total_to_produce' => $totalToProduce,
             ],
             'production_lines' => $productionByLine,
             'has_data' => $dailyPrograms->count() > 0

@@ -26,7 +26,7 @@
                     </div>
                     
                     <!-- KPIs -->
-                    <div class="grid grid-cols-5 gap-4 p-4 border-b">
+                    <div class="grid grid-cols-6 gap-4 p-4 border-b">
                         <div class="text-center">
                             <div class="text-xs text-gray-500">Programado</div>
                             <div class="text-xl font-bold">{{ formatNumber(wc.kpis.programmed) }}</div>
@@ -48,6 +48,10 @@
                             <div class="text-xl font-bold" :class="getEfficiencyClass(wc.kpis.efficiency)">
                                 {{ wc.kpis.efficiency }}%
                             </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-500">Total a producir</div>
+                            <div class="text-xl font-bold text-purple-600">{{ formatNumber(wc.kpis.total_to_produce) }}</div>
                         </div>
                     </div>
                     
