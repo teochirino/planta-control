@@ -6,65 +6,65 @@ jobs:
 deploy:
 runs-on: ubuntu-latest
 steps:
-- name: Setup PHP
-uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
-with:
-php-version: '8.2'
-extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
-- uses: actions/checkout@v4
-- name: Setup Node
-uses: actions/setup-node@v4
-with:
-node-version: 20
-cache: 'npm'
-- name: Create env file
+  - name: Setup PHP
+    uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
+    with:
+      php-version: '8.2'
+      extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
+  - uses: actions/checkout@v4
+  - name: Setup Node
+    uses: actions/setup-node@v4
+    with:
+      node-version: 20
+      cache: 'npm'
+  - name: Create env file
+    run: |
+      echo "${{ secrets.ENV_PRO }}" > .env
+  - name: Cache Composer packages
+    id: composer-cache
+    uses: actions/cache@v3
+    with:
+      path: vendor
+      key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+      restore-keys: |
+        ${{ runner.os }}-php-
+  - name: Install Dependencies
+    run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist --ignore-platform-reqs --optimize-autoload
+  - name: Generate Application Key
+    run: php artisan key:generate --force
+  - name: Clear Caches
   run: |
-echo "${{ secrets.ENV_PRO }}" > .env
-- name: Cache Composer packages
-id: composer-cache
-uses: actions/cache@v3
-with:
-path: vendor
-key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-restore-keys: |
-${{ runner.os }}-php-
-- name: Install Dependencies
-  run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist --ignore-platform-reqs --optimize-autoload
-- name: Generate Application Key
-  run: php artisan key:generate --force
-- name: Clear Caches
+      php artisan config:clear
+      php artisan cache:clear
+      php artisan view:clear
+  - name: Install Node Dependencies
+    run: npm ci
+  - name: Build Assets
+    run: npm run build
+  - name: Create Storage Link
+    run: php artisan storage:link
+  - name: Set Directory Permissions
   run: |
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
-- name: Install Node Dependencies
-  run: npm ci
-- name: Build Assets
-  run: npm run build
-- name: Create Storage Link
-  run: php artisan storage:link
-- name: Set Directory Permissions
+      chmod -R 775 storage bootstrap/cache
+      chown -R www-data:www-data storage bootstrap/cache
+  - name: Optimize for Production
   run: |
-chmod -R 775 storage bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
-- name: Optimize for Production
-  run: |
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-- name: Deploy to Server
-uses: SamKirkland/FTP-Deploy-Action@4.3.3
-with:
-server: ${{ secrets.FTP_SERVER }}
-username: ${{ secrets.FTP_USERNAME }}
-password: ${{ secrets.FTP_PASSWORD }}
-server-dir: planta.lineaitalia.net/
-exclude: |
-node_modules
-.git
-.github
-tests
-storage/logs/*.log
-storage/framework/cache/**
-storage/framework/sessions/**
-storage/framework/views/**
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+  - name: Deploy to Server
+    uses: SamKirkland/FTP-Deploy-Action@4.3.3
+    with:
+      server: ${{ secrets.FTP_SERVER }}
+      username: ${{ secrets.FTP_USERNAME }}
+      password: ${{ secrets.FTP_PASSWORD }}
+      server-dir: planta.lineaitalia.net/
+      exclude: |
+        node_modules
+        .git
+        .github
+        tests
+        storage/logs/*.log
+        storage/framework/cache/**
+        storage/framework/sessions/**
+        storage/framework/views/**
