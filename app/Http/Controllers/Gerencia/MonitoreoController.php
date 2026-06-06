@@ -73,6 +73,7 @@ class MonitoreoController extends Controller
                 'total_to_produce' => $totalToProduce,
             ],
             'production_lines' => $productionByLine,
+            'hourly_data' => $this->calculateHourlyData($dailyPrograms, $totalToProduce),
             'has_data' => $dailyPrograms->count() > 0
         ];
     }
@@ -82,4 +83,60 @@ class MonitoreoController extends Controller
         'workCenters' => $result,
     ]);
 }
+    
+    private function calculateHourlyData($dailyPrograms, $totalToProduce)
+    {
+        if ($dailyPrograms->isEmpty()) {
+            return [
+                'labels' => [],
+                'expected' => [],
+                'produced' => []
+            ];
+        }
+        
+        // Obtener horas de trabajo del primer programa
+        $shiftHours = $dailyPrograms->first()->shift_hours ?? 8;
+        
+        // Determinar hora de inicio del turno (tomar del primer schedule)
+        $firstSchedule = $dailyPrograms->first()->schedules->first();
+        $startHour = $firstSchedule ? (int)substr($firstSchedule->start_time, 0, 2) : 8;
+        
+        // Generar etiquetas de horas
+        $labels = [];
+        $expected = [];
+        $produced = [];
+        
+        $expectedPerHour = $shiftHours > 0 ? $totalToProduce / $shiftHours : 0;
+        $cumulativeExpected = 0;
+        $cumulativeProduced = 0;
+        
+        for ($i = 0; $i <= $shiftHours; $i++) {
+            $currentHour = $startHour + $i;
+            $hourLabel = sprintf('%02d:00', $currentHour % 24);
+            $labels[] = $hourLabel;
+            
+            // Producción esperada acumulada
+            $cumulativeExpected = round($expectedPerHour * $i, 2);
+            $expected[] = $cumulativeExpected;
+            
+            // Producción real acumulada hasta esta hora
+            $hourProduced = 0;
+            foreach ($dailyPrograms as $dp) {
+                foreach ($dp->schedules as $schedule) {
+                    $scheduleStartHour = (int)substr($schedule->start_time, 0, 2);
+                    if ($scheduleStartHour <= $currentHour) {
+                        $hourProduced += $schedule->produced;
+                    }
+                }
+            }
+            $cumulativeProduced = $hourProduced;
+            $produced[] = $cumulativeProduced;
+        }
+        
+        return [
+            'labels' => $labels,
+            'expected' => $expected,
+            'produced' => $produced
+        ];
+    }
 }

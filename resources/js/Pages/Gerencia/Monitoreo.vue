@@ -55,6 +55,14 @@
                         </div>
                     </div>
                     
+                    <!-- Gráfica de producción por hora (líneas) -->
+                    <div v-if="wc.has_data && wc.hourly_data.labels.length > 0" class="p-4">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-3">Producción por Hora</h3>
+                        <div class="bg-gray-50 p-4 rounded">
+                            <canvas :id="'line-chart-' + wc.id" class="w-full" style="height: 300px;"></canvas>
+                        </div>
+                    </div>
+                    
                     <!-- Gráfica de producción por línea -->
                     <div v-if="wc.has_data" class="p-4">
                         <h3 class="text-sm font-semibold text-gray-700 mb-3">Producción por Línea</h3>
@@ -90,6 +98,7 @@ const workCenters = ref([])
 const cargando = ref(false)
 const chartRefs = ref({})
 const chartInstances = ref({})
+const lineChartInstances = ref({})
 let refreshInterval = null
 
 const formatNumber = (num) => {
@@ -121,6 +130,11 @@ const destroyCharts = () => {
         if (chart) chart.destroy()
     })
     chartInstances.value = {}
+    
+    Object.values(lineChartInstances.value).forEach(chart => {
+        if (chart) chart.destroy()
+    })
+    lineChartInstances.value = {}
 }
 
 const createCharts = async () => {
@@ -258,6 +272,134 @@ const createCharts = async () => {
     console.log('=== Fin createCharts ===\n')
 }
 
+const createLineCharts = async () => {
+    console.log('=== Iniciando createLineCharts ===')
+    await nextTick()
+    
+    workCenters.value.forEach(wc => {
+        console.log(`\nCreando gráfica de líneas para: ${wc.name}`)
+        console.log('  hourly_data:', wc.hourly_data)
+        
+        if (!wc.has_data || !wc.hourly_data || wc.hourly_data.labels.length === 0) {
+            console.log(`  ❌ Saltando ${wc.name} - no hay datos por hora`)
+            return
+        }
+        
+        const canvasId = 'line-chart-' + wc.id
+        const canvas = document.getElementById(canvasId)
+        
+        console.log('  Buscando canvas con ID:', canvasId)
+        console.log('  Canvas encontrado:', canvas)
+        
+        if (!canvas) {
+            console.log(`  ❌ Canvas no encontrado para ${wc.name}`)
+            return
+        }
+        
+        const ctx = canvas.getContext('2d')
+        
+        const labels = wc.hourly_data.labels
+        const expectedData = wc.hourly_data.expected
+        const producedData = wc.hourly_data.produced
+        
+        console.log('  ✓ Labels:', labels)
+        console.log('  ✓ Expected:', expectedData)
+        console.log('  ✓ Produced:', producedData)
+        
+        try {
+            lineChartInstances.value[wc.id] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total a producir (esperado)',
+                            data: expectedData,
+                            borderColor: 'rgba(147, 51, 234, 1)',
+                            backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.1,
+                            fill: false,
+                            pointRadius: 3,
+                            pointBackgroundColor: 'rgba(147, 51, 234, 1)'
+                        },
+                        {
+                            label: 'Producido (real)',
+                            data: producedData,
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            fill: false,
+                            pointRadius: 3,
+                            pointBackgroundColor: 'rgba(59, 130, 246, 1)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString('es-MX')
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Hora'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Piezas'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('es-MX')
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            })
+            
+            console.log(`  ✅ Gráfica de líneas creada exitosamente para ${wc.name}`)
+        } catch (error) {
+            console.error(`  ❌ Error creando gráfica de líneas para ${wc.name}:`, error)
+        }
+    })
+    
+    console.log('=== Fin createLineCharts ===\n')
+}
+
 const cargarDatos = async () => {
     cargando.value = true
     try {
@@ -284,6 +426,7 @@ const cargarDatos = async () => {
         setTimeout(() => {
             console.log('Llamando a createCharts después del timeout')
             createCharts()
+            createLineCharts()
         }, 100)
     } catch (error) {
         console.error('Error:', error)
