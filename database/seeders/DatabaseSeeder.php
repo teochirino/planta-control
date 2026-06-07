@@ -34,7 +34,13 @@ class DatabaseSeeder extends Seeder
         // 4. Crear usuarios y asignar centros de trabajo
         echo "👥 Paso 4: Creando usuarios y asignando centros...\n";
         $this->call(UserWorkCenterSeeder::class);
-        
+
+        echo "\n";
+
+        // 5. Crear destinatarios de notificaciones
+        echo "📧 Paso 5: Creando destinatarios de notificaciones...\n";
+        $this->call(NotificationRecipientSeeder::class);
+
         echo "\n";
         echo "╔════════════════════════════════════════════╗\n";
         echo "║          ✅ SEEDER COMPLETADO              ║\n";

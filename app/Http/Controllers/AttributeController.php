@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Attribute;
 use App\Models\ColorChangeHistory;
+use App\Models\NotificationRecipient;
+use App\Mail\MateriaPrimaNotification;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
 
 class AttributeController extends Controller
 {
@@ -32,7 +35,28 @@ class AttributeController extends Controller
             'color' => $request->color,
             'color_changed_at' => Carbon::now(),
         ]);
-        
+
+        // Enviar notificación por email para Materia Prima cuando cambia a rojo o amarillo
+        if ($attribute->name === 'Materia Prima' && in_array($request->color, ['rojo', 'amarillo'])) {
+            $recipients = NotificationRecipient::where('name', 'Compras')
+                ->where('is_active', true)
+                ->get();
+
+            if ($recipients->isNotEmpty()) {
+                $workCenter = $attribute->workCenter;
+                $user = auth()->user();
+
+                foreach ($recipients as $recipient) {
+                    Mail::to($recipient->email)->send(new MateriaPrimaNotification(
+                        $workCenter->name,
+                        $user->name,
+                        $request->comment,
+                        $request->color
+                    ));
+                }
+            }
+        }
+
         return response()->json([
             'success' => true,
             'attribute' => $attribute->fresh(),
