@@ -8,8 +8,8 @@
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Favicons -->
-        <link rel="icon" href="/favicon.ico">
-        <link rel="apple-touch-icon" href="/favicon.ico">
+        <link rel="icon" href="/logo-iso-negro.png">
+        <link rel="apple-touch-icon" href="/logo-iso-negro.png">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

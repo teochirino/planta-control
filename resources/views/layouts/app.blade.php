@@ -7,8 +7,8 @@
     <title>{{ config('app.name', 'Control de Planta') }} - @yield('title')</title>
     
     <!-- Favicons -->
-    <link rel="icon" href="/favicon.ico">
-    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="icon" href="/logo-cliente.png">
+    <link rel="apple-touch-icon" href="/logo-cliente.png">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
