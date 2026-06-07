@@ -5,6 +5,7 @@ import AdminSidebar from '@/Components/AdminSidebar.vue';
 
 const props = defineProps({
     recipient: Object,
+    categories: Array,
 });
 
 const form = useForm({
@@ -48,12 +49,15 @@ const submit = () => {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Nombre del Destinatario</label>
-                            <input v-model="form.name" 
-                                   type="text" 
-                                   required
-                                   placeholder="Ej: Compras, Mantenimiento, Gerencia"
-                                   class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1"
-                                   :class="{ 'border-red-500': form.errors.name }">
+                            <select v-model="form.name"
+                                    required
+                                    class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1 bg-white"
+                                    :class="{ 'border-red-500': form.errors.name }">
+                                <option value="">Seleccione una categoría</option>
+                                <option v-for="category in categories" :key="category" :value="category">
+                                    {{ category }}
+                                </option>
+                            </select>
                             <p v-if="form.errors.name" class="text-xs text-red-500 mt-1">{{ form.errors.name }}</p>
                         </div>
                         

@@ -9,6 +9,19 @@ use Inertia\Inertia;
 class NotificationRecipientController extends Controller
 {
     /**
+     * Obtener categorías disponibles para destinatarios
+     */
+    private function getCategories(): array
+    {
+        return [
+            'Gerencia',
+            'Compras',
+            'Mantenimiento',
+            'Ingeniería de procesos',
+        ];
+    }
+
+    /**
      * Mostrar listado de destinatarios de notificaciones
      */
     public function index()
@@ -25,7 +38,9 @@ class NotificationRecipientController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/NotificationRecipients/Create');
+        return Inertia::render('Admin/NotificationRecipients/Create', [
+            'categories' => $this->getCategories(),
+        ]);
     }
 
     /**
@@ -34,7 +49,7 @@ class NotificationRecipientController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|in:' . implode(',', $this->getCategories()),
             'email' => 'required|email|unique:notification_recipients,email',
             'is_active' => 'boolean',
         ]);
@@ -56,6 +71,7 @@ class NotificationRecipientController extends Controller
     {
         return Inertia::render('Admin/NotificationRecipients/Edit', [
             'recipient' => $notificationRecipient,
+            'categories' => $this->getCategories(),
         ]);
     }
 
@@ -65,7 +81,7 @@ class NotificationRecipientController extends Controller
     public function update(Request $request, NotificationRecipient $notificationRecipient)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|in:' . implode(',', $this->getCategories()),
             'email' => 'required|email|unique:notification_recipients,email,' . $notificationRecipient->id,
             'is_active' => 'boolean',
         ]);
