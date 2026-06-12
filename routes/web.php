@@ -138,6 +138,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProducts'])->name('import.products.store');
         Route::post('/crear-programa-excel', [\App\Http\Controllers\IngenieroProcesosController::class, 'createProgramFromExcel'])->name('import.products.create');
 
+        // Exportación de productos a Excel
+        Route::get('/exportar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'exportProductsView'])->name('export.products');
+        Route::get('/exportar-productos/download', [\App\Http\Controllers\IngenieroProcesosController::class, 'exportProducts'])->name('export.products.download');
+
         // Ajustes de producción
         Route::get('/ajustes-produccion', [\App\Http\Controllers\IngenieroProcesosController::class, 'productionAdjustments'])->name('production-adjustments');
         Route::get('/registrar-ajustes', [\App\Http\Controllers\IngenieroProcesosController::class, 'registerAdjustmentsView'])->name('register-adjustments');

@@ -830,4 +830,63 @@ class IngenieroProcesosController extends Controller
             return back()->with('error', 'Error al registrar el ajuste: ' . $e->getMessage());
         }
     }
+
+    // ============================================
+    // EXPORTACIÓN DE PRODUCTOS A EXCEL
+    // ============================================
+
+    public function exportProductsView()
+    {
+        return Inertia::render('IngenieroProcesos/ExportProducts');
+    }
+
+    public function exportProducts()
+    {
+        $products = Product::with('workCenter')
+            ->orderBy('id')
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'Modelo' => $product->modelo,
+                    'id_centro_trabajo' => $product->id_work_center,
+                    'Nombre Centro de trabajo' => $product->workCenter ? $product->workCenter->name : '',
+                    'Tiempo' => $product->tiempo,
+                    'Piezas' => $product->piezas,
+                ];
+            });
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Encabezados
+        $headers = array_keys($products->first());
+        $sheet->fromArray($headers, null, 'A1');
+
+        // Datos
+        $row = 2;
+        foreach ($products as $product) {
+            $sheet->fromArray(array_values($product), null, 'A' . $row);
+            $row++;
+        }
+
+        // Estilos para encabezados
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:E1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setRGB('4472C4');
+        $sheet->getStyle('A1:E1')->getFont()->getColor()->setRGB('FFFFFF');
+
+        // Ajustar ancho de columnas
+        foreach (range('A', 'E') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $fileName = 'productos_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save('php://output');
+        exit;
+    }
 }
