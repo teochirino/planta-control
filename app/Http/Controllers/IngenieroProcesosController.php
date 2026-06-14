@@ -27,6 +27,7 @@ class IngenieroProcesosController extends Controller
     public function create()
     {
         $products = Product::with('workCenter')
+            ->where('piezas', '>', 0)
             ->orderBy('modelo')
             ->get()
             ->groupBy('modelo');
@@ -105,8 +106,9 @@ class IngenieroProcesosController extends Controller
         $allDetails = ProgramDetail::where('program_id', $program->id)
             ->get()
             ->flatMap(function ($detail) {
-                // Buscar todos los productos con ese modelo (pueden estar en múltiples work centers)
+                // Buscar todos los productos con ese modelo y piezas > 0 (pueden estar en múltiples work centers)
                 $products = Product::where('modelo', $detail->modelo)
+                    ->where('piezas', '>', 0)
                     ->with('workCenter')
                     ->get();
                 
@@ -167,7 +169,7 @@ class IngenieroProcesosController extends Controller
     
     public function productsIndex(Request $request)
     {
-        $query = Product::with('workCenter');
+        $query = Product::with('workCenter')->where('piezas', '>', 0);
 
         if ($request->has('search')) {
             $query->where('modelo', 'like', '%' . $request->input('search') . '%');
@@ -480,9 +482,9 @@ class IngenieroProcesosController extends Controller
             $totalTime = 0;
             $totalPiezas = 0;
             
-            // Obtener TODOS los productos con los modelos del Excel (no usar keyBy porque hay múltiples por modelo)
+            // Obtener solo los productos con piezas > 0 (no usar keyBy porque hay múltiples por modelo)
             $modelos = array_unique(array_column($request->data, 'modelo'));
-            $allProducts = \App\Models\Product::whereIn('modelo', $modelos)->get();
+            $allProducts = \App\Models\Product::whereIn('modelo', $modelos)->where('piezas', '>', 0)->get();
             
             // Para el cálculo de totales del programa, sumamos de TODOS los productos (independientemente del centro)
             foreach ($request->data as $item) {
