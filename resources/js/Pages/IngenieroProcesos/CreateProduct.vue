@@ -82,7 +82,7 @@
                                         <input 
                                             v-model="wc.piezas" 
                                             type="number" 
-                                            min="1"
+                                            min="0"
                                             class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
                                             style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;"
                                             required
@@ -138,7 +138,7 @@ function toggleWorkCenter(workCenterId) {
         form.work_centers.push({
             id_work_center: workCenterId,
             tiempo: 0,
-            piezas: 1,
+            piezas: 0,
         });
     } else {
         // Eliminar centro de trabajo

@@ -169,7 +169,7 @@ class IngenieroProcesosController extends Controller
     
     public function productsIndex(Request $request)
     {
-        $query = Product::with('workCenter')->where('piezas', '>', 0);
+        $query = Product::with('workCenter')->where('piezas', '>=', 0);
 
         if ($request->has('search')) {
             $query->where('modelo', 'like', '%' . $request->input('search') . '%');
@@ -215,7 +215,7 @@ class IngenieroProcesosController extends Controller
             'work_centers' => 'required|array|min:1',
             'work_centers.*.id_work_center' => 'required|exists:work_centers,id',
             'work_centers.*.tiempo' => 'required|numeric|min:0',
-            'work_centers.*.piezas' => 'required|integer|min:1',
+            'work_centers.*.piezas' => 'required|integer|min:0',
         ]);
         
         DB::beginTransaction();
@@ -282,7 +282,7 @@ class IngenieroProcesosController extends Controller
             'work_centers' => 'required|array|min:1',
             'work_centers.*.id_work_center' => 'required|exists:work_centers,id',
             'work_centers.*.tiempo' => 'required|numeric|min:0',
-            'work_centers.*.piezas' => 'required|integer|min:1',
+            'work_centers.*.piezas' => 'required|integer|min:0',
         ]);
         
         DB::beginTransaction();
