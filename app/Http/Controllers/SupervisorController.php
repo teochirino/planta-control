@@ -673,7 +673,11 @@ public function getStrikesByProgram($dailyProgramId)
             ->where('date', $request->phase_date)
             ->where('id_work_center', $request->work_center_id)
             ->orderBy('shift')
-            ->get();
+            ->get()
+            ->map(function ($dailyProgram) {
+                $dailyProgram->date_formatted = $dailyProgram->date ? Carbon::parse($dailyProgram->date)->format('d/m/Y') : null;
+                return $dailyProgram;
+            });
 
         $user = auth()->user();
         $workCenters = $user->workCenters()->orderBy('work_centers.name')->get();

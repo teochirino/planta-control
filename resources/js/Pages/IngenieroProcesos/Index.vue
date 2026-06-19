@@ -26,9 +26,9 @@
                     <tbody>
                         <tr v-for="program in programs" :key="program.id" style="border-bottom: 1px solid #e8eff4;">
                             <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.codigo }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ formatDate(program.fecha_entrega) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.fecha_entrega_formatted }}</td>
                             <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.creator?.name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ formatDate(program.created_at) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.created_at_formatted }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <Link :href="route('ingeniero-procesos.show', program.id)" 
                                       class="font-semibold" style="color: #174060;">
@@ -54,8 +54,4 @@ import IngenieroProcesosSidebar from '@/Components/IngenieroProcesosSidebar.vue'
 defineProps({
     programs: Array,
 });
-
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('es-MX');
-}
 </script>

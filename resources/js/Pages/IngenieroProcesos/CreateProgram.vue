@@ -15,7 +15,7 @@
                            class="w-full rounded-lg px-4 py-2 font-semibold focus:outline-none"
                            style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
                     <p v-if="errors.fecha_entrega" class="text-sm mt-1 font-semibold" style="color: #ba2418;">{{ errors.fecha_entrega }}</p>
-                    <p class="text-sm mt-1" style="color: #6a8090;">Mínimo: {{ formatDate(minDeliveryDate) }}</p>
+                    <p class="text-sm mt-1" style="color: #6a8090;">Mínimo: {{ minDeliveryDateFormatted }}</p>
                 </div>
                 
                 <!-- Productos -->
@@ -107,9 +107,5 @@ function submit() {
             errors.value = errs;
         },
     });
-}
-
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('es-MX');
 }
 </script>

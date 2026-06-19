@@ -105,8 +105,4 @@ defineProps({
     details: Object,
     totalsByDate: Object,
 });
-
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('es-MX');
-}
 </script>

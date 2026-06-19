@@ -16,7 +16,7 @@
                                 class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                             <option value="">Seleccione un programa</option>
                             <option v-for="program in programs" :key="program.id" :value="program.id">
-                                {{ program.codigo }} - {{ formatDate(program.fecha_entrega) }}
+                                {{ program.codigo }} - {{ program.fecha_entrega_formatted }}
                             </option>
                         </select>
                     </div>
@@ -95,7 +95,7 @@
                         
                         <div class="mb-4">
                             <p class="text-sm font-semibold text-[#6a8090]">
-                                {{ formatDate(editingProgram.date) }} - {{ editingProgram.shift }} - {{ editingProgram.work_center?.name }}
+                                {{ editingProgram.date_formatted || formatDate(editingProgram.date) }} - {{ editingProgram.shift }} - {{ editingProgram.work_center?.name }}
                             </p>
                         </div>
 

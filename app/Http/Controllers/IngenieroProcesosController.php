@@ -17,7 +17,18 @@ class IngenieroProcesosController extends Controller
     {
         $programs = Program::with('creator')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($program) {
+                return [
+                    'id' => $program->id,
+                    'codigo' => $program->codigo,
+                    'fecha_entrega' => $program->fecha_entrega,
+                    'fecha_entrega_formatted' => $program->fecha_entrega ? \Carbon\Carbon::parse($program->fecha_entrega)->format('d/m/Y') : null,
+                    'created_at' => $program->created_at,
+                    'created_at_formatted' => $program->created_at ? \Carbon\Carbon::parse($program->created_at)->format('d/m/Y') : null,
+                    'creator' => $program->creator,
+                ];
+            });
         
         return Inertia::render('IngenieroProcesos/Index', [
             'programs' => $programs,
@@ -32,9 +43,12 @@ class IngenieroProcesosController extends Controller
             ->get()
             ->groupBy('modelo');
         
+        $minDeliveryDate = Program::addWorkingDays(now(), 4);
+        
         return Inertia::render('IngenieroProcesos/CreateProgram', [
             'products' => $products,
-            'minDeliveryDate' => Program::addWorkingDays(now(), 4)->format('Y-m-d'),
+            'minDeliveryDate' => $minDeliveryDate->format('Y-m-d'),
+            'minDeliveryDateFormatted' => $minDeliveryDate->format('d/m/Y'),
         ]);
     }
     
@@ -640,7 +654,23 @@ class IngenieroProcesosController extends Controller
     {
         $programs = Program::select('id', 'codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4')
             ->orderBy('fecha_entrega', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($program) {
+                return [
+                    'id' => $program->id,
+                    'codigo' => $program->codigo,
+                    'fecha_entrega' => $program->fecha_entrega,
+                    'fecha_entrega_formatted' => $program->fecha_entrega ? \Carbon\Carbon::parse($program->fecha_entrega)->format('d/m/Y') : null,
+                    'fecha_fase1' => $program->fecha_fase1,
+                    'fecha_fase1_formatted' => $program->fecha_fase1 ? \Carbon\Carbon::parse($program->fecha_fase1)->format('d/m/Y') : null,
+                    'fecha_fase2' => $program->fecha_fase2,
+                    'fecha_fase2_formatted' => $program->fecha_fase2 ? \Carbon\Carbon::parse($program->fecha_fase2)->format('d/m/Y') : null,
+                    'fecha_fase3' => $program->fecha_fase3,
+                    'fecha_fase3_formatted' => $program->fecha_fase3 ? \Carbon\Carbon::parse($program->fecha_fase3)->format('d/m/Y') : null,
+                    'fecha_fase4' => $program->fecha_fase4,
+                    'fecha_fase4_formatted' => $program->fecha_fase4 ? \Carbon\Carbon::parse($program->fecha_fase4)->format('d/m/Y') : null,
+                ];
+            });
         $workCenters = WorkCenter::orderBy('name')->get();
 
         return Inertia::render('IngenieroProcesos/RegisterAdjustments', [
@@ -662,12 +692,34 @@ class IngenieroProcesosController extends Controller
             ->where('date', $request->phase_date)
             ->where('id_work_center', $request->work_center_id)
             ->orderBy('shift')
-            ->get();
+            ->get()
+            ->map(function ($dailyProgram) {
+                $dailyProgram->date_formatted = $dailyProgram->date ? \Carbon\Carbon::parse($dailyProgram->date)->format('d/m/Y') : null;
+                return $dailyProgram;
+            });
+
+        $programs = Program::select('id', 'codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4')
+            ->orderBy('fecha_entrega', 'desc')
+            ->get()
+            ->map(function ($program) {
+                return [
+                    'id' => $program->id,
+                    'codigo' => $program->codigo,
+                    'fecha_entrega' => $program->fecha_entrega,
+                    'fecha_entrega_formatted' => $program->fecha_entrega ? \Carbon\Carbon::parse($program->fecha_entrega)->format('d/m/Y') : null,
+                    'fecha_fase1' => $program->fecha_fase1,
+                    'fecha_fase1_formatted' => $program->fecha_fase1 ? \Carbon\Carbon::parse($program->fecha_fase1)->format('d/m/Y') : null,
+                    'fecha_fase2' => $program->fecha_fase2,
+                    'fecha_fase2_formatted' => $program->fecha_fase2 ? \Carbon\Carbon::parse($program->fecha_fase2)->format('d/m/Y') : null,
+                    'fecha_fase3' => $program->fecha_fase3,
+                    'fecha_fase3_formatted' => $program->fecha_fase3 ? \Carbon\Carbon::parse($program->fecha_fase3)->format('d/m/Y') : null,
+                    'fecha_fase4' => $program->fecha_fase4,
+                    'fecha_fase4_formatted' => $program->fecha_fase4 ? \Carbon\Carbon::parse($program->fecha_fase4)->format('d/m/Y') : null,
+                ];
+            });
 
         return Inertia::render('IngenieroProcesos/RegisterAdjustments', [
-            'programs' => Program::select('id', 'codigo', 'fecha_entrega', 'fecha_fase1', 'fecha_fase2', 'fecha_fase3', 'fecha_fase4')
-                ->orderBy('fecha_entrega', 'desc')
-                ->get(),
+            'programs' => $programs,
             'workCenters' => WorkCenter::orderBy('name')->get(),
             'dailyPrograms' => $dailyPrograms,
         ]);
@@ -704,6 +756,9 @@ class IngenieroProcesosController extends Controller
     public function editDailyProgram($id)
     {
         $dailyProgram = \App\Models\DailyProgram::with(['workCenter', 'program', 'schedules'])->findOrFail($id);
+
+        // Formatear fecha para la vista
+        $dailyProgram->date_formatted = $dailyProgram->date ? \Carbon\Carbon::parse($dailyProgram->date)->format('d/m/Y') : null;
 
         return Inertia::render('IngenieroProcesos/EditDailyProgram', [
             'dailyProgram' => $dailyProgram,

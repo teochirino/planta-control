@@ -17,7 +17,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm" style="color: #6a8090;">Fecha</label>
-                        <p style="color: #0c1c28; font-weight: 600;">{{ formatDate(dailyProgram.date) }}</p>
+                        <p style="color: #0c1c28; font-weight: 600;">{{ dailyProgram.date_formatted }}</p>
                     </div>
                     <div>
                         <label class="block text-sm" style="color: #6a8090;">Turno</label>
@@ -180,9 +180,5 @@ function submit() {
             form.reset('reason', 'notes');
         },
     });
-}
-
-function formatDate(date) {
-    return new Date(date).toLocaleDateString('es-MX');
 }
 </script>
