@@ -102,9 +102,6 @@ function handleDelete() {
     dialog.value.show = false;
     
     router.delete(route('ingeniero-procesos.destroy', dialog.value.programToDelete.id), {
-        onSuccess: () => {
-            toast.success('Programa eliminado exitosamente');
-        },
         onError: (errors) => {
             toast.error('Error al eliminar el programa');
         },
