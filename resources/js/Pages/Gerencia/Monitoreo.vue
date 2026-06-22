@@ -19,60 +19,60 @@
             </div>
             
             <!-- Centros de Trabajo -->
-            <div v-else class="space-y-6">
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div v-for="wc in workCenters" :key="wc.id" class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-                    <div class="bg-gray-50 px-4 py-3 border-b">
-                        <h2 class="text-lg font-bold text-gray-800">{{ wc.name }}</h2>
+                    <div class="bg-gray-50 px-3 py-2 border-b">
+                        <h2 class="text-base font-bold text-gray-800">{{ wc.name }}</h2>
                     </div>
                     
                     <!-- KPIs -->
-                    <div class="grid grid-cols-6 gap-4 p-4 border-b">
+                    <div class="grid grid-cols-3 gap-2 p-3 border-b">
                         <div class="text-center">
-                            <div class="text-xs text-gray-500">Programado</div>
-                            <div class="text-xl font-bold">{{ formatNumber(wc.kpis.programmed) }}</div>
+                            <div class="text-[10px] text-gray-500">Programado</div>
+                            <div class="text-sm font-bold">{{ formatNumber(wc.kpis.programmed) }}</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-xs text-gray-500">Atraso</div>
-                            <div class="text-xl font-bold text-red-600">{{ formatNumber(wc.kpis.backwardness) }}</div>
+                            <div class="text-[10px] text-gray-500">Atraso</div>
+                            <div class="text-sm font-bold text-red-600">{{ formatNumber(wc.kpis.backwardness) }}</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-xs text-gray-500">Adelanto</div>
-                            <div class="text-xl font-bold text-green-600">{{ formatNumber(wc.kpis.advanced) }}</div>
+                            <div class="text-[10px] text-gray-500">Adelanto</div>
+                            <div class="text-sm font-bold text-green-600">{{ formatNumber(wc.kpis.advanced) }}</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-xs text-gray-500">Producido</div>
-                            <div class="text-xl font-bold text-blue-600">{{ formatNumber(wc.kpis.produced) }}</div>
+                            <div class="text-[10px] text-gray-500">Producido</div>
+                            <div class="text-sm font-bold text-blue-600">{{ formatNumber(wc.kpis.produced) }}</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-xs text-gray-500">Eficiencia</div>
-                            <div class="text-xl font-bold" :class="getEfficiencyClass(wc.kpis.efficiency)">
+                            <div class="text-[10px] text-gray-500">Eficiencia</div>
+                            <div class="text-sm font-bold" :class="getEfficiencyClass(wc.kpis.efficiency)">
                                 {{ wc.kpis.efficiency }}%
                             </div>
                         </div>
                         <div class="text-center">
-                            <div class="text-xs text-gray-500">Total a producir</div>
-                            <div class="text-xl font-bold text-purple-600">{{ formatNumber(wc.kpis.total_to_produce) }}</div>
+                            <div class="text-[10px] text-gray-500">Total</div>
+                            <div class="text-sm font-bold text-purple-600">{{ formatNumber(wc.kpis.total_to_produce) }}</div>
                         </div>
                     </div>
                     
                     <!-- Gráfica de producción por hora (líneas) -->
-                    <div v-if="wc.has_data && wc.hourly_data.labels.length > 0" class="p-4">
-                        <h3 class="text-sm font-semibold text-gray-700 mb-3">Producción por Hora</h3>
-                        <div class="bg-gray-50 p-4 rounded">
-                            <canvas :id="'line-chart-' + wc.id" class="w-full" style="height: 300px;"></canvas>
+                    <div v-if="wc.has_data && wc.hourly_data.labels.length > 0" class="p-3">
+                        <h3 class="text-[11px] font-semibold text-gray-700 mb-2">Producción por Hora</h3>
+                        <div class="bg-gray-50 p-2 rounded">
+                            <canvas :id="'line-chart-' + wc.id" class="w-full" style="height: 180px;"></canvas>
                         </div>
                     </div>
                     
                     <!-- Gráfica de producción por línea -->
-                    <div v-if="wc.has_data" class="p-4">
-                        <h3 class="text-sm font-semibold text-gray-700 mb-3">Producción por Línea</h3>
-                        <div class="bg-gray-50 p-4 rounded">
-                            <canvas :id="'chart-' + wc.id" class="w-full" style="height: 300px;"></canvas>
+                    <div v-if="wc.has_data" class="p-3">
+                        <h3 class="text-[11px] font-semibold text-gray-700 mb-2">Producción por Línea</h3>
+                        <div class="bg-gray-50 p-2 rounded">
+                            <canvas :id="'chart-' + wc.id" class="w-full" style="height: 180px;"></canvas>
                         </div>
                     </div>
                     
-                    <div v-if="!wc.has_data" class="p-4 text-center bg-yellow-50 border-t">
-                        <p class="text-sm text-yellow-700">⚠️ No hay información para la fecha seleccionada</p>
+                    <div v-if="!wc.has_data" class="p-3 text-center bg-yellow-50 border-t">
+                        <p class="text-[11px] text-yellow-700">⚠️ No hay información para la fecha seleccionada</p>
                     </div>
                 </div>
                 
@@ -213,7 +213,7 @@ const createCharts = async () => {
                             color: '#1f2937',
                             font: {
                                 weight: 'bold',
-                                size: 12
+                                size: 10
                             },
                             formatter: function(value) {
                                 return value.toLocaleString('es-MX')
@@ -243,7 +243,7 @@ const createCharts = async () => {
                             color: '#1f2937',
                             font: {
                                 weight: 'bold',
-                                size: 12
+                                size: 10
                             },
                             formatter: function(value) {
                                 return value.toLocaleString('es-MX')
@@ -321,7 +321,7 @@ const createLineCharts = async () => {
                             borderDash: [5, 5],
                             tension: 0.1,
                             fill: false,
-                            pointRadius: 3,
+                            pointRadius: 2,
                             pointBackgroundColor: 'rgba(147, 51, 234, 1)'
                         },
                         {
@@ -332,7 +332,7 @@ const createLineCharts = async () => {
                             borderWidth: 2,
                             tension: 0.1,
                             fill: false,
-                            pointRadius: 3,
+                            pointRadius: 2,
                             pointBackgroundColor: 'rgba(59, 130, 246, 1)'
                         }
                     ]
@@ -346,7 +346,10 @@ const createLineCharts = async () => {
                             position: 'top',
                             labels: {
                                 usePointStyle: true,
-                                padding: 20
+                                padding: 10,
+                                font: {
+                                    size: 10
+                                }
                             }
                         },
                         tooltip: {
@@ -363,22 +366,34 @@ const createLineCharts = async () => {
                         x: {
                             title: {
                                 display: true,
-                                text: 'Hora'
+                                text: 'Hora',
+                                font: {
+                                    size: 10
+                                }
                             },
                             ticks: {
                                 maxRotation: 45,
-                                minRotation: 45
+                                minRotation: 45,
+                                font: {
+                                    size: 9
+                                }
                             }
                         },
                         y: {
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Piezas'
+                                text: 'Piezas',
+                                font: {
+                                    size: 10
+                                }
                             },
                             ticks: {
                                 callback: function(value) {
                                     return value.toLocaleString('es-MX')
+                                },
+                                font: {
+                                    size: 9
                                 }
                             }
                         }
