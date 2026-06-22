@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import AdminSidebar from '@/Components/AdminSidebar.vue';
@@ -19,9 +19,7 @@ console.log('ItalianetUsers data:', props.italianetUsers?.data);
 console.log('ItalianetUsers data length:', props.italianetUsers?.data?.length);
 console.log('Primer usuario:', props.italianetUsers?.data?.[0]);
 
-const searchForm = useForm({
-    search: props.search || '',
-});
+const searchValue = ref(props.search || '');
 
 const importForm = useForm({
     user_main_id: null,
@@ -60,16 +58,26 @@ const submitImport = () => {
     });
 };
 
-const submitSearch = () => {
-    searchForm.get(route('admin.users.import'), {
+// Custom debounce function
+const debounce = (fn, delay) => {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn(...args), delay);
+    };
+};
+
+const performSearch = () => {
+    router.get(route('admin.users.import'), { search: searchValue.value }, {
         preserveScroll: true,
         preserveState: true,
     });
 };
 
+watch(searchValue, debounce(performSearch, 300));
+
 const clearSearch = () => {
-    searchForm.search = '';
-    submitSearch();
+    searchValue.value = '';
 };
 </script>
 
@@ -105,24 +113,20 @@ const clearSearch = () => {
                             <p class="text-xs text-[#6a8090] mt-1">Selecciona un usuario para importarlo al sistema de control de planta</p>
                         </div>
                         
-                        <form @submit.prevent="submitSearch" class="flex gap-2">
+                        <div class="flex gap-2">
                             <div class="relative">
-                                <input v-model="searchForm.search"
+                                <input v-model="searchValue"
                                        type="text" 
                                        placeholder="Buscar por nombre o email..."
                                        class="px-4 py-2 pr-10 border border-[#d4dee8] rounded-md text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#174060] w-80">
-                                <button v-if="searchForm.search" 
+                                <button v-if="searchValue" 
                                         type="button"
                                         @click="clearSearch"
                                         class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6a8090] hover:text-[#0b2a40]">
                                     ✕
                                 </button>
                             </div>
-                            <button type="submit" 
-                                    class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85">
-                                🔍 Buscar
-                            </button>
-                        </form>
+                        </div>
                     </div>
                 </div>
                 
