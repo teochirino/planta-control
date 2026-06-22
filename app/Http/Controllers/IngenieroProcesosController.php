@@ -177,6 +177,59 @@ class IngenieroProcesosController extends Controller
         ]);
     }
     
+    public function destroy(Program $program)
+    {
+        DB::beginTransaction();
+        
+        try {
+            // Obtener los daily programs asociados a este programa
+            $dailyPrograms = \App\Models\DailyProgram::where('program_id', $program->id)->get();
+            
+            // Verificar si hay strikes asociados a los daily programs
+            $hasStrikes = \App\Models\Strike::whereIn('id_daily_program', $dailyPrograms->pluck('id'))->exists();
+            if ($hasStrikes) {
+                return back()->with('error', 'No se puede eliminar el programa porque tiene paros registrados.');
+            }
+            
+            // Verificar si hay rejected pieces asociados a los daily programs
+            $hasRejectedPieces = \App\Models\RejectedPiece::whereIn('id_daily_program', $dailyPrograms->pluck('id'))->exists();
+            if ($hasRejectedPieces) {
+                return back()->with('error', 'No se puede eliminar el programa porque tiene piezas rechazadas registradas.');
+            }
+            
+            // Verificar si hay production adjustments que referencian este programa
+            $hasAdjustments = \App\Models\ProductionAdjustment::where('source_program_id', $program->id)
+                ->orWhere('target_program_id', $program->id)
+                ->exists();
+            if ($hasAdjustments) {
+                return back()->with('error', 'No se puede eliminar el programa porque tiene ajustes de producción asociados.');
+            }
+            
+            // Eliminar schedules de cada daily program
+            foreach ($dailyPrograms as $dailyProgram) {
+                \App\Models\Schedule::where('id_daily_program', $dailyProgram->id)->delete();
+            }
+            
+            // Eliminar daily programs
+            \App\Models\DailyProgram::where('program_id', $program->id)->delete();
+            
+            // Eliminar program details
+            ProgramDetail::where('program_id', $program->id)->delete();
+            
+            // Eliminar el programa
+            $program->delete();
+            
+            DB::commit();
+            
+            return redirect()->route('ingeniero-procesos.index')
+                ->with('success', 'Programa eliminado exitosamente.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al eliminar el programa: ' . $e->getMessage());
+        }
+    }
+    
     // ============================================
     // CRUD DE PRODUCTOS
     // ============================================

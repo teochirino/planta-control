@@ -5,7 +5,8 @@
         <div class="p-6 ml-16">
             <div class="mb-6">
                 <Link :href="route('ingeniero-procesos.production-lines.index')" 
-                      class="font-semibold" style="color: #174060;">
+                      class="px-4 py-2 rounded-lg font-semibold transition text-sm"
+                      style="background: #fff; color: #0b2a40; border: 1px solid #d4dee8;">
                     ← Volver a Líneas de Producción
                 </Link>
             </div>

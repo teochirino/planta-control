@@ -30,10 +30,17 @@
                             <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.creator?.name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.created_at_formatted }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <Link :href="route('ingeniero-procesos.show', program.id)" 
-                                      class="font-semibold" style="color: #174060;">
-                                    Ver
-                                </Link>
+                                <div class="flex items-center gap-2">
+                                    <Link :href="route('ingeniero-procesos.show', program.id)" 
+                                          class="px-3 py-1.5 bg-[#174060] text-white border border-[#174060] rounded text-xs font-bold hover:opacity-85">
+                                        👁️ Ver
+                                    </Link>
+                                    <button 
+                                        @click="showDeleteDialog(program)"
+                                        class="px-3 py-1.5 bg-[#f4f7fa] text-[#ba2418] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#ba2418] hover:text-white hover:border-[#ba2418]">
+                                        🗑️ Borrar
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -44,14 +51,73 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Diálogo de confirmación -->
+        <ConfirmDialog
+            :show="dialog.show"
+            :title="dialog.title"
+            :message="dialog.message"
+            :confirm-text="dialog.confirmText"
+            @confirm="handleDelete"
+            @cancel="dialog.show = false"
+        />
     </div>
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
+import { useToast } from 'vue-toastification';
 import IngenieroProcesosSidebar from '@/Components/IngenieroProcesosSidebar.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+
+const page = usePage();
+const toast = useToast();
 
 defineProps({
     programs: Array,
 });
+
+const dialog = ref({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: 'Eliminar',
+    programToDelete: null
+});
+
+function showDeleteDialog(program) {
+    dialog.value = {
+        show: true,
+        title: 'Eliminar Programa',
+        message: `¿Estás seguro de que deseas eliminar el programa "${program.codigo}"? Esta acción no se puede deshacer.`,
+        confirmText: 'Eliminar',
+        programToDelete: program
+    };
+}
+
+function handleDelete() {
+    if (!dialog.value.programToDelete) return;
+    
+    dialog.value.show = false;
+    
+    router.delete(route('ingeniero-procesos.destroy', dialog.value.programToDelete.id), {
+        onSuccess: () => {
+            toast.success('Programa eliminado exitosamente');
+        },
+        onError: (errors) => {
+            toast.error('Error al eliminar el programa');
+        },
+    });
+}
+
+// Mostrar notificaciones de flash messages
+watch(() => page.props.flash, (flash) => {
+    if (flash?.success) {
+        toast.success(flash.success);
+    }
+    if (flash?.error) {
+        toast.error(flash.error);
+    }
+}, { immediate: true });
 </script>

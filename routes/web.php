@@ -151,6 +151,7 @@ Route::middleware('auth')->group(function () {
 
         // Ruta dinámica de programas (debe ir al final, después de las rutas específicas)
         Route::get('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'show'])->name('show');
+        Route::delete('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'destroy'])->name('destroy');
     });
     
     

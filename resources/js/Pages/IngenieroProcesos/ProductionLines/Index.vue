@@ -52,13 +52,16 @@
                             <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ line.installed_capacity }}</td>
                             <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">${{ line.cost }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <Link :href="route('ingeniero-procesos.production-lines.edit', line.id)" 
-                                      class="font-semibold mr-3" style="color: #174060;">
-                                    Editar
-                                </Link>
-                                <button @click="confirmDelete(line)" class="font-semibold" style="color: #dc3545;">
-                                    Eliminar
-                                </button>
+                                <div class="flex items-center gap-2">
+                                    <Link :href="route('ingeniero-procesos.production-lines.edit', line.id)" 
+                                          class="px-3 py-1.5 bg-[#174060] text-white border border-[#174060] rounded text-xs font-bold hover:opacity-85">
+                                        ✏️ Editar
+                                    </Link>
+                                    <button @click="confirmDelete(line)" 
+                                            class="px-3 py-1.5 bg-[#f4f7fa] text-[#ba2418] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#ba2418] hover:text-white hover:border-[#ba2418]">
+                                        🗑️ Eliminar
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
