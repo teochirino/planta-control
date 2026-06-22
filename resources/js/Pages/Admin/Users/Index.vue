@@ -2,10 +2,39 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import AdminSidebar from '@/Components/AdminSidebar.vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
     users: Object,
+    profiles: Object,
+    filters: Object,
 });
+
+const profileFilter = ref(props.filters?.profile || null);
+const search = ref(props.filters?.search || '');
+
+// Custom debounce function
+const debounce = (fn, delay) => {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn(...args), delay);
+    };
+};
+
+watch(profileFilter, (value) => {
+    router.get(route('admin.users.index'), { profile: value, search: search.value }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+});
+
+watch(search, debounce((value) => {
+    router.get(route('admin.users.index'), { profile: profileFilter.value, search: value }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+}, 300));
 
 const deleteUser = (user) => {
     if (confirm(`¿Estás seguro de eliminar a ${user.name}?`)) {
@@ -29,6 +58,30 @@ const deleteUser = (user) => {
                     <div>
                         <span class="text-[10px] font-bold tracking-widest uppercase text-[#174060]">Módulo Administrador</span>
                         <h1 class="text-2xl font-extrabold text-[#0b2a40] leading-none">Gestión de Usuarios</h1>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
+                <div class="px-4 py-3 flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-[#174060] uppercase tracking-widest">Filtrar por Perfil:</label>
+                        <select v-model="profileFilter" class="px-3 py-1.5 text-sm border border-[#d4dee8] rounded-lg bg-white text-[#0c1c28] focus:outline-none focus:ring-2 focus:ring-[#174060]">
+                            <option :value="null">Todos los perfiles</option>
+                            <option v-for="profile in profiles" :key="profile.id_profile" :value="profile.id_profile">
+                                {{ profile.title }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-[#174060] uppercase tracking-widest">Buscar por nombre:</label>
+                        <input 
+                            v-model="search" 
+                            type="text" 
+                            placeholder="Escribe para buscar..." 
+                            class="px-3 py-1.5 text-sm border border-[#d4dee8] rounded-lg bg-white text-[#0c1c28] focus:outline-none focus:ring-2 focus:ring-[#174060] w-64"
+                        >
                     </div>
                 </div>
             </div>

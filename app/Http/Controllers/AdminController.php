@@ -13,18 +13,37 @@ use Illuminate\Support\Facades\Hash;
 class AdminController extends Controller
 {
     // Lista de usuarios del sistema planta_control
-   public function index()
+   public function index(Request $request)
 {
-    $users = User::with(['profile', 'workCenters', 'productionLines'])
-        ->paginate(15);
+    $profileFilter = $request->input('profile');
+    $search = $request->input('search');
+    
+    $query = User::with(['profile', 'workCenters', 'productionLines']);
+    
+    if ($profileFilter) {
+        $query->where('id_profile', $profileFilter);
+    }
+    
+    if ($search) {
+        $query->where('name', 'like', '%' . $search . '%');
+    }
+    
+    $users = $query->paginate(15)->appends(['profile' => $profileFilter, 'search' => $search]);
     
     // Forzar autenticación
     if (!auth()->check()) {
         return redirect()->route('login');
     }
     
+    $profiles = Profile::all();
+    
     return Inertia::render('Admin/Users/Index', [
         'users' => $users,
+        'profiles' => $profiles,
+        'filters' => [
+            'profile' => $profileFilter,
+            'search' => $search,
+        ],
         'auth' => [
             'user' => auth()->user() ? [
                 'id' => auth()->user()->id,
