@@ -268,4 +268,16 @@ class GerenteMantenimientoController extends Controller
             'breakdowns' => $breakdowns,
         ]);
     }
+    
+    // Listado de todas las máquinas agrupadas por centros de trabajo
+    public function machinesList()
+    {
+        $workCenters = WorkCenter::with(['machines' => function($query) {
+            $query->orderBy('title');
+        }])->has('machines')->orderBy('name')->get();
+        
+        return Inertia::render('GerenteMantenimiento/MachinesList', [
+            'workCenters' => $workCenters,
+        ]);
+    }
 }
