@@ -126,6 +126,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('gerente-mantenimiento')->name('gerente-mantenimiento.')->middleware('gerente_mantenimiento')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\GerenteMantenimientoController::class, 'dashboard'])->name('dashboard');
         Route::get('/machines', [\App\Http\Controllers\GerenteMantenimientoController::class, 'machinesList'])->name('machines');
+        Route::get('/reports', [\App\Http\Controllers\GerenteMantenimientoController::class, 'reports'])->name('reports');
         
         // API endpoints
         Route::get('/breakdowns/pending', [\App\Http\Controllers\GerenteMantenimientoController::class, 'getPendingBreakdowns'])->name('breakdowns.pending');
