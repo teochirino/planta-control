@@ -27,29 +27,29 @@
                     
                     <!-- KPIs -->
                     <div class="grid grid-cols-3 gap-2 p-3 border-b">
-                        <div class="text-center">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
                             <div class="text-[10px] text-gray-500">Programado</div>
                             <div class="text-sm font-bold">{{ formatNumber(wc.kpis.programmed) }}</div>
                         </div>
-                        <div class="text-center">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
                             <div class="text-[10px] text-gray-500">Atraso</div>
                             <div class="text-sm font-bold text-red-600">{{ formatNumber(wc.kpis.backwardness) }}</div>
                         </div>
-                        <div class="text-center">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
                             <div class="text-[10px] text-gray-500">Adelanto</div>
                             <div class="text-sm font-bold text-green-600">{{ formatNumber(wc.kpis.advanced) }}</div>
                         </div>
-                        <div class="text-center">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
                             <div class="text-[10px] text-gray-500">Producido</div>
                             <div class="text-sm font-bold text-blue-600">{{ formatNumber(wc.kpis.produced) }}</div>
                         </div>
-                        <div class="text-center">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
                             <div class="text-[10px] text-gray-500">Eficiencia</div>
                             <div class="text-sm font-bold" :class="getEfficiencyClass(wc.kpis.efficiency)">
                                 {{ wc.kpis.efficiency }}%
                             </div>
                         </div>
-                        <div class="text-center">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
                             <div class="text-[10px] text-gray-500">Total</div>
                             <div class="text-sm font-bold text-purple-600">{{ formatNumber(wc.kpis.total_to_produce) }}</div>
                         </div>
