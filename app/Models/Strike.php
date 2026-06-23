@@ -16,7 +16,8 @@ class Strike extends Model
         'start_time',
         'end_time',
         'minutes',
-        'cost'
+        'cost',
+        'id_machine'
     ];
     
     protected $casts = [
@@ -33,6 +34,11 @@ class Strike extends Model
     public function dailyProgram()
     {
         return $this->belongsTo(DailyProgram::class, 'id_daily_program');
+    }
+    
+    public function machine()
+    {
+        return $this->belongsTo(Machine::class, 'id_machine');
     }
     
     protected static function boot()

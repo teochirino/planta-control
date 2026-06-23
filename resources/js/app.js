@@ -22,6 +22,10 @@ const toastOptions = {
     hideCloseButton: false,
     icon: true,
     rtl: false,
+    transition: 'Vue-Toastification__fade',
+    maxToasts: 5,
+    newestOnTop: true,
+    filterToasts: toasts => toasts,
 };
 
 createInertiaApp({

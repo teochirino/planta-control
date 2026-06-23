@@ -28,6 +28,8 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('gerencia.dashboard');
         } elseif ($user->isGerenteProduccion()) {
             return redirect()->route('gerencia.monitoreo');
+        } elseif ($user->isGerenteMantenimiento()) {
+            return redirect()->route('gerente-mantenimiento.dashboard');
         } elseif ($user->isIngenieroProcesos()) {
             return redirect()->route('ingeniero-procesos.index');
         } elseif ($user->isSupervisor()) {
@@ -116,6 +118,20 @@ Route::middleware('auth')->group(function () {
         Route::post('/rejected-pieces/{id}/replaced', [RejectedPieceController::class, 'markAsReplaced'])->name('rejected-pieces.replaced');
         Route::post('/rejected-pieces/{id}/discarded', [RejectedPieceController::class, 'markAsDiscarded'])->name('rejected-pieces.discarded');
         Route::get('/rejected-pieces/schedules', [RejectedPieceController::class, 'getSchedulesForReplacement'])->name('rejected-pieces.schedules');
+    });
+    
+    // ============================================
+    // MÓDULO GERENTE DE MANTENIMIENTO
+    // ============================================
+    Route::prefix('gerente-mantenimiento')->name('gerente-mantenimiento.')->middleware('gerente_mantenimiento')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\GerenteMantenimientoController::class, 'dashboard'])->name('dashboard');
+        
+        // API endpoints
+        Route::get('/breakdowns/pending', [\App\Http\Controllers\GerenteMantenimientoController::class, 'getPendingBreakdowns'])->name('breakdowns.pending');
+        Route::post('/breakdowns/{id}/confirm', [\App\Http\Controllers\GerenteMantenimientoController::class, 'confirmBreakdown'])->name('breakdowns.confirm');
+        Route::put('/machines/{id}/state', [\App\Http\Controllers\GerenteMantenimientoController::class, 'updateMachineState'])->name('machines.update-state');
+        Route::get('/machines/{id}/breakdowns', [\App\Http\Controllers\GerenteMantenimientoController::class, 'getMachineBreakdowns'])->name('machines.breakdowns');
+        Route::get('/export', [\App\Http\Controllers\GerenteMantenimientoController::class, 'exportReport'])->name('export');
     });
     
     // ============================================

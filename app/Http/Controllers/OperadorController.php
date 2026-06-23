@@ -83,6 +83,9 @@ class OperadorController extends Controller
             $kpis = $this->kpiService->calculateLineKPIs($dailyProgram, $selectedLine, $schedules, $strikes);
         }
 
+        // Obtener máquinas del centro de trabajo
+        $machines = \App\Models\Machine::where('id_work_center', $selectedLine->id_work_center)->get();
+        
         return Inertia::render('Operador/Dashboard', [
             'productionLines' => $productionLines,
             'selectedLine' => $selectedLine,
@@ -93,6 +96,7 @@ class OperadorController extends Controller
             'strikes' => $strikes,
             'kpis' => $kpis,
             'lineClosure' => $lineClosure,
+            'machines' => $machines,
         ]);
     }
     
@@ -145,6 +149,7 @@ class OperadorController extends Controller
             'start_time' => 'required',
             'end_time' => 'nullable',
             'description' => 'required|string',
+            'id_machine' => 'nullable|exists:machines,id',
         ]);
         
         $user = auth()->user();
@@ -152,6 +157,11 @@ class OperadorController extends Controller
         if (!$user->canEditProductionLine($request->id_production_line)) {
             return response()->json(['success' => false, 'message' => 'No tienes permiso para registrar paros en esta línea'], 403);
         }
+        
+        \Log::info('Operador: Registrando paro', [
+            'id_machine' => $request->id_machine,
+            'all_data' => $request->all()
+        ]);
         
         // Asegurar formato HH:MM:SS
         $startTime = $request->start_time;
@@ -172,8 +182,27 @@ class OperadorController extends Controller
             'end_time' => $endTime,
             'description' => $request->description,
             'minutes' => 0,
-            'cost' => 0
+            'cost' => 0,
+            'id_machine' => $request->id_machine,
         ]);
+        
+        \Log::info('Operador: Strike creado', [
+            'strike_id' => $strike->id,
+            'strike_id_machine' => $strike->id_machine
+        ]);
+        
+        // Si se seleccionó una máquina, crear breakdown y actualizar estado
+        if ($request->id_machine) {
+            \App\Models\Breakdown::create([
+                'id_machine' => $request->id_machine,
+                'id_user' => auth()->id(),
+                'reason' => $request->description,
+                'start_date' => now(),
+            ]);
+            
+            // Actualizar estado de máquina a averiado
+            \App\Models\Machine::where('id', $request->id_machine)->update(['state' => 'averiado']);
+        }
         
         return response()->json([
             'success' => true, 
@@ -221,6 +250,22 @@ class OperadorController extends Controller
                 'minutes' => $minutes,
                 'cost' => $cost
             ]);
+            
+            // Si el strike tiene una máquina asociada, finalizar breakdown y actualizar estado
+            if ($strike->id_machine) {
+                $breakdown = \App\Models\Breakdown::where('id_machine', $strike->id_machine)
+                    ->whereNull('end_date')
+                    ->first();
+                
+                if ($breakdown) {
+                    $breakdown->update([
+                        'end_date' => now(),
+                    ]);
+                }
+                
+                // Actualizar estado de máquina a operativo
+                \App\Models\Machine::where('id', $strike->id_machine)->update(['state' => 'operativo']);
+            }
             
             // Actualizar KPIs del programa diario
             $this->dailyProgramService->updateTotalProduced($strike->id_daily_program);

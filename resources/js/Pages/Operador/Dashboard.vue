@@ -191,6 +191,13 @@
             <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
                 <h3 class="text-lg font-bold text-[#0b2a40] mb-4">Registrar Paro</h3>
                 <div class="space-y-4">
+                    <div v-if="machines && machines.length > 0">
+                        <label class="block text-sm font-bold text-[#0b2a40] mb-2">Máquina afectada (opcional)</label>
+                        <select v-model="nuevoParo.machine_id" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md">
+                            <option :value="null">No afecta a máquina específica</option>
+                            <option v-for="machine in machines" :key="machine.id" :value="machine.id">{{ machine.title }}</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-sm font-bold text-[#0b2a40] mb-2">Hora de Inicio</label>
                         <input type="time" v-model="nuevoParo.start_time" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md">
@@ -216,6 +223,27 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Modal de Confirmación para Finalizar Paro -->
+        <div v-if="showConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-[#0b2a40]">Confirmar Finalización de Paro</h3>
+                    <p class="text-[#4e6070] mt-2">¿Finalizar este paro a las {{ confirmEndTime }}?</p>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button @click="cancelEndStrike" 
+                            class="px-4 py-2 bg-[#f4f7fa] text-[#4e6070] border border-[#d4dee8] rounded-md font-bold hover:bg-[#e8edf2]">
+                        Cancelar
+                    </button>
+                    <button @click="confirmEndStrike" 
+                            class="px-4 py-2 bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
     </AuthenticatedLayout>
 </template>
 
@@ -223,7 +251,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import axios from 'axios'
+import { useToast } from 'vue-toastification'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+
+const toast = useToast()
 
 // Props
 const props = defineProps({
@@ -262,6 +293,10 @@ const props = defineProps({
     lineClosure: {
         type: Object,
         default: null
+    },
+    machines: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -276,6 +311,7 @@ const kpisData = ref(props.kpis)
 const schedulesData = ref(props.schedules || [])
 const strikesList = ref(props.strikes || [])
 const dailyProgramId = ref(props.dailyProgram?.id || null)
+const machines = ref(props.machines || [])
 
 const selectedLineId = ref(props.selectedLine?.id || (props.productionLines?.[0]?.id))
 const fechaSeleccionada = ref(props.selectedDate && props.selectedDate !== '' ? props.selectedDate : fechaActualStr)
@@ -289,10 +325,16 @@ const autoSaveTimeouts = {}
 const modalVisible = ref(false)
 const guardandoParo = ref(false)
 const nuevoParo = ref({
+    machine_id: null,
     start_time: '',
     end_time: '',
     description: ''
 })
+
+// Modal de confirmación para finalizar paro
+const showConfirmModal = ref(false)
+const confirmStrike = ref(null)
+const confirmEndTime = ref('')
 
 // Cierre de turno
 const cerrandoTurno = ref(false)
@@ -445,8 +487,13 @@ const cambiarTurno = () => {
 
 // Paros - Modal
 const abrirModalParo = () => {
+    const now = new Date()
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    
     nuevoParo.value = {
-        start_time: new Date().toLocaleTimeString().slice(0, 5),
+        machine_id: null,
+        start_time: `${hours}:${minutes}`,
         end_time: '',
         description: ''
     }
@@ -460,11 +507,11 @@ const cerrarModalParo = () => {
 // Registrar paro
 const registrarParo = async () => {
     if (!nuevoParo.value.start_time) {
-        alert('Indique la hora de inicio')
+        toast.error('Indique la hora de inicio')
         return
     }
     if (!nuevoParo.value.description) {
-        alert('Describa el paro')
+        toast.error('Describa el paro')
         return
     }
     
@@ -477,37 +524,43 @@ const registrarParo = async () => {
             date: fechaSeleccionada.value,
             start_time: nuevoParo.value.start_time,
             end_time: nuevoParo.value.end_time || null,
-            description: nuevoParo.value.description
+            description: nuevoParo.value.description,
+            id_machine: nuevoParo.value.machine_id || null
         })
         
         if (response.data.success) {
-            alert('Paro registrado correctamente')
+            toast.success('Paro registrado correctamente')
             cerrarModalParo()
             await cargarParos()
         } else {
-            alert('Error: ' + response.data.message)
+            toast.error('Error: ' + response.data.message)
         }
     } catch (error) {
         console.error('Error:', error)
-        alert('Error al registrar el paro')
+        toast.error('Error al registrar el paro')
     } finally {
         guardandoParo.value = false
     }
 }
 
 // Finalizar paro
-const finalizarParo = async (strike) => {
-    if (!confirm('¿Finalizar este paro?')) return
-    
+const finalizarParo = (strike) => {
     const now = new Date()
     const hours = String(now.getHours()).padStart(2, '0')
     const minutes = String(now.getMinutes()).padStart(2, '0')
     const endTime = `${hours}:${minutes}`
     
+    confirmStrike.value = strike
+    confirmEndTime.value = endTime
+    showConfirmModal.value = true
+}
+
+const confirmEndStrike = async () => {
+    showConfirmModal.value = false
+    
     try {
-        // Usar axios.put explícitamente
-        const response = await axios.put(`/operador/strikes/${strike.id}/end`, {
-            end_time: endTime
+        const response = await axios.put(`/operador/strikes/${confirmStrike.value.id}/end`, {
+            end_time: confirmEndTime.value
         }, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
@@ -516,31 +569,40 @@ const finalizarParo = async (strike) => {
         })
         
         if (response.data.success) {
-            alert('Paro finalizado correctamente')
+            toast.success('Paro finalizado correctamente')
             await cargarParos()
         } else {
-            alert('Error: ' + response.data.message)
+            toast.error('Error: ' + response.data.message)
         }
     } catch (error) {
         console.error('Error en finalizarParo:', error)
         if (error.response) {
             console.error('Respuesta del servidor:', error.response.data)
-            alert(`Error ${error.response.status}: ${error.response.data.message || 'Error al finalizar el paro'}`)
+            toast.error(`Error ${error.response.status}: ${error.response.data.message || 'Error al finalizar el paro'}`)
         } else {
-            alert('Error de conexión: ' + error.message)
+            toast.error('Error de conexión: ' + error.message)
         }
     }
+    
+    confirmStrike.value = null
+    confirmEndTime.value = ''
+}
+
+const cancelEndStrike = () => {
+    showConfirmModal.value = false
+    confirmStrike.value = null
+    confirmEndTime.value = ''
 }
 
 // Cerrar turno
 const cerrarTurno = async () => {
     if (!dailyProgramId.value) {
-        alert('No hay programa diario para cerrar')
+        toast.error('No hay programa diario para cerrar')
         return
     }
 
     if (!selectedLineId.value) {
-        alert('No hay línea de producción seleccionada')
+        toast.error('No hay línea de producción seleccionada')
         return
     }
 
@@ -560,15 +622,15 @@ const cerrarTurno = async () => {
                 ? 'Todas las líneas cerradas correctamente. El supervisor revisará el balance.'
                 : `Línea cerrada correctamente (${response.data.closed_lines} de ${response.data.total_lines} líneas cerradas).`
 
-            alert(message)
+            toast.success(message)
             // Recargar la página para actualizar el estado
             router.reload()
         } else {
-            alert('Error: ' + response.data.message)
+            toast.error('Error: ' + response.data.message)
         }
     } catch (error) {
         console.error('Error al cerrar turno:', error)
-        alert('Error al cerrar el turno')
+        toast.error('Error al cerrar el turno')
     } finally {
         cerrandoTurno.value = false
     }
@@ -583,6 +645,15 @@ const iniciarActualizacionTiempo = () => {
     }, 60000)
 }
 
+// Recargar paros cada 30 segundos para detectar cambios por Gerente de Mantenimiento
+let parosInterval = null
+const iniciarRecargaParos = () => {
+    if (parosInterval) clearInterval(parosInterval)
+    parosInterval = setInterval(() => {
+        cargarParos()
+    }, 30000)
+}
+
 // Watch para cuando cambia la línea seleccionada
 watch(() => selectedLineId.value, () => {
     // Reiniciar valores de producción
@@ -592,6 +663,7 @@ watch(() => selectedLineId.value, () => {
 onMounted(() => {
     initProduccion()
     iniciarActualizacionTiempo()
+    iniciarRecargaParos()
     console.log('=== DASHBOARD OPERADOR ===')
     console.log('Líneas:', productionLinesData.value.length)
     console.log('Fecha:', fechaSeleccionada.value)
@@ -599,5 +671,6 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (timerInterval) clearInterval(timerInterval)
+    if (parosInterval) clearInterval(parosInterval)
 })
 </script>

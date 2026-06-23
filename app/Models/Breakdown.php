@@ -14,30 +14,37 @@ class Breakdown extends Model
         'reason',
         'start_date',
         'end_date',
-        'minutes'
+        'minutes',
+        'confirmed_by',
+        'confirmed_at',
+        'confirmed_minutes'
     ];
     
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'minutes' => 'integer',
+        'confirmed_minutes' => 'integer',
+        'confirmed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
     
-    // Relación con Machine
     public function machine()
     {
         return $this->belongsTo(Machine::class, 'id_machine');
     }
     
-    // Relación con User (supervisor que reporta)
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user');
     }
     
-    // Accesor para duración formateada
+    public function confirmedBy()
+    {
+        return $this->belongsTo(User::class, 'confirmed_by');
+    }
+    
     public function getFormattedDurationAttribute()
     {
         if ($this->minutes) {
@@ -50,7 +57,6 @@ class Breakdown extends Model
             return "{$minutes} minutos";
         }
         
-        // Si no hay minutos calculados, calcular entre fechas
         if ($this->end_date) {
             $diffInMinutes = $this->start_date->diffInMinutes($this->end_date);
             $hours = floor($diffInMinutes / 60);
@@ -65,13 +71,11 @@ class Breakdown extends Model
         return "En curso";
     }
     
-    // Accesor para saber si está activa
     public function getIsActiveAttribute()
     {
         return is_null($this->end_date);
     }
     
-    // Mutador: calcula minutos automáticamente al guardar end_date
     public function setEndDateAttribute($value)
     {
         $this->attributes['end_date'] = $value;
@@ -83,31 +87,26 @@ class Breakdown extends Model
         }
     }
     
-    // Scope: averías activas (sin end_date)
     public function scopeActive($query)
     {
         return $query->whereNull('end_date');
     }
     
-    // Scope: averías por máquina
     public function scopeByMachine($query, $machineId)
     {
         return $query->where('id_machine', $machineId);
     }
     
-    // Scope: averías por fecha
     public function scopeFromDate($query, $date)
     {
         return $query->whereDate('start_date', $date);
     }
     
-    // Scope: averías entre fechas
     public function scopeDateBetween($query, $startDate, $endDate)
     {
         return $query->whereBetween('start_date', [$startDate, $endDate]);
     }
     
-    // Scope: averías por usuario que reportó
     public function scopeByReporter($query, $userId)
     {
         return $query->where('id_user', $userId);

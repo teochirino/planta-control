@@ -105,10 +105,16 @@ class User extends Authenticatable
         return $this->id_profile === 2;
     }
     
+    // Verificar si es gerente de mantenimiento
+    public function isGerenteMantenimiento()
+    {
+        return $this->id_profile === 3;
+    }
+    
     // Verificar si el usuario puede ver un centro de trabajo
     public function canViewWorkCenter($workCenterId)
     {
-        if ($this->id_profile <= 2) return true;
+        if ($this->id_profile <= 3) return true;
         
         return $this->workCenters()
             ->where('work_center_id', $workCenterId)
@@ -118,7 +124,7 @@ class User extends Authenticatable
     // Verificar si el usuario puede ver una línea de producción
     public function canViewProductionLine($productionLineId)
     {
-        if ($this->id_profile <= 2) return true;
+        if ($this->id_profile <= 3) return true;
         
         return $this->productionLines()
             ->where('production_line_id', $productionLineId)
@@ -128,7 +134,7 @@ class User extends Authenticatable
     // Verificar si el usuario puede editar una línea de producción
     public function canEditProductionLine($productionLineId)
     {
-        if ($this->id_profile <= 2) return true;
+        if ($this->id_profile <= 3) return true;
         
         return $this->productionLines()
             ->where('production_line_id', $productionLineId)
@@ -139,7 +145,7 @@ class User extends Authenticatable
     // Obtener líneas de producción accesibles para el usuario
     public function getAccessibleProductionLines()
     {
-        if ($this->id_profile <= 2) {
+        if ($this->id_profile <= 3) {
             return ProductionLine::all();
         }
         

@@ -8,6 +8,7 @@ const props = defineProps({
     dailyProgramId: Number,
     date: String,
     routeName: String,
+    machines: Array,
 });
 
 const emit = defineEmits(['close', 'saved']);
@@ -19,6 +20,7 @@ const form = useForm({
     start_time: '',
     end_time: '',
     description: '',
+    id_machine: null,
 });
 
 watch(() => props.show, (newVal) => {
@@ -31,6 +33,7 @@ watch(() => props.show, (newVal) => {
         form.start_time = now.toTimeString().slice(0, 5);
         form.end_time = '';
         form.description = '';
+        form.id_machine = null;
     }
 });
 
@@ -59,6 +62,17 @@ const close = () => {
             </div>
             
             <form @submit.prevent="submit" class="p-6 space-y-4">
+                <div v-if="machines && machines.length > 0">
+                    <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Máquina afectada (opcional)</label>
+                    <select v-model="form.id_machine" 
+                            class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1">
+                        <option :value="null">No afecta a máquina específica</option>
+                        <option v-for="machine in machines" :key="machine.id" :value="machine.id">
+                            {{ machine.title }}
+                        </option>
+                    </select>
+                </div>
+                
                 <div>
                     <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Hora de Inicio</label>
                     <input v-model="form.start_time" 

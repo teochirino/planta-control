@@ -260,6 +260,13 @@
                             <option v-for="line in lineas" :key="line.id" :value="line.id">{{ line.title }}</option>
                         </select>
                     </div>
+                    <div v-if="machines && machines.length > 0">
+                        <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Máquina afectada (opcional)</label>
+                        <select v-model="nuevoParo.machine_id" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1">
+                            <option :value="null">No afecta a máquina específica</option>
+                            <option v-for="machine in machines" :key="machine.id" :value="machine.id">{{ machine.title }}</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Inicio</label>
                         <input type="time" v-model="nuevoParo.start_time" class="w-full px-3 py-2 border border-[#d4dee8] rounded-md text-sm font-semibold mt-1">
@@ -321,6 +328,27 @@
             </div>
         </div>
         </div>
+        
+        <!-- Modal de Confirmación para Finalizar Paro -->
+        <div v-if="showConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-[#0b2a40]">Confirmar Finalización de Paro</h3>
+                    <p class="text-[#4e6070] mt-2">¿Finalizar este paro a las {{ confirmEndTime }}?</p>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button @click="cancelEndStrike" 
+                            class="px-4 py-2 bg-[#f4f7fa] text-[#4e6070] border border-[#d4dee8] rounded-md font-bold hover:bg-[#e8edf2]">
+                        Cancelar
+                    </button>
+                    <button @click="confirmEndStrike" 
+                            class="px-4 py-2 bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -328,8 +356,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { router, usePage, Link } from '@inertiajs/vue3'
 import axios from 'axios'
+import { useToast } from 'vue-toastification'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
 
+const toast = useToast()
 const page = usePage()
 const props = page.props
 
@@ -337,6 +367,7 @@ const props = page.props
 const workCenter = ref(props.workCenter || {})
 const lineas = ref(props.productionLines || [])
 const closedLinesData = ref(props.closedLines || [])
+const machines = ref(props.machines || [])
 const horasBase = ref(props.hours || [
     { start: '08:00', end: '09:00' }, { start: '09:00', end: '10:00' }, 
     { start: '10:00', end: '11:00' }, { start: '11:00', end: '12:00' },
@@ -356,6 +387,10 @@ const savingProgram = ref(false)
 const creandoPrograma = ref(false)
 const modalVisible = ref(false)
 const strikesList = ref([])
+let strikesInterval = null
+const showConfirmModal = ref(false)
+const confirmStrike = ref(null)
+const confirmEndTime = ref('')
 
 const programData = ref({
     programmed: props.dailyProgram?.programmed || 0,
@@ -374,6 +409,7 @@ const autoSaveTimeouts = {}
 
 const nuevoParo = ref({
     line_id: null,
+    machine_id: null,
     start_time: '',
     end_time: '',
     description: ''
@@ -553,11 +589,11 @@ const crearPrograma = async () => {
             advanced: nuevoPrograma.value.advanced,
             shift_hours: 9
         })
-        alert('Programa creado correctamente')
+        toast.success('Programa creado correctamente')
         router.reload()
     } catch (error) {
         console.error('Error:', error)
-        alert('Error al crear el programa: ' + (error.response?.data?.message || error.message))
+        toast.error('Error al crear el programa: ' + (error.response?.data?.message || error.message))
     } finally {
         creandoPrograma.value = false
     }
@@ -575,10 +611,10 @@ const guardarPrograma = async () => {
             advanced: programData.value.advanced,
             shift_hours: 9
         })
-        alert('Programa guardado')
+        toast.success('Programa guardado')
         router.reload()
     } catch (error) {
-        alert('Error al guardar: ' + (error.response?.data?.message || error.message))
+        toast.error('Error al guardar: ' + (error.response?.data?.message || error.message))
     } finally {
         savingProgram.value = false
     }
@@ -596,9 +632,14 @@ const loadStrikes = async () => {
 }
 
 const abrirModalParo = () => {
+    const now = new Date()
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    
     nuevoParo.value = {
         line_id: lineas.value[0]?.id || null,
-        start_time: new Date().toLocaleTimeString().slice(0, 5),
+        machine_id: null,
+        start_time: `${hours}:${minutes}`,
         end_time: '',
         description: ''
     }
@@ -608,8 +649,8 @@ const abrirModalParo = () => {
 const cerrarModalParo = () => { modalVisible.value = false }
 
 const registrarParo = async () => {
-    if (!nuevoParo.value.description) { alert('Describa el paro'); return }
-    if (!nuevoParo.value.start_time) { alert('Indique la hora de inicio'); return }
+    if (!nuevoParo.value.description) { toast.error('Describa el paro'); return }
+    if (!nuevoParo.value.start_time) { toast.error('Indique la hora de inicio'); return }
     try {
         await axios.post(route('supervisor.strikes.store'), {
             id_production_line: nuevoParo.value.line_id,
@@ -617,27 +658,50 @@ const registrarParo = async () => {
             date: selectedDate.value,
             start_time: nuevoParo.value.start_time,
             end_time: nuevoParo.value.end_time || null,
-            description: nuevoParo.value.description
+            description: nuevoParo.value.description,
+            id_machine: nuevoParo.value.machine_id || null
         })
-        alert('Paro registrado')
+        toast.success('Paro registrado correctamente')
         cerrarModalParo()
         loadStrikes()
     } catch (error) { 
         console.error('Error:', error)
-        alert('Error al registrar: ' + (error.response?.data?.message || error.message))
+        toast.error('Error al registrar: ' + (error.response?.data?.message || error.message))
     }
 }
 
-const finalizarParo = async (strike) => {
-    if (!confirm('¿Finalizar este paro?')) return
+const finalizarParo = (strike) => {
+    const now = new Date()
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    const endTime = `${hours}:${minutes}`
+    
+    confirmStrike.value = strike
+    confirmEndTime.value = endTime
+    showConfirmModal.value = true
+}
+
+const confirmEndStrike = async () => {
+    showConfirmModal.value = false
+    
     try {
-        await axios.put(route('supervisor.strikes.end', strike.id), {
-            end_time: new Date().toLocaleTimeString().slice(0, 5)
+        await axios.put(route('supervisor.strikes.end', confirmStrike.value.id), {
+            end_time: confirmEndTime.value
         })
+        toast.success('Paro finalizado correctamente')
         loadStrikes()
     } catch (error) { 
-        alert('Error: ' + (error.response?.data?.message || error.message))
+        toast.error('Error: ' + (error.response?.data?.message || error.message))
     }
+    
+    confirmStrike.value = null
+    confirmEndTime.value = ''
+}
+
+const cancelEndStrike = () => {
+    showConfirmModal.value = false
+    confirmStrike.value = null
+    confirmEndTime.value = ''
 }
 
 const cambiarFecha = () => {
@@ -674,7 +738,7 @@ const cerrarModalAjuste = () => {
 
 const guardarAjusteManual = async () => {
     if (!ajusteManual.value.reason) {
-        alert('Por favor ingresa el motivo del ajuste')
+        toast.error('Por favor ingresa el motivo del ajuste')
         return
     }
 
@@ -689,12 +753,12 @@ const guardarAjusteManual = async () => {
             notes: ajusteManual.value.notes
         })
 
-        alert('Ajuste registrado correctamente')
+        toast.success('Ajuste registrado correctamente')
         cerrarModalAjuste()
         router.reload()
     } catch (error) {
         console.error('Error al guardar ajuste:', error)
-        alert('Error al guardar el ajuste: ' + (error.response?.data?.message || error.message))
+        toast.error('Error al guardar el ajuste: ' + (error.response?.data?.message || error.message))
     } finally {
         guardandoAjuste.value = false
     }
@@ -703,7 +767,7 @@ const guardarAjusteManual = async () => {
 // Procesar balance
 const procesarBalance = async () => {
     if (!dailyProgramId.value) {
-        alert('No hay programa diario para procesar')
+        toast.error('No hay programa diario para procesar')
         return
     }
 
@@ -718,14 +782,14 @@ const procesarBalance = async () => {
         })
 
         if (response.data.success) {
-            alert('Balance procesado correctamente')
+            toast.success('Balance procesado correctamente')
             router.reload()
         } else {
-            alert('Error: ' + response.data.message)
+            toast.error('Error: ' + response.data.message)
         }
     } catch (error) {
         console.error('Error al procesar balance:', error)
-        alert('Error al procesar el balance')
+        toast.error('Error al procesar el balance')
     } finally {
         procesandoBalance.value = false
     }
@@ -765,7 +829,13 @@ onMounted(() => {
     clockInterval = setInterval(updateClock, 1000)
     initProduction()
     loadStrikes()
+    
+    // Recargar strikes cada 30 segundos para detectar cambios por Gerente de Mantenimiento
+    strikesInterval = setInterval(loadStrikes, 30000)
 })
 
-onUnmounted(() => { clearInterval(clockInterval) })
+onUnmounted(() => { 
+    clearInterval(clockInterval)
+    if (strikesInterval) clearInterval(strikesInterval)
+})
 </script>

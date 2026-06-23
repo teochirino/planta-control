@@ -149,6 +149,9 @@ class SupervisorController extends Controller
             ->with('productionLine', 'closedBy')
             ->get();
 
+        // Obtener máquinas del centro de trabajo
+        $machines = \App\Models\Machine::where('id_work_center', $workCenterId)->get();
+        
         return Inertia::render('Supervisor/DailyProduction', [
             'workCenter' => $workCenter,
             'productionLines' => $productionLines,
@@ -158,6 +161,7 @@ class SupervisorController extends Controller
             'hours' => $hours,
             'existingSchedules' => $schedules,
             'closedLines' => $closedLines,
+            'machines' => $machines,
         ]);
     }
     
@@ -291,6 +295,12 @@ class SupervisorController extends Controller
             'start_time' => 'required',
             'end_time' => 'nullable',
             'description' => 'required|string',
+            'id_machine' => 'nullable|exists:machines,id',
+        ]);
+        
+        \Log::info('Supervisor: Registrando paro', [
+            'id_machine' => $request->id_machine,
+            'all_data' => $request->all()
         ]);
         
         $strike = Strike::create([
@@ -300,7 +310,26 @@ class SupervisorController extends Controller
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
             'description' => $request->description,
+            'id_machine' => $request->id_machine,
         ]);
+        
+        \Log::info('Supervisor: Strike creado', [
+            'strike_id' => $strike->id,
+            'strike_id_machine' => $strike->id_machine
+        ]);
+        
+        // Si se seleccionó una máquina, crear breakdown y actualizar estado
+        if ($request->id_machine) {
+            \App\Models\Breakdown::create([
+                'id_machine' => $request->id_machine,
+                'id_user' => auth()->id(),
+                'reason' => $request->description,
+                'start_date' => now(),
+            ]);
+            
+            // Actualizar estado de máquina a averiado
+            \App\Models\Machine::where('id', $request->id_machine)->update(['state' => 'averiado']);
+        }
         
         return response()->json([
             'success' => true, 
@@ -324,6 +353,22 @@ class SupervisorController extends Controller
             $end = Carbon::parse($strike->end_time);
             $minutes = $start->diffInMinutes($end);
             $strike->update(['minutes' => $minutes]);
+        }
+        
+        // Si el strike tiene una máquina asociada, finalizar breakdown y actualizar estado
+        if ($strike->id_machine) {
+            $breakdown = \App\Models\Breakdown::where('id_machine', $strike->id_machine)
+                ->whereNull('end_date')
+                ->first();
+            
+            if ($breakdown) {
+                $breakdown->update([
+                    'end_date' => now(),
+                ]);
+            }
+            
+            // Actualizar estado de máquina a operativo
+            \App\Models\Machine::where('id', $strike->id_machine)->update(['state' => 'operativo']);
         }
         
         return response()->json([
@@ -483,14 +528,14 @@ class SupervisorController extends Controller
     }
 
     // Obtener paros por programa diario
-public function getStrikesByProgram($dailyProgramId)
-{
-    $strikes = Strike::with('productionLine')
-        ->where('id_daily_program', $dailyProgramId)
-        ->get();
-    
-    return response()->json($strikes);
-}
+    public function getStrikesByProgram($dailyProgramId)
+    {
+        $strikes = Strike::with('productionLine')
+            ->where('id_daily_program', $dailyProgramId)
+            ->get();
+        
+        return response()->json($strikes);
+    }
     
     // Corregir datos del operador
     public function correctOperatorData(Request $request)
