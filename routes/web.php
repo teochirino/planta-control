@@ -26,6 +26,8 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('admin.users.index');
         } elseif ($user->id_profile === 1) {
             return redirect()->route('gerencia.dashboard');
+        } elseif ($user->isGerenteProduccion()) {
+            return redirect()->route('gerencia.monitoreo');
         } elseif ($user->isIngenieroProcesos()) {
             return redirect()->route('ingeniero-procesos.index');
         } elseif ($user->isSupervisor()) {
@@ -87,11 +89,18 @@ Route::middleware('auth')->group(function () {
     // ============================================
     // MÓDULO GERENCIA
     // ============================================
-    Route::prefix('gerencia')->name('gerencia.')->middleware('gerencia')->group(function () {
-    Route::get('/dashboard', [GerenciaController::class, 'dashboard'])->name('dashboard');
-    Route::get('/monitoreo', [App\Http\Controllers\Gerencia\MonitoreoController::class, 'index'])->name('monitoreo');
-    Route::get('/monitoreo-data', [App\Http\Controllers\Gerencia\MonitoreoController::class, 'getData'])->name('monitoreo.data');
-});
+    Route::prefix('gerencia')->name('gerencia.')->group(function () {
+        // Rutas exclusivas para Gerencia (id_profile = 1)
+        Route::middleware('gerencia')->group(function () {
+            Route::get('/dashboard', [GerenciaController::class, 'dashboard'])->name('dashboard');
+        });
+        
+        // Rutas compartidas entre Gerencia y Gerente de Produccion
+        Route::middleware('gerencia_or_gerente_produccion')->group(function () {
+            Route::get('/monitoreo', [App\Http\Controllers\Gerencia\MonitoreoController::class, 'index'])->name('monitoreo');
+            Route::get('/monitoreo-data', [App\Http\Controllers\Gerencia\MonitoreoController::class, 'getData'])->name('monitoreo.data');
+        });
+    });
     
     // ============================================
     // MÓDULO CALIDAD

@@ -99,6 +99,12 @@ class User extends Authenticatable
         return $this->id_profile === 6;
     }
     
+    // Verificar si es gerente de produccion
+    public function isGerenteProduccion()
+    {
+        return $this->id_profile === 2;
+    }
+    
     // Verificar si el usuario puede ver un centro de trabajo
     public function canViewWorkCenter($workCenterId)
     {

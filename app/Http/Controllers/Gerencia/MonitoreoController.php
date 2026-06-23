@@ -12,6 +12,13 @@ class MonitoreoController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+        
+        // Renderizar vista según el perfil
+        if ($user->isGerenteProduccion()) {
+            return Inertia::render('GerenteProduccion/Monitoreo');
+        }
+        
         return Inertia::render('Gerencia/Monitoreo');
     }
     
