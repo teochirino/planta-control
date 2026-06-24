@@ -9,10 +9,13 @@ use App\Models\Schedule;
 use App\Models\Strike;
 use App\Models\ProductionAdjustment;
 use App\Models\Program;
+use App\Models\NotificationRecipient;
+use App\Mail\MachineBreakdownNotification;
 use App\Services\BalanceService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class SupervisorController extends Controller
@@ -329,6 +332,28 @@ class SupervisorController extends Controller
             
             // Actualizar estado de máquina a averiado
             \App\Models\Machine::where('id', $request->id_machine)->update(['state' => 'averiado']);
+
+            // Enviar notificación por email a Mantenimiento
+            $recipients = NotificationRecipient::where('name', 'Mantenimiento')
+                ->where('is_active', true)
+                ->get();
+
+            if ($recipients->isNotEmpty()) {
+                $machine = \App\Models\Machine::with('workCenter')->find($request->id_machine);
+                $productionLine = ProductionLine::find($request->id_production_line);
+                $user = auth()->user();
+
+                foreach ($recipients as $recipient) {
+                    Mail::to($recipient->email)->send(new MachineBreakdownNotification(
+                        $machine->title,
+                        $machine->workCenter->name,
+                        $productionLine->title,
+                        $user->name,
+                        $request->description,
+                        $request->start_time
+                    ));
+                }
+            }
         }
         
         return response()->json([
