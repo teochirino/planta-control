@@ -135,7 +135,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/machines/{id}/breakdowns', [\App\Http\Controllers\GerenteMantenimientoController::class, 'getMachineBreakdowns'])->name('machines.breakdowns');
         Route::get('/export', [\App\Http\Controllers\GerenteMantenimientoController::class, 'exportReport'])->name('export');
     });
-    
+
+    // Ruta específica para Gerente de Producción
+    Route::prefix('gerente-produccion')->name('gerente-produccion.')->middleware('gerente_produccion')->group(function () {
+        Route::get('/machines', [\App\Http\Controllers\GerenteMantenimientoController::class, 'machinesListProduccion'])->name('machines');
+    });
+
     // ============================================
     // MÓDULO INGENIERO DE PROCESOS
     // ============================================

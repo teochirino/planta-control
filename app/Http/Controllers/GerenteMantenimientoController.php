@@ -369,4 +369,16 @@ class GerenteMantenimientoController extends Controller
             'workCenters' => $workCenters,
         ]);
     }
+
+    // Listado de máquinas para Gerente de Producción (vista de solo lectura)
+    public function machinesListProduccion()
+    {
+        $workCenters = WorkCenter::with(['machines' => function($query) {
+            $query->orderBy('title');
+        }])->has('machines')->orderBy('name')->get();
+        
+        return Inertia::render('GerenteProduccion/MachinesList', [
+            'workCenters' => $workCenters,
+        ]);
+    }
 }
