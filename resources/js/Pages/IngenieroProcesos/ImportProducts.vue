@@ -92,14 +92,99 @@
                     <p class="mb-4 font-semibold" style="color: #0a7c3e;">
                         Puedes crear un programa con estos productos usando la fecha de vencimiento como fecha de entrega.
                     </p>
+                    
                     <button 
-                        @click="createProgram"
+                        @click="createProgram()"
                         :disabled="creatingProgram"
                         class="px-6 py-2 rounded-lg transition font-semibold text-sm disabled:opacity-50"
                         style="background: #0b2a40; color: #fff;"
                     >
                         {{ creatingProgram ? 'Creando programa...' : 'Crear Programa' }}
                     </button>
+                </div>
+                
+                <!-- Modal de confirmación para sábados -->
+                <div v-if="showSaturdayModal" class="fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.6);">
+                    <div class="rounded-xl p-8 max-w-2xl w-full mx-4" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2);">
+                        <!-- Header con icono -->
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="flex items-center justify-center w-16 h-16 rounded-full" style="background: #fff9e6; border: 2px solid #ffd700;">
+                                <svg class="w-8 h-8" style="color: #b8860b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold" style="color: #0b2a40;">Confirmar Inclusión de Sábados</h3>
+                                <p class="text-sm" style="color: #6a8090;">Se detectaron sábados en el cálculo de fases</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Información de sábados -->
+                        <div class="mb-6 rounded-lg p-5" style="background: #fff9e6; border: 1px solid #ffd700;">
+                            <p class="mb-4 font-semibold text-lg" style="color: #b8860b;">📅 Sábados detectados en el cálculo de fases:</p>
+                            <div v-for="phase in importData.phases_with_saturday" :key="phase.fase" class="mb-4 p-4 rounded-lg" style="background: #fff; border: 1px solid #ffd700;">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="px-3 py-1 rounded-full text-sm font-bold" style="background: #ffd700; color: #0b2a40;">{{ phase.fase }}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="p-3 rounded" style="background: #f4f7fa;">
+                                        <p class="text-xs font-semibold uppercase mb-1" style="color: #6a8090;">Sin incluir sábados</p>
+                                        <p class="text-lg font-bold" style="color: #0c1c28;">{{ phase.fecha_sin_sabado }}</p>
+                                    </div>
+                                    <div class="p-3 rounded" style="background: #e4f5ec;">
+                                        <p class="text-xs font-semibold uppercase mb-1" style="color: #6a8090;">Incluyendo sábados</p>
+                                        <p class="text-lg font-bold" style="color: #0a7c3e;">{{ phase.fecha_con_sabado }}</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3 p-3 rounded" style="background: #fce9e8; border: 1px solid #ebbab8;">
+                                    <p class="text-sm font-semibold" style="color: #ba2418;">
+                                        🗓️ Sábados que se saltan: <strong>{{ phase.sabados_saltados.join(', ') }}</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pregunta de confirmación -->
+                        <div class="mb-6 p-4 rounded-lg text-center" style="background: #f4f7fa; border: 1px solid #e8eff4;">
+                            <p class="text-lg font-semibold" style="color: #0b2a40;">
+                                ¿Desea incluir los días sábado como días laborables en este programa de producción?
+                            </p>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="flex gap-4 justify-center">
+                            <button 
+                                @click="showSaturdayModal = false"
+                                class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2"
+                                style="background: #e8eff4; color: #0b2a40; border: 1px solid #d4dee8;"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Cancelar
+                            </button>
+                            <button 
+                                @click="includeSaturdays = false; showSaturdayModal = false"
+                                class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2"
+                                style="background: #ba2418; color: #fff;"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                </svg>
+                                No Incluir Sábados
+                            </button>
+                            <button 
+                                @click="includeSaturdays = true; showSaturdayModal = false"
+                                class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2"
+                                style="background: #0a7c3e; color: #fff;"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Incluir Sábados
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Mensaje de programa creado -->
@@ -166,6 +251,8 @@ const file = ref(null);
 const processing = ref(false);
 const creatingProgram = ref(false);
 const programCreated = ref(page.props.flash?.program_created || null);
+const showSaturdayModal = ref(false);
+const includeSaturdays = ref(false);
 
 // Obtener datos de importación del flash message
 const importData = ref(page.props.flash?.import_data || null);
@@ -174,6 +261,10 @@ const importData = ref(page.props.flash?.import_data || null);
 watch(() => page.props.flash, (newFlash) => {
     if (newFlash?.import_data) {
         importData.value = newFlash.import_data;
+        // Mostrar modal automáticamente si hay sábados detectados
+        if (newFlash.import_data.has_saturday_in_phases) {
+            showSaturdayModal.value = true;
+        }
     }
     if (newFlash?.program_created) {
         programCreated.value = newFlash.program_created;
@@ -221,6 +312,7 @@ function submit() {
 function createProgram() {
     console.log('createProgram called');
     console.log('importData.value:', importData.value);
+    console.log('includeSaturdays:', includeSaturdays.value);
     
     if (!importData.value || !importData.value.data) {
         console.log('No import data or data array');
@@ -228,6 +320,7 @@ function createProgram() {
     }
     
     creatingProgram.value = true;
+    showSaturdayModal.value = false;
     
     // Filtrar solo los productos que existen
     const validProducts = importData.value.data.filter(item => item.existe);
@@ -236,6 +329,7 @@ function createProgram() {
     
     router.post(route('ingeniero-procesos.import.products.create'), {
         data: validProducts,
+        include_saturdays: includeSaturdays.value,
     }, {
         onSuccess: () => {
             console.log('Program created successfully');

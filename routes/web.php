@@ -176,6 +176,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/daily-programs/{id}/edit', [\App\Http\Controllers\IngenieroProcesosController::class, 'editDailyProgram'])->name('daily-programs.edit');
         Route::put('/daily-programs/{id}', [\App\Http\Controllers\IngenieroProcesosController::class, 'updateDailyProgram'])->name('daily-programs.update');
 
+        // Actualizar fecha de entrega
+        Route::post('/check-saturdays', [\App\Http\Controllers\IngenieroProcesosController::class, 'checkSaturdayInPhases'])->name('check-saturdays');
+        Route::put('/{program}/update-delivery-date', [\App\Http\Controllers\IngenieroProcesosController::class, 'updateDeliveryDate'])->name('update-delivery-date');
+
         // Ruta dinámica de programas (debe ir al final, después de las rutas específicas)
         Route::get('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'show'])->name('show');
         Route::delete('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'destroy'])->name('destroy');

@@ -66,12 +66,12 @@ class Program extends Model
         return $code;
     }
     
-    public static function calculatePhaseDates($deliveryDate)
+    public static function calculatePhaseDates($deliveryDate, $includeSaturdays = false)
     {
         $phase4 = Carbon::parse($deliveryDate);
-        $phase3 = self::subtractWorkingDays($phase4, 1);
-        $phase2 = self::subtractWorkingDays($phase3, 1);
-        $phase1 = self::subtractWorkingDays($phase2, 1);
+        $phase3 = self::subtractWorkingDays($phase4, 1, $includeSaturdays);
+        $phase2 = self::subtractWorkingDays($phase3, 1, $includeSaturdays);
+        $phase1 = self::subtractWorkingDays($phase2, 1, $includeSaturdays);
         
         return [
             'fase1' => $phase1,
@@ -81,15 +81,24 @@ class Program extends Model
         ];
     }
     
-    private static function subtractWorkingDays($date, $days)
+    private static function subtractWorkingDays($date, $days, $includeSaturdays = false)
     {
         $current = $date->copy();
         $count = 0;
         
         while ($count < $days) {
             $current->subDay();
-            if (!$current->isWeekend()) {
-                $count++;
+            $isWeekend = $current->isWeekend();
+            // Si includeSaturdays es true, solo excluimos domingos
+            if ($includeSaturdays) {
+                if (!$current->isSunday()) {
+                    $count++;
+                }
+            } else {
+                // Comportamiento original: excluir sábados y domingos
+                if (!$isWeekend) {
+                    $count++;
+                }
             }
         }
         

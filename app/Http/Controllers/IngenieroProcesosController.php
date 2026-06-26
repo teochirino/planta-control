@@ -231,6 +231,147 @@ class IngenieroProcesosController extends Controller
     }
     
     // ============================================
+    // ACTUALIZAR FECHA DE ENTREGA
+    // ============================================
+    
+    public function updateDeliveryDate(Request $request, Program $program)
+    {
+        $request->validate([
+            'fecha_entrega' => 'required|date',
+            'include_saturdays' => 'sometimes|boolean',
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            // Calcular nuevas fases
+            $includeSaturdays = $request->input('include_saturdays', false);
+            $phaseDates = Program::calculatePhaseDates($request->fecha_entrega, $includeSaturdays);
+            
+            // Actualizar el programa
+            $program->update([
+                'fecha_entrega' => $request->fecha_entrega,
+                'fecha_fase1' => $phaseDates['fase1']->format('Y-m-d'),
+                'fecha_fase2' => $phaseDates['fase2']->format('Y-m-d'),
+                'fecha_fase3' => $phaseDates['fase3']->format('Y-m-d'),
+                'fecha_fase4' => $phaseDates['fase4']->format('Y-m-d'),
+            ]);
+            
+            // Eliminar daily programs y schedules existentes para este programa
+            $dailyPrograms = \App\Models\DailyProgram::where('program_id', $program->id)->get();
+            foreach ($dailyPrograms as $dailyProgram) {
+                \App\Models\Schedule::where('id_daily_program', $dailyProgram->id)->delete();
+            }
+            \App\Models\DailyProgram::where('program_id', $program->id)->delete();
+            
+            // Recrear daily programs y schedules con las nuevas fechas
+            $phases = [
+                1 => $phaseDates['fase1']->format('Y-m-d'),
+                2 => $phaseDates['fase2']->format('Y-m-d'),
+                3 => $phaseDates['fase3']->format('Y-m-d'),
+                4 => $phaseDates['fase4']->format('Y-m-d'),
+            ];
+            
+            // Obtener detalles del programa para recalcular piezas
+            $programDetails = ProgramDetail::where('program_id', $program->id)->get();
+            $modelos = $programDetails->pluck('modelo')->unique();
+            $allProducts = \App\Models\Product::whereIn('modelo', $modelos)->where('piezas', '>', 0)->get();
+            
+            foreach ($phases as $phaseNumber => $phaseDate) {
+                $workCenters = \App\Models\WorkCenter::where('phase', $phaseNumber)->get();
+                
+                foreach ($workCenters as $workCenter) {
+                    $centerPiezas = 0;
+                    foreach ($programDetails as $detail) {
+                        $productsForModel = $allProducts->where('modelo', $detail->modelo);
+                        foreach ($productsForModel as $product) {
+                            if ($product->id_work_center == $workCenter->id) {
+                                $centerPiezas += $product->piezas * $detail->cantidad_solicitada;
+                            }
+                        }
+                    }
+                    
+                    if ($centerPiezas > 0) {
+                        $dailyProgram = \App\Models\DailyProgram::create([
+                            'date' => $phaseDate,
+                            'id_work_center' => $workCenter->id,
+                            'shift' => 'matutino',
+                            'programmed' => $centerPiezas,
+                            'backwardness' => 0,
+                            'advanced' => 0,
+                            'shift_hours' => 9.0,
+                            'program_id' => $program->id,
+                        ]);
+                        
+                        $productionLines = $workCenter->productionLines;
+                        $this->generateSchedulesForProgram($dailyProgram, $productionLines);
+                    }
+                }
+            }
+            
+            DB::commit();
+            
+            return back()->with('success', 'Fecha de entrega actualizada exitosamente.');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al actualizar la fecha de entrega: ' . $e->getMessage());
+        }
+    }
+    
+    public function checkSaturdayInPhases(Request $request)
+    {
+        $request->validate([
+            'fecha_entrega' => 'required|date',
+        ]);
+        
+        try {
+            // Calcular fases sin incluir sábados
+            $phaseDates = Program::calculatePhaseDates($request->fecha_entrega, false);
+            
+            // Calcular fases incluyendo sábados
+            $phaseDatesWithSaturdays = Program::calculatePhaseDates($request->fecha_entrega, true);
+            
+            // Comparar para detectar sábados
+            $hasSaturdayInPhases = false;
+            $phasesWithSaturday = [];
+            
+            foreach ($phaseDates as $phaseName => $dateWithoutSaturday) {
+                $dateWithSaturday = $phaseDatesWithSaturdays[$phaseName];
+                
+                if ($dateWithoutSaturday->format('Y-m-d') !== $dateWithSaturday->format('Y-m-d')) {
+                    $hasSaturdayInPhases = true;
+                    
+                    $current = $dateWithSaturday->copy();
+                    $saturdaysFound = [];
+                    
+                    while ($current->gt($dateWithoutSaturday)) {
+                        if ($current->isSaturday()) {
+                            $saturdaysFound[] = $current->format('d/m/Y');
+                        }
+                        $current->subDay();
+                    }
+                    
+                    $phasesWithSaturday[] = [
+                        'fase' => $phaseName,
+                        'fecha_sin_sabado' => $dateWithoutSaturday->format('d/m/Y'),
+                        'fecha_con_sabado' => $dateWithSaturday->format('d/m/Y'),
+                        'sabados_saltados' => $saturdaysFound,
+                    ];
+                }
+            }
+            
+            return response()->json([
+                'has_saturday_in_phases' => $hasSaturdayInPhases,
+                'phases_with_saturday' => $phasesWithSaturday,
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    
+    // ============================================
     // CRUD DE PRODUCTOS
     // ============================================
     
@@ -476,6 +617,62 @@ class IngenieroProcesosController extends Controller
                 'no_coincidencias' => $noCoincidencias,
             ]);
             
+            // Detectar si hay sábados entre las fases (solo si todos los productos existen)
+            $hasSaturdayInPhases = false;
+            $phasesWithSaturday = [];
+            
+            if ($noCoincidencias === 0 && !empty($data)) {
+                // Obtener la fecha de vencimiento del primer registro
+                $fechaVencimiento = $data[0]['fecha_vencimiento'];
+                
+                // Convertir la fecha de Excel a formato Y-m-d
+                if (is_numeric($fechaVencimiento)) {
+                    $fechaEntrega = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($fechaVencimiento)
+                        ->format('Y-m-d');
+                } else {
+                    $fechaEntrega = \Carbon\Carbon::parse($fechaVencimiento)->format('Y-m-d');
+                }
+                
+                // Calcular fases sin incluir sábados (comportamiento actual)
+                $phaseDates = Program::calculatePhaseDates($fechaEntrega, false);
+                
+                // Calcular fases incluyendo sábados para comparación
+                $phaseDatesWithSaturdays = Program::calculatePhaseDates($fechaEntrega, true);
+                
+                // Comparar las dos calculaciones para detectar sábados que se están saltando
+                foreach ($phaseDates as $phaseName => $dateWithoutSaturday) {
+                    $dateWithSaturday = $phaseDatesWithSaturdays[$phaseName];
+                    
+                    // Si las fechas son diferentes, significa que hay sábados en medio
+                    if ($dateWithoutSaturday->format('Y-m-d') !== $dateWithSaturday->format('Y-m-d')) {
+                        $hasSaturdayInPhases = true;
+                        
+                        // Encontrar los sábados entre las dos fechas
+                        $current = $dateWithSaturday->copy();
+                        $saturdaysFound = [];
+                        
+                        while ($current->gt($dateWithoutSaturday)) {
+                            if ($current->isSaturday()) {
+                                $saturdaysFound[] = $current->format('d/m/Y');
+                            }
+                            $current->subDay();
+                        }
+                        
+                        $phasesWithSaturday[] = [
+                            'fase' => $phaseName,
+                            'fecha_sin_sabado' => $dateWithoutSaturday->format('d/m/Y'),
+                            'fecha_con_sabado' => $dateWithSaturday->format('d/m/Y'),
+                            'sabados_saltados' => $saturdaysFound,
+                        ];
+                    }
+                }
+                
+                \Log::info('Saturday detection:', [
+                    'has_saturday' => $hasSaturdayInPhases,
+                    'phases_with_saturday' => $phasesWithSaturday,
+                ]);
+            }
+            
             return back()->with([
                 'success' => 'Archivo procesado exitosamente.',
                 'import_data' => [
@@ -484,6 +681,12 @@ class IngenieroProcesosController extends Controller
                     'no_coincidencias' => $noCoincidencias,
                     'modelos_no_existentes' => array_values($modelosNoExistentes),
                     'data' => $data,
+                    'has_saturday_in_phases' => $hasSaturdayInPhases,
+                    'phases_with_saturday' => $phasesWithSaturday,
+                    'fecha_entrega' => $noCoincidencias === 0 && !empty($data) ? 
+                        (is_numeric($data[0]['fecha_vencimiento']) ? 
+                            \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data[0]['fecha_vencimiento'])->format('Y-m-d') :
+                            \Carbon\Carbon::parse($data[0]['fecha_vencimiento'])->format('Y-m-d')) : null,
                 ],
                 'program_created' => null,
             ]);
@@ -506,6 +709,7 @@ class IngenieroProcesosController extends Controller
                 'data.*.modelo' => 'required|string',
                 'data.*.cantidad' => 'required|numeric|min:1',
                 'data.*.fecha_vencimiento' => 'required',
+                'include_saturdays' => 'sometimes|boolean',
             ]);
             
             \Log::info('Validation passed');
@@ -537,9 +741,10 @@ class IngenieroProcesosController extends Controller
             // NOTA: No validamos fecha mínima para importación desde Excel
             // ya que el usuario está importando datos con una fecha específica
             
-            // Calcular fechas de fases
-            $phaseDates = Program::calculatePhaseDates($fechaEntrega);
-            \Log::info('Phase dates calculated:', ['dates' => $phaseDates]);
+            // Calcular fechas de fases (incluyendo sábados si el usuario lo seleccionó)
+            $includeSaturdays = $request->input('include_saturdays', false);
+            $phaseDates = Program::calculatePhaseDates($fechaEntrega, $includeSaturdays);
+            \Log::info('Phase dates calculated:', ['dates' => $phaseDates, 'include_saturdays' => $includeSaturdays]);
             
             // Generar código del programa: fecha de vencimiento + 3 números aleatorios
             $codigo = \Carbon\Carbon::parse($fechaEntrega)->format('d-m-Y') . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);

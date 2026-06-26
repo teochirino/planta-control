@@ -31,11 +31,16 @@
                             <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.created_at_formatted }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-2">
-                                    <Link :href="route('ingeniero-procesos.show', program.id)" 
+                                    <Link :href="route('ingeniero-procesos.show', program.id)"
                                           class="px-3 py-1.5 bg-[#174060] text-white border border-[#174060] rounded text-xs font-bold hover:opacity-85">
                                         👁️ Ver
                                     </Link>
-                                    <button 
+                                    <button
+                                        @click="showEditDateDialog(program)"
+                                        class="px-3 py-1.5 bg-[#f4f7fa] text-[#0a7c3e] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#0a7c3e] hover:text-white hover:border-[#0a7c3e]">
+                                        📅 Editar Fecha
+                                    </button>
+                                    <button
                                         @click="showDeleteDialog(program)"
                                         class="px-3 py-1.5 bg-[#f4f7fa] text-[#ba2418] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#ba2418] hover:text-white hover:border-[#ba2418]">
                                         🗑️ Borrar
@@ -61,6 +66,127 @@
             @confirm="handleDelete"
             @cancel="dialog.show = false"
         />
+
+        <!-- Modal para editar fecha de entrega -->
+        <div v-if="editDateDialog.show" class="fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.6);">
+            <div class="rounded-xl p-8 max-w-md w-full mx-4" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2);">
+                <h3 class="text-2xl font-bold mb-4" style="color: #0b2a40;">Editar Fecha de Entrega</h3>
+                <p class="mb-4" style="color: #6a8090;">
+                    Programa: <strong>{{ editDateDialog.program?.codigo }}</strong>
+                </p>
+                <p class="mb-4" style="color: #6a8090;">
+                    Fecha actual: <strong>{{ editDateDialog.program?.fecha_entrega_formatted }}</strong>
+                </p>
+                <div class="mb-6">
+                    <label class="block font-semibold mb-2" style="color: #4e6070;">Nueva Fecha de Entrega</label>
+                    <input
+                        v-model="editDateDialog.newDate"
+                        type="date"
+                        class="w-full px-4 py-2 rounded-lg focus:outline-none"
+                        style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;"
+                    >
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button
+                        @click="editDateDialog.show = false"
+                        class="px-4 py-2 rounded-lg transition font-semibold text-sm"
+                        style="background: #e8eff4; color: #0b2a40; border: 1px solid #d4dee8;"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        @click="checkSaturdaysAndUpdate"
+                        :disabled="editDateDialog.updating"
+                        class="px-4 py-2 rounded-lg transition font-semibold text-sm disabled:opacity-50"
+                        style="background: #0b2a40; color: #fff;"
+                    >
+                        {{ editDateDialog.updating ? 'Verificando...' : 'Continuar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de confirmación para sábados -->
+        <div v-if="saturdayModal.show" class="fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.6);">
+            <div class="rounded-xl p-8 max-w-2xl w-full mx-4" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2);">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="flex items-center justify-center w-16 h-16 rounded-full" style="background: #fff9e6; border: 2px solid #ffd700;">
+                        <svg class="w-8 h-8" style="color: #b8860b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold" style="color: #0b2a40;">Confirmar Inclusión de Sábados</h3>
+                        <p class="text-sm" style="color: #6a8090;">Se detectaron sábados en el cálculo de fases</p>
+                    </div>
+                </div>
+
+                <div class="mb-6 rounded-lg p-5" style="background: #fff9e6; border: 1px solid #ffd700;">
+                    <p class="mb-4 font-semibold text-lg" style="color: #b8860b;">📅 Sábados detectados en el cálculo de fases:</p>
+                    <div v-for="phase in saturdayModal.phases" :key="phase.fase" class="mb-4 p-4 rounded-lg" style="background: #fff; border: 1px solid #ffd700;">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-3 py-1 rounded-full text-sm font-bold" style="background: #ffd700; color: #0b2a40;">{{ phase.fase }}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-3 rounded" style="background: #f4f7fa;">
+                                <p class="text-xs font-semibold uppercase mb-1" style="color: #6a8090;">Sin incluir sábados</p>
+                                <p class="text-lg font-bold" style="color: #0c1c28;">{{ phase.fecha_sin_sabado }}</p>
+                            </div>
+                            <div class="p-3 rounded" style="background: #e4f5ec;">
+                                <p class="text-xs font-semibold uppercase mb-1" style="color: #6a8090;">Incluyendo sábados</p>
+                                <p class="text-lg font-bold" style="color: #0a7c3e;">{{ phase.fecha_con_sabado }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 p-3 rounded" style="background: #fce9e8; border: 1px solid #ebbab8;">
+                            <p class="text-sm font-semibold" style="color: #ba2418;">
+                                🗓️ Sábados que se saltan: <strong>{{ phase.sabados_saltados.join(', ') }}</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 p-4 rounded-lg text-center" style="background: #f4f7fa; border: 1px solid #e8eff4;">
+                    <p class="text-lg font-semibold" style="color: #0b2a40;">
+                        ¿Desea incluir los días sábado como días laborables en este programa de producción?
+                    </p>
+                </div>
+
+                <div class="flex gap-4 justify-center">
+                    <button
+                        @click="saturdayModal.show = false"
+                        class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2"
+                        style="background: #e8eff4; color: #0b2a40; border: 1px solid #d4dee8;"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Cancelar
+                    </button>
+                    <button
+                        @click="updateDeliveryDate(false)"
+                        :disabled="saturdayModal.updating"
+                        class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2 disabled:opacity-50"
+                        style="background: #ba2418; color: #fff;"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                        </svg>
+                        {{ saturdayModal.updating ? 'Actualizando...' : 'No Incluir Sábados' }}
+                    </button>
+                    <button
+                        @click="updateDeliveryDate(true)"
+                        :disabled="saturdayModal.updating"
+                        class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2 disabled:opacity-50"
+                        style="background: #0a7c3e; color: #fff;"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        {{ saturdayModal.updating ? 'Actualizando...' : 'Incluir Sábados' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -86,6 +212,20 @@ const dialog = ref({
     programToDelete: null
 });
 
+const editDateDialog = ref({
+    show: false,
+    program: null,
+    newDate: '',
+    updating: false
+});
+
+const saturdayModal = ref({
+    show: false,
+    phases: [],
+    updating: false,
+    includeSaturdays: false
+});
+
 function showDeleteDialog(program) {
     dialog.value = {
         show: true,
@@ -96,15 +236,84 @@ function showDeleteDialog(program) {
     };
 }
 
+function showEditDateDialog(program) {
+    editDateDialog.value = {
+        show: true,
+        program: program,
+        newDate: program.fecha_entrega,
+        updating: false
+    };
+}
+
 function handleDelete() {
     if (!dialog.value.programToDelete) return;
-    
+
     dialog.value.show = false;
-    
+
     router.delete(route('ingeniero-procesos.destroy', dialog.value.programToDelete.id), {
         onError: (errors) => {
             toast.error('Error al eliminar el programa');
         },
+    });
+}
+
+async function checkSaturdaysAndUpdate() {
+    if (!editDateDialog.value.newDate) {
+        toast.error('Por favor seleccione una fecha');
+        return;
+    }
+
+    editDateDialog.value.updating = true;
+
+    try {
+        const response = await fetch(route('ingeniero-procesos.check-saturdays'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                fecha_entrega: editDateDialog.value.newDate
+            })
+        });
+
+        const data = await response.json();
+
+        editDateDialog.value.updating = false;
+        editDateDialog.value.show = false;
+
+        if (data.has_saturday_in_phases) {
+            saturdayModal.value = {
+                show: true,
+                phases: data.phases_with_saturday,
+                updating: false,
+                includeSaturdays: false
+            };
+        } else {
+            // No hay sábados, actualizar directamente
+            updateDeliveryDate(false);
+        }
+    } catch (error) {
+        editDateDialog.value.updating = false;
+        toast.error('Error al verificar sábados');
+    }
+}
+
+function updateDeliveryDate(includeSaturdays) {
+    saturdayModal.value.updating = true;
+
+    router.put(route('ingeniero-procesos.update-delivery-date', editDateDialog.value.program.id), {
+        fecha_entrega: editDateDialog.value.newDate,
+        include_saturdays: includeSaturdays
+    }, {
+        onSuccess: () => {
+            saturdayModal.value.show = false;
+            saturdayModal.value.updating = false;
+            editDateDialog.value.show = false;
+        },
+        onError: (errors) => {
+            saturdayModal.value.updating = false;
+        }
     });
 }
 
