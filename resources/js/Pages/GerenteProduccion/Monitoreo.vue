@@ -26,7 +26,7 @@
                     </div>
                     
                     <!-- KPIs -->
-                    <div class="grid grid-cols-3 gap-2 p-3 border-b">
+                    <div class="grid grid-cols-4 gap-2 p-3 border-b">
                         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
                             <div class="text-[10px] text-gray-500">Programado</div>
                             <div class="text-sm font-bold">{{ formatNumber(wc.kpis.programmed) }}</div>
@@ -47,6 +47,12 @@
                             <div class="text-[10px] text-gray-500">Eficiencia</div>
                             <div class="text-sm font-bold" :class="getEfficiencyClass(wc.kpis.efficiency)">
                                 {{ wc.kpis.efficiency }}%
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
+                            <div class="text-[10px] text-gray-500">OEE</div>
+                            <div class="text-sm font-bold" :class="getOEEClass(wc.kpis.oee)">
+                                {{ wc.kpis.oee }}%
                             </div>
                         </div>
                         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
@@ -109,6 +115,12 @@ const formatNumber = (num) => {
 const getEfficiencyClass = (efficiency) => {
     if (efficiency >= 95) return 'text-green-600'
     if (efficiency >= 80) return 'text-yellow-600'
+    return 'text-red-600'
+}
+
+const getOEEClass = (oee) => {
+    if (oee >= 85) return 'text-green-600'
+    if (oee >= 60) return 'text-yellow-600'
     return 'text-red-600'
 }
 
