@@ -321,37 +321,42 @@ class IngenieroProcesosController extends Controller
     
     public function checkSaturdayInPhases(Request $request)
     {
+        \Log::info('checkSaturdayInPhases called', [
+            'fecha_entrega' => $request->fecha_entrega,
+            'all_data' => $request->all()
+        ]);
+
         $request->validate([
             'fecha_entrega' => 'required|date',
         ]);
-        
+
         try {
             // Calcular fases sin incluir sábados
             $phaseDates = Program::calculatePhaseDates($request->fecha_entrega, false);
-            
+
             // Calcular fases incluyendo sábados
             $phaseDatesWithSaturdays = Program::calculatePhaseDates($request->fecha_entrega, true);
-            
+
             // Comparar para detectar sábados
             $hasSaturdayInPhases = false;
             $phasesWithSaturday = [];
-            
+
             foreach ($phaseDates as $phaseName => $dateWithoutSaturday) {
                 $dateWithSaturday = $phaseDatesWithSaturdays[$phaseName];
-                
+
                 if ($dateWithoutSaturday->format('Y-m-d') !== $dateWithSaturday->format('Y-m-d')) {
                     $hasSaturdayInPhases = true;
-                    
+
                     $current = $dateWithSaturday->copy();
                     $saturdaysFound = [];
-                    
+
                     while ($current->gt($dateWithoutSaturday)) {
                         if ($current->isSaturday()) {
                             $saturdaysFound[] = $current->format('d/m/Y');
                         }
                         $current->subDay();
                     }
-                    
+
                     $phasesWithSaturday[] = [
                         'fase' => $phaseName,
                         'fecha_sin_sabado' => $dateWithoutSaturday->format('d/m/Y'),
@@ -360,13 +365,22 @@ class IngenieroProcesosController extends Controller
                     ];
                 }
             }
-            
+
+            \Log::info('checkSaturdayInPhases success', [
+                'has_saturday_in_phases' => $hasSaturdayInPhases,
+                'phases_count' => count($phasesWithSaturday)
+            ]);
+
             return response()->json([
                 'has_saturday_in_phases' => $hasSaturdayInPhases,
                 'phases_with_saturday' => $phasesWithSaturday,
             ]);
-            
+
         } catch (\Exception $e) {
+            \Log::error('checkSaturdayInPhases error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }

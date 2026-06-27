@@ -270,14 +270,24 @@ async function checkSaturdaysAndUpdate() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 fecha_entrega: editDateDialog.value.newDate
             })
         });
 
+        console.log('Response status:', response.status);
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error response:', errorData);
+            throw new Error(errorData.error || errorData.message || 'Error en la respuesta del servidor');
+        }
+
         const data = await response.json();
+        console.log('Success response:', data);
 
         editDateDialog.value.updating = false;
         editDateDialog.value.show = false;
@@ -295,7 +305,8 @@ async function checkSaturdaysAndUpdate() {
         }
     } catch (error) {
         editDateDialog.value.updating = false;
-        toast.error('Error al verificar sábados');
+        console.error('Error al verificar sábados:', error);
+        toast.error('Error al verificar sábados: ' + error.message);
     }
 }
 
