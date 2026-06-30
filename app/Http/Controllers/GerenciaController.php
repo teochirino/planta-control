@@ -252,8 +252,10 @@ class GerenciaController extends Controller
         
         // Determinar estado basado en paros activos
         $activeStrike = $program->strikes()
-            ->whereNull('end_time')
-            ->orWhere('end_time', '>=', now())
+            ->where(function($query) {
+                $query->whereNull('end_time')
+                      ->orWhere('end_time', '>=', now());
+            })
             ->first();
         
         if ($activeStrike) {
@@ -269,12 +271,55 @@ class GerenciaController extends Controller
             ];
         }
         
-        // Verificar cumplimiento
-        $totalProduced = $program->schedules->sum('produced');
+        // Calcular estado basado en producción acumulada
         $totalToProduced = max($program->programmed + $program->backwardness - $program->advanced, 0);
-        $compliance = $totalToProduced > 0 ? ($totalProduced / $totalToProduced) * 100 : 0;
+        $shiftHours = $program->shift_hours ?? 8;
+        $totalSchedules = $program->schedules->count();
         
-        if ($compliance >= 95) {
+        // Calcular producción real acumulada de todos los schedules
+        $cumulativeProduced = 0;
+        $schedulesWithProduction = 0;
+        foreach ($program->schedules as $schedule) {
+            $cumulativeProduced += $schedule->produced;
+            if ($schedule->produced > 0) {
+                $schedulesWithProduction++;
+            }
+        }
+        
+        // Si no hay producción registrada, usar total_produced del programa
+        if ($cumulativeProduced == 0 && $program->total_produced > 0) {
+            $cumulativeProduced = $program->total_produced;
+        }
+        
+        // Verificar si el turno aún no ha iniciado (no hay schedules con producción)
+        if ($schedulesWithProduction == 0 && $totalSchedules > 0) {
+            return [
+                'status' => 'idle',
+                'color' => 'gray',
+                'label' => 'Sin datos',
+                'time' => '00:00:00',
+                'message' => 'El turno aún no ha iniciado.',
+            ];
+        }
+        
+        // Calcular producción esperada basada en el número de schedules con producción
+        // Si hay schedules con producción, usar ese número como horas transcurridas
+        $hoursElapsed = $schedulesWithProduction > 0 ? $schedulesWithProduction : 1;
+        $expectedPerHour = $shiftHours > 0 ? $totalToProduced / $shiftHours : 0;
+        $cumulativeExpected = round($expectedPerHour * $hoursElapsed, 2);
+        
+        // Verificar si el turno ya terminó (todos los schedules tienen producción)
+        if ($schedulesWithProduction >= $totalSchedules && $totalSchedules > 0) {
+            // Usar cumplimiento final del turno
+            $compliance = $totalToProduced > 0 ? ($cumulativeProduced / $totalToProduced) * 100 : 0;
+        } else {
+            // Usar cumplimiento acumulado hasta el momento
+            $compliance = $cumulativeExpected > 0 ? ($cumulativeProduced / $cumulativeExpected) * 100 : 0;
+        }
+        
+        // Aplicar umbrales solicitados por el usuario
+        // Verde: >=90%, Amarillo: 70-89%, Rojo: <70%
+        if ($compliance >= 90) {
             return [
                 'status' => 'optimal',
                 'color' => 'green',
@@ -282,7 +327,7 @@ class GerenciaController extends Controller
                 'time' => now()->format('H:i:s'),
                 'message' => 'Operación normal y estable',
             ];
-        } elseif ($compliance >= 80) {
+        } elseif ($compliance >= 70) {
             return [
                 'status' => 'warning',
                 'color' => 'yellow',

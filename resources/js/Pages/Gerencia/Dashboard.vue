@@ -260,7 +260,7 @@ function formatNumber(value) {
     return new Intl.NumberFormat('es-MX').format(value || 0);
 }
 
-// Auto-refresh cada 30 segundos
+// Auto-refresh cada 5 minutos
 let refreshInterval = null;
 
 onMounted(() => {
@@ -268,7 +268,7 @@ onMounted(() => {
     clockInterval = setInterval(updateClock, 1000);
     refreshInterval = setInterval(() => {
         router.reload({ only: ['kpis', 'metrics', 'areaStatus', 'qualityMetrics', 'recentCompliance'] });
-    }, 30000);
+    }, 300000); // 5 minutos (300,000 ms)
 });
 
 onUnmounted(() => {
