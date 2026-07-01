@@ -108,7 +108,7 @@
 
         <!-- Modal de confirmación para sábados -->
         <div v-if="saturdayModal.show" class="fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.6);">
-            <div class="rounded-xl max-w-2xl w-full mx-4 flex flex-col" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2); max-height: 90vh;">
+            <div class="rounded-xl max-w-2xl w-full mx-4 flex flex-col" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2); max-height: 60vh;">
                 <div class="p-8 flex-1 overflow-y-auto">
                     <div class="flex items-center gap-4 mb-6">
                         <div class="flex items-center justify-center w-16 h-16 rounded-full" style="background: #fff9e6; border: 2px solid #ffd700;">
