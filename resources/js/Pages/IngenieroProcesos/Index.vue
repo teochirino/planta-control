@@ -107,39 +107,43 @@
         </div>
 
         <!-- Modal de confirmación para sábados -->
-        <div v-if="saturdayModal.show" class="fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.6);">
-            <div class="rounded-xl max-w-2xl w-full mx-4 flex flex-col" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2); max-height: 60vh;">
-                <div class="p-8 flex-1 overflow-y-auto">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="flex items-center justify-center w-16 h-16 rounded-full" style="background: #fff9e6; border: 2px solid #ffd700;">
-                            <svg class="w-8 h-8" style="color: #b8860b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-if="saturdayModal.show" class="fixed inset-0 flex items-center justify-center z-50 p-4" style="background: rgba(0,0,0,0.6); width: 100vw; height: 100vh; box-sizing: border-box;">
+            <div class="rounded-xl flex flex-col" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2); max-height: calc(100vh - 40px); width: 90%; max-width: 600px; box-sizing: border-box;">
+                <!-- Header fijo -->
+                <div class="p-6 flex-shrink-0" style="border-bottom: 1px solid #e8eff4;">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="flex items-center justify-center w-14 h-14 rounded-full flex-shrink-0" style="background: #fff9e6; border: 2px solid #ffd700;">
+                            <svg class="w-7 h-7" style="color: #b8860b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-bold" style="color: #0b2a40;">Confirmar Inclusión de Sábados</h3>
+                            <h3 class="text-xl font-bold" style="color: #0b2a40;">Confirmar Inclusión de Sábados</h3>
                             <p class="text-sm" style="color: #6a8090;">Se detectaron sábados en el cálculo de fases</p>
                         </div>
                     </div>
+                </div>
 
-                    <div class="mb-6 rounded-lg p-5" style="background: #fff9e6; border: 1px solid #ffd700;">
-                        <p class="mb-4 font-semibold text-lg" style="color: #b8860b;">📅 Sábados detectados en el cálculo de fases:</p>
-                        <div v-for="phase in saturdayModal.phases" :key="phase.fase" class="mb-4 p-4 rounded-lg" style="background: #fff; border: 1px solid #ffd700;">
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="px-3 py-1 rounded-full text-sm font-bold" style="background: #ffd700; color: #0b2a40;">{{ phase.fase }}</span>
+                <!-- Body con scroll -->
+                <div class="flex-1 overflow-y-auto p-6" style="box-sizing: border-box;">
+                    <div class="rounded-lg p-4" style="background: #fff9e6; border: 1px solid #ffd700;">
+                        <p class="mb-3 font-semibold text-base" style="color: #b8860b;">📅 Sábados detectados en el cálculo de fases:</p>
+                        <div v-for="phase in saturdayModal.phases" :key="phase.fase" class="mb-3 p-3 rounded-lg" style="background: #fff; border: 1px solid #ffd700;">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-bold" style="background: #ffd700; color: #0b2a40;">{{ phase.fase }}</span>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="p-3 rounded" style="background: #f4f7fa;">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="p-2 rounded" style="background: #f4f7fa;">
                                     <p class="text-xs font-semibold uppercase mb-1" style="color: #6a8090;">Sin incluir sábados</p>
-                                    <p class="text-lg font-bold" style="color: #0c1c28;">{{ phase.fecha_sin_sabado }}</p>
+                                    <p class="text-base font-bold" style="color: #0c1c28;">{{ phase.fecha_sin_sabado }}</p>
                                 </div>
-                                <div class="p-3 rounded" style="background: #e4f5ec;">
+                                <div class="p-2 rounded" style="background: #e4f5ec;">
                                     <p class="text-xs font-semibold uppercase mb-1" style="color: #6a8090;">Incluyendo sábados</p>
-                                    <p class="text-lg font-bold" style="color: #0a7c3e;">{{ phase.fecha_con_sabado }}</p>
+                                    <p class="text-base font-bold" style="color: #0a7c3e;">{{ phase.fecha_con_sabado }}</p>
                                 </div>
                             </div>
-                            <div class="mt-3 p-3 rounded" style="background: #fce9e8; border: 1px solid #ebbab8;">
-                                <p class="text-sm font-semibold" style="color: #ba2418;">
+                            <div class="mt-2 p-2 rounded" style="background: #fce9e8; border: 1px solid #ebbab8;">
+                                <p class="text-xs font-semibold" style="color: #ba2418;">
                                     🗓️ Sábados que se saltan: <strong>{{ phase.sabados_saltados.join(', ') }}</strong>
                                 </p>
                             </div>
@@ -147,17 +151,18 @@
                     </div>
                 </div>
 
-                <div class="p-8 pt-0 border-t" style="border-color: #e8eff4;">
-                    <div class="mb-6 p-4 rounded-lg text-center" style="background: #f4f7fa; border: 1px solid #e8eff4;">
-                        <p class="text-lg font-semibold" style="color: #0b2a40;">
+                <!-- Footer fijo -->
+                <div class="flex-shrink-0 p-6" style="border-top: 1px solid #e8eff4; box-sizing: border-box;">
+                    <div class="mb-4 p-3 rounded-lg text-center" style="background: #f4f7fa; border: 1px solid #e8eff4;">
+                        <p class="text-base font-semibold" style="color: #0b2a40;">
                             ¿Desea incluir los días sábado como días laborables en este programa de producción?
                         </p>
                     </div>
 
-                    <div class="flex gap-4 justify-center">
+                    <div class="flex gap-3 justify-center flex-wrap">
                         <button
                             @click="saturdayModal.show = false"
-                            class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2"
+                            class="px-4 py-2 rounded-lg transition font-semibold text-sm flex items-center gap-2"
                             style="background: #e8eff4; color: #0b2a40; border: 1px solid #d4dee8;"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +173,7 @@
                         <button
                             @click="updateDeliveryDate(false)"
                             :disabled="saturdayModal.updating"
-                            class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2 disabled:opacity-50"
+                            class="px-4 py-2 rounded-lg transition font-semibold text-sm flex items-center gap-2 disabled:opacity-50"
                             style="background: #ba2418; color: #fff;"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,7 +184,7 @@
                         <button
                             @click="updateDeliveryDate(true)"
                             :disabled="saturdayModal.updating"
-                            class="px-6 py-3 rounded-lg transition font-semibold text-sm flex items-center gap-2 disabled:opacity-50"
+                            class="px-4 py-2 rounded-lg transition font-semibold text-sm flex items-center gap-2 disabled:opacity-50"
                             style="background: #0a7c3e; color: #fff;"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
