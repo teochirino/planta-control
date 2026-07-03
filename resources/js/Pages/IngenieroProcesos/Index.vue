@@ -13,43 +13,45 @@
             </div>
             
             <div class="rounded-lg overflow-hidden" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
-                <table class="w-full">
-                    <thead>
-                        <tr style="background: #0b2a40;">
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Código</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Fecha Entrega</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Creado Por</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Fecha Creación</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="program in programs" :key="program.id" style="border-bottom: 1px solid #e8eff4;">
-                            <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.codigo }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.fecha_entrega_formatted }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.creator?.name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.created_at_formatted }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center gap-2">
-                                    <Link :href="route('ingeniero-procesos.show', program.id)"
-                                          class="px-3 py-1.5 bg-[#174060] text-white border border-[#174060] rounded text-xs font-bold hover:opacity-85">
-                                        👁️ Ver
-                                    </Link>
-                                    <button
-                                        @click="showEditDateDialog(program)"
-                                        class="px-3 py-1.5 bg-[#f4f7fa] text-[#0a7c3e] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#0a7c3e] hover:text-white hover:border-[#0a7c3e]">
-                                        📅 Editar Fecha
-                                    </button>
-                                    <button
-                                        @click="showDeleteDialog(program)"
-                                        class="px-3 py-1.5 bg-[#f4f7fa] text-[#ba2418] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#ba2418] hover:text-white hover:border-[#ba2418]">
-                                        🗑️ Borrar
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead>
+                            <tr style="background: #0b2a40;">
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Código</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Fecha Entrega</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Creado Por</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Fecha Creación</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style="color: #fff;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="program in programs" :key="program.id" style="border-bottom: 1px solid #e8eff4;">
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.codigo }}</td>
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.fecha_entrega_formatted }}</td>
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.creator?.name }}</td>
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap" style="color: #0c1c28; font-weight: 600;">{{ program.created_at_formatted }}</td>
+                                <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <Link :href="route('ingeniero-procesos.show', program.id)"
+                                              class="px-3 py-1.5 bg-[#174060] text-white border border-[#174060] rounded text-xs font-bold hover:opacity-85 whitespace-nowrap">
+                                            👁️ Ver
+                                        </Link>
+                                        <button
+                                            @click="showEditDateDialog(program)"
+                                            class="px-3 py-1.5 bg-[#f4f7fa] text-[#0a7c3e] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#0a7c3e] hover:text-white hover:border-[#0a7c3e] whitespace-nowrap">
+                                            📅 Editar Fecha
+                                        </button>
+                                        <button
+                                            @click="showDeleteDialog(program)"
+                                            class="px-3 py-1.5 bg-[#f4f7fa] text-[#ba2418] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#ba2418] hover:text-white hover:border-[#ba2418] whitespace-nowrap">
+                                            🗑️ Borrar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 
                 <div v-if="programs.length === 0" class="text-center py-8">
                     <p style="color: #6a8090; font-weight: 600;">No hay programas registrados</p>
@@ -68,28 +70,28 @@
         />
 
         <!-- Modal para editar fecha de entrega -->
-        <div v-if="editDateDialog.show" class="fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.6);">
-            <div class="rounded-xl p-8 max-w-md w-full mx-4" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2);">
-                <h3 class="text-2xl font-bold mb-4" style="color: #0b2a40;">Editar Fecha de Entrega</h3>
-                <p class="mb-4" style="color: #6a8090;">
+        <div v-if="editDateDialog.show" class="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4" style="background: rgba(0,0,0,0.6);">
+            <div class="rounded-xl p-4 sm:p-6 md:p-8 w-full max-w-md mx-2 sm:mx-4" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2);">
+                <h3 class="text-xl sm:text-2xl font-bold mb-3 sm:mb-4" style="color: #0b2a40;">Editar Fecha de Entrega</h3>
+                <p class="mb-3 sm:mb-4 text-sm sm:text-base" style="color: #6a8090;">
                     Programa: <strong>{{ editDateDialog.program?.codigo }}</strong>
                 </p>
-                <p class="mb-4" style="color: #6a8090;">
+                <p class="mb-3 sm:mb-4 text-sm sm:text-base" style="color: #6a8090;">
                     Fecha actual: <strong>{{ editDateDialog.program?.fecha_entrega_formatted }}</strong>
                 </p>
-                <div class="mb-6">
-                    <label class="block font-semibold mb-2" style="color: #4e6070;">Nueva Fecha de Entrega</label>
+                <div class="mb-4 sm:mb-6">
+                    <label class="block font-semibold mb-2 text-sm sm:text-base" style="color: #4e6070;">Nueva Fecha de Entrega</label>
                     <input
                         v-model="editDateDialog.newDate"
                         type="date"
-                        class="w-full px-4 py-2 rounded-lg focus:outline-none"
+                        class="w-full px-3 sm:px-4 py-2 rounded-lg focus:outline-none text-sm sm:text-base"
                         style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;"
                     >
                 </div>
-                <div class="flex gap-3 justify-end">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
                     <button
                         @click="editDateDialog.show = false"
-                        class="px-4 py-2 rounded-lg transition font-semibold text-sm"
+                        class="px-3 sm:px-4 py-2 rounded-lg transition font-semibold text-xs sm:text-sm"
                         style="background: #e8eff4; color: #0b2a40; border: 1px solid #d4dee8;"
                     >
                         Cancelar
@@ -97,7 +99,7 @@
                     <button
                         @click="checkSaturdaysAndUpdate"
                         :disabled="editDateDialog.updating"
-                        class="px-4 py-2 rounded-lg transition font-semibold text-sm disabled:opacity-50"
+                        class="px-3 sm:px-4 py-2 rounded-lg transition font-semibold text-xs sm:text-sm disabled:opacity-50"
                         style="background: #0b2a40; color: #fff;"
                     >
                         {{ editDateDialog.updating ? 'Verificando...' : 'Continuar' }}
@@ -107,43 +109,43 @@
         </div>
 
         <!-- Modal de confirmación para sábados -->
-        <div v-if="saturdayModal.show" class="fixed inset-0 flex items-center justify-center z-50 p-4" style="background: rgba(0,0,0,0.6); width: 100vw; height: 100vh; box-sizing: border-box;">
-            <div class="rounded-xl flex flex-col" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2); max-height: calc(100vh - 40px); width: 90%; max-width: 600px; box-sizing: border-box;">
+        <div v-if="saturdayModal.show" class="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4" style="background: rgba(0,0,0,0.6);">
+            <div class="rounded-xl flex flex-col w-full max-w-full sm:max-w-lg md:max-w-2xl mx-2 sm:mx-4 max-h-[calc(100vh-16px)] sm:max-h-[calc(100vh-32px)]" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2);">
                 <!-- Header fijo -->
-                <div class="p-6 flex-shrink-0" style="border-bottom: 1px solid #e8eff4;">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="flex items-center justify-center w-14 h-14 rounded-full flex-shrink-0" style="background: #fff9e6; border: 2px solid #ffd700;">
-                            <svg class="w-7 h-7" style="color: #b8860b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-4 sm:p-6 flex-shrink-0" style="border-bottom: 1px solid #e8eff4;">
+                    <div class="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-4">
+                        <div class="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full flex-shrink-0" style="background: #fff9e6; border: 2px solid #ffd700;">
+                            <svg class="w-6 h-6 sm:w-7 sm:h-7" style="color: #b8860b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                             </svg>
                         </div>
-                        <div>
-                            <h3 class="text-xl font-bold" style="color: #0b2a40;">Confirmar Inclusión de Sábados</h3>
-                            <p class="text-sm" style="color: #6a8090;">Se detectaron sábados en el cálculo de fases</p>
+                        <div class="min-w-0">
+                            <h3 class="text-lg sm:text-xl font-bold" style="color: #0b2a40;">Confirmar Inclusión de Sábados</h3>
+                            <p class="text-xs sm:text-sm" style="color: #6a8090;">Se detectaron sábados en el cálculo de fases</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Body con scroll -->
-                <div class="flex-1 overflow-y-auto p-6" style="box-sizing: border-box;">
-                    <div class="rounded-lg p-4" style="background: #fff9e6; border: 1px solid #ffd700;">
-                        <p class="mb-3 font-semibold text-base" style="color: #b8860b;">📅 Sábados detectados en el cálculo de fases:</p>
-                        <div v-for="phase in saturdayModal.phases" :key="phase.fase" class="mb-3 p-3 rounded-lg" style="background: #fff; border: 1px solid #ffd700;">
+                <div class="flex-1 overflow-y-auto p-3 sm:p-6">
+                    <div class="rounded-lg p-3 sm:p-4" style="background: #fff9e6; border: 1px solid #ffd700;">
+                        <p class="mb-2 sm:mb-3 font-semibold text-sm sm:text-base" style="color: #b8860b;">📅 Sábados detectados en el cálculo de fases:</p>
+                        <div v-for="phase in saturdayModal.phases" :key="phase.fase" class="mb-2 sm:mb-3 p-2 sm:p-3 rounded-lg" style="background: #fff; border: 1px solid #ffd700;">
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="px-2 py-0.5 rounded-full text-xs font-bold" style="background: #ffd700; color: #0b2a40;">{{ phase.fase }}</span>
+                                <span class="px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap" style="background: #ffd700; color: #0b2a40;">{{ phase.fase }}</span>
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                                 <div class="p-2 rounded" style="background: #f4f7fa;">
                                     <p class="text-xs font-semibold uppercase mb-1" style="color: #6a8090;">Sin incluir sábados</p>
-                                    <p class="text-base font-bold" style="color: #0c1c28;">{{ phase.fecha_sin_sabado }}</p>
+                                    <p class="text-sm sm:text-base font-bold break-words" style="color: #0c1c28;">{{ phase.fecha_sin_sabado }}</p>
                                 </div>
                                 <div class="p-2 rounded" style="background: #e4f5ec;">
                                     <p class="text-xs font-semibold uppercase mb-1" style="color: #6a8090;">Incluyendo sábados</p>
-                                    <p class="text-base font-bold" style="color: #0a7c3e;">{{ phase.fecha_con_sabado }}</p>
+                                    <p class="text-sm sm:text-base font-bold break-words" style="color: #0a7c3e;">{{ phase.fecha_con_sabado }}</p>
                                 </div>
                             </div>
                             <div class="mt-2 p-2 rounded" style="background: #fce9e8; border: 1px solid #ebbab8;">
-                                <p class="text-xs font-semibold" style="color: #ba2418;">
+                                <p class="text-xs font-semibold break-words" style="color: #ba2418;">
                                     🗓️ Sábados que se saltan: <strong>{{ phase.sabados_saltados.join(', ') }}</strong>
                                 </p>
                             </div>
@@ -152,17 +154,17 @@
                 </div>
 
                 <!-- Footer fijo -->
-                <div class="flex-shrink-0 p-6" style="border-top: 1px solid #e8eff4; box-sizing: border-box;">
-                    <div class="mb-4 p-3 rounded-lg text-center" style="background: #f4f7fa; border: 1px solid #e8eff4;">
-                        <p class="text-base font-semibold" style="color: #0b2a40;">
+                <div class="flex-shrink-0 p-3 sm:p-6" style="border-top: 1px solid #e8eff4;">
+                    <div class="mb-3 sm:mb-4 p-2 sm:p-3 rounded-lg text-center" style="background: #f4f7fa; border: 1px solid #e8eff4;">
+                        <p class="text-sm sm:text-base font-semibold" style="color: #0b2a40;">
                             ¿Desea incluir los días sábado como días laborables en este programa de producción?
                         </p>
                     </div>
 
-                    <div class="flex gap-3 justify-center flex-wrap">
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
                         <button
                             @click="saturdayModal.show = false"
-                            class="px-4 py-2 rounded-lg transition font-semibold text-sm flex items-center gap-2"
+                            class="px-3 sm:px-4 py-2 rounded-lg transition font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 w-full sm:w-auto"
                             style="background: #e8eff4; color: #0b2a40; border: 1px solid #d4dee8;"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,7 +175,7 @@
                         <button
                             @click="updateDeliveryDate(false)"
                             :disabled="saturdayModal.updating"
-                            class="px-4 py-2 rounded-lg transition font-semibold text-sm flex items-center gap-2 disabled:opacity-50"
+                            class="px-3 sm:px-4 py-2 rounded-lg transition font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
                             style="background: #ba2418; color: #fff;"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,7 +186,7 @@
                         <button
                             @click="updateDeliveryDate(true)"
                             :disabled="saturdayModal.updating"
-                            class="px-4 py-2 rounded-lg transition font-semibold text-sm flex items-center gap-2 disabled:opacity-50"
+                            class="px-3 sm:px-4 py-2 rounded-lg transition font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
                             style="background: #0a7c3e; color: #fff;"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
