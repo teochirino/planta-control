@@ -165,6 +165,14 @@ Route::middleware('auth')->group(function () {
         Route::put('/production-lines/{productionLine}', [ProductionLineController::class, 'update'])->name('production-lines.update');
         Route::delete('/production-lines/{productionLine}', [ProductionLineController::class, 'destroy'])->name('production-lines.destroy');
 
+        // CRUD de Centros de Trabajo
+        Route::get('/work-centers', [\App\Http\Controllers\WorkCenterController::class, 'index'])->name('work-centers.index');
+        Route::get('/work-centers/create', [\App\Http\Controllers\WorkCenterController::class, 'create'])->name('work-centers.create');
+        Route::post('/work-centers', [\App\Http\Controllers\WorkCenterController::class, 'store'])->name('work-centers.store');
+        Route::get('/work-centers/{workCenter}/edit', [\App\Http\Controllers\WorkCenterController::class, 'edit'])->name('work-centers.edit');
+        Route::put('/work-centers/{workCenter}', [\App\Http\Controllers\WorkCenterController::class, 'update'])->name('work-centers.update');
+        Route::delete('/work-centers/{workCenter}', [\App\Http\Controllers\WorkCenterController::class, 'destroy'])->name('work-centers.destroy');
+
         // Importación de productos desde Excel
         Route::get('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProductsView'])->name('import.products');
         Route::post('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProducts'])->name('import.products.store');

@@ -120,6 +120,31 @@
                             </Link>
                         </div>
 
+                        <!-- Sección Centros de Trabajo -->
+                        <div class="mb-4">
+                            <p class="text-xs font-semibold uppercase tracking-wider mb-2 px-4" style="color: #6a8090;">Centros de Trabajo</p>
+                            <Link 
+                                :href="route('ingeniero-procesos.work-centers.index')" 
+                                class="sidebar-link"
+                                :class="{ 'active': route().current('ingeniero-procesos.work-centers.index') }"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                <span>Centros de Trabajo</span>
+                            </Link>
+                            <Link 
+                                :href="route('ingeniero-procesos.work-centers.create')" 
+                                class="sidebar-link"
+                                :class="{ 'active': route().current('ingeniero-procesos.work-centers.create') }"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>Nuevo Centro</span>
+                            </Link>
+                        </div>
+
                         <!-- Sección Ajustes -->
                         <div class="mb-4">
                             <p class="text-xs font-semibold uppercase tracking-wider mb-2 px-4" style="color: #6a8090;">Ajustes</p>
