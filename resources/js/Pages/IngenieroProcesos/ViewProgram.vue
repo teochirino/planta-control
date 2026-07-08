@@ -15,6 +15,26 @@
                 </Link>
             </div>
             
+            <!-- Filtro por Centro de Trabajo -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold mb-2" style="color: #0b2a40;">Filtrar por Centro de Trabajo</label>
+                <select 
+                    v-model="selectedWorkCenterId"
+                    @change="applyFilter"
+                    class="w-full sm:w-auto px-4 py-2 rounded-lg border focus:outline-none focus:ring-2"
+                    style="background: #fff; border-color: #d4dee8; color: #0b2a40;"
+                >
+                    <option value="">Todos los centros de trabajo</option>
+                    <option 
+                        v-for="workCenter in workCenters" 
+                        :key="workCenter.id" 
+                        :value="workCenter.id"
+                    >
+                        {{ workCenter.name }} (Fase {{ workCenter.phase }})
+                    </option>
+                </select>
+            </div>
+            
             <!-- Fechas de Fases -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                 <div class="rounded-lg p-3 sm:p-4" style="background: #fff; border: 1px solid #d4dee8;">
@@ -37,9 +57,25 @@
             
             <!-- Tabla por Fases -->
             <div v-for="(phaseDetails, phase) in details" :key="phase" class="mb-6">
-                <h2 class="text-lg sm:text-xl font-bold mb-4" style="color: #0b2a40;">Fase {{ phase }}</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg sm:text-xl font-bold" style="color: #0b2a40;">Fase {{ phase }}</h2>
+                    <button 
+                        @click="togglePhaseVisibility(phase)"
+                        class="p-2 rounded-lg transition hover:bg-gray-100"
+                        style="background: #fff; border: 1px solid #d4dee8;"
+                        :title="phaseVisibility[phase] ? 'Ocultar detalles' : 'Mostrar detalles'"
+                    >
+                        <svg v-if="phaseVisibility[phase]" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: #0b2a40;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: #0b2a40;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                    </button>
+                </div>
                 
-                <div class="rounded-lg overflow-hidden" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
+                <div v-show="phaseVisibility[phase]" class="rounded-lg overflow-hidden" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 2px 12px rgba(11,28,40,.08);">
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[700px]">
                             <thead>
@@ -101,12 +137,46 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import IngenieroProcesosSidebar from '@/Components/IngenieroProcesosSidebar.vue';
+import { ref, reactive } from 'vue';
 
-defineProps({
+const props = defineProps({
     program: Object,
     details: Object,
     totalsByDate: Object,
+    workCenters: Object,
+    filters: Object,
 });
+
+const selectedWorkCenterId = ref(props.filters?.work_center_id || '');
+
+// Estado de visibilidad de las fases (todas visibles por defecto)
+const phaseVisibility = reactive({});
+
+// Inicializar visibilidad de fases basado en los detalles disponibles
+const initializePhaseVisibility = () => {
+    Object.keys(props.details).forEach(phase => {
+        if (!(phase in phaseVisibility)) {
+            phaseVisibility[phase] = false; // Cerradas por defecto
+        }
+    });
+};
+
+// Inicializar al montar el componente
+initializePhaseVisibility();
+
+// Método para alternar la visibilidad de una fase
+const togglePhaseVisibility = (phase) => {
+    phaseVisibility[phase] = !phaseVisibility[phase];
+};
+
+const applyFilter = () => {
+    router.get(route('ingeniero-procesos.show', props.program.id), {
+        work_center_id: selectedWorkCenterId.value || undefined,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
+};
 </script>

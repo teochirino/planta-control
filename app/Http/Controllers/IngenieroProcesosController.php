@@ -95,7 +95,7 @@ class IngenieroProcesosController extends Controller
         }
     }
     
-    public function show(Program $program)
+    public function show(Program $program, Request $request)
     {
         $program->load('creator');
         
@@ -133,6 +133,7 @@ class IngenieroProcesosController extends Controller
                         'modelo' => $detail->modelo,
                         'cantidad_solicitada' => $detail->cantidad_solicitada,
                         'work_center' => $product->workCenter->name,
+                        'work_center_id' => $product->workCenter->id,
                         'phase' => $product->workCenter->phase,
                         'piezas_por_centro' => $product->piezas,
                         'tiempo_por_centro' => $product->tiempo,
@@ -141,6 +142,14 @@ class IngenieroProcesosController extends Controller
                     ];
                 });
             });
+
+        // Aplicar filtro por centro de trabajo si se proporciona
+        $selectedWorkCenterId = $request->input('work_center_id');
+        if ($selectedWorkCenterId) {
+            $allDetails = $allDetails->filter(function ($detail) use ($selectedWorkCenterId) {
+                return $detail['work_center_id'] == $selectedWorkCenterId;
+            });
+        }
 
         // Agrupar por fase para las tablas individuales
         $details = $allDetails->sortBy('phase')->groupBy('phase');
@@ -170,10 +179,15 @@ class IngenieroProcesosController extends Controller
             });
         });
         
+        // Obtener todos los centros de trabajo disponibles para el filtro
+        $workCenters = WorkCenter::orderBy('phase')->orderBy('name')->get();
+        
         return Inertia::render('IngenieroProcesos/ViewProgram', [
             'program' => $programData,
             'details' => $details,
             'totalsByDate' => $totalsByDate,
+            'workCenters' => $workCenters,
+            'filters' => $request->only(['work_center_id']),
         ]);
     }
     
