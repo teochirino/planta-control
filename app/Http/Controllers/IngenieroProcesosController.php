@@ -1473,7 +1473,7 @@ class IngenieroProcesosController extends Controller
 
             DB::commit();
             
-            return redirect()->route('ingeniero-procesos.recovery.show', $program->id)
+            return redirect()->route('ingeniero-procesos.recuperacion.show', $program->id)
                 ->with('success', 'Programa de recuperación creado exitosamente. Atraso actualizado de ' . ($balance->accumulated_backwardness + $request->cantidad_piezas) . ' a ' . $newBackwardness . '.');
                 
         } catch (\Exception $e) {
@@ -1536,7 +1536,7 @@ class IngenieroProcesosController extends Controller
             
             DB::commit();
             
-            return redirect()->route('ingeniero-procesos.recovery.index')
+            return redirect()->route('ingeniero-procesos.recuperacion.index')
                 ->with('success', 'Programa de recuperación eliminado exitosamente.');
                 
         } catch (\Exception $e) {
@@ -1627,7 +1627,7 @@ class IngenieroProcesosController extends Controller
 
             DB::commit();
             
-            return redirect()->route('ingeniero-procesos.recovery.show', $program->id)
+            return redirect()->route('ingeniero-procesos.recuperacion.show', $program->id)
                 ->with('success', 'Programa de recuperación actualizado exitosamente.');
                 
         } catch (\Exception $e) {

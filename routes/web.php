@@ -202,11 +202,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [\App\Http\Controllers\IngenieroProcesosController::class, 'recoveryIndex'])->name('index');
             Route::get('/create', [\App\Http\Controllers\IngenieroProcesosController::class, 'createRecovery'])->name('create');
             Route::post('/', [\App\Http\Controllers\IngenieroProcesosController::class, 'storeRecovery'])->name('store');
+            Route::get('/balance/{workCenter}', [\App\Http\Controllers\IngenieroProcesosController::class, 'getWorkCenterBalance'])->name('balance');
             Route::get('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'showRecovery'])->name('show');
             Route::get('/{program}/edit', [\App\Http\Controllers\IngenieroProcesosController::class, 'editRecovery'])->name('edit');
             Route::put('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'updateRecovery'])->name('update');
             Route::delete('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'destroyRecovery'])->name('destroy');
-            Route::get('/balance/{workCenter}', [\App\Http\Controllers\IngenieroProcesosController::class, 'getWorkCenterBalance'])->name('balance');
         });
         // ============================================
         // FIN ROLLBACK
