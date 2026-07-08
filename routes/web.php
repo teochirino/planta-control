@@ -193,6 +193,25 @@ Route::middleware('auth')->group(function () {
         Route::post('/check-saturdays', [\App\Http\Controllers\IngenieroProcesosController::class, 'checkSaturdayInPhases'])->name('check-saturdays');
         Route::put('/{program}/update-delivery-date', [\App\Http\Controllers\IngenieroProcesosController::class, 'updateDeliveryDate'])->name('update-delivery-date');
 
+        // ============================================
+        // ROLLBACK: Eliminar estas rutas para volver al comportamiento original
+        // ============================================
+        // CRUD DE PROGRAMAS DE RECUPERACIÓN (ATRASOS)
+        // IMPORTANTE: Estas rutas deben ir ANTES de la ruta dinámica /{program}
+        Route::prefix('recuperacion')->name('recuperacion.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\IngenieroProcesosController::class, 'recoveryIndex'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\IngenieroProcesosController::class, 'createRecovery'])->name('create');
+            Route::post('/', [\App\Http\Controllers\IngenieroProcesosController::class, 'storeRecovery'])->name('store');
+            Route::get('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'showRecovery'])->name('show');
+            Route::get('/{program}/edit', [\App\Http\Controllers\IngenieroProcesosController::class, 'editRecovery'])->name('edit');
+            Route::put('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'updateRecovery'])->name('update');
+            Route::delete('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'destroyRecovery'])->name('destroy');
+            Route::get('/balance/{workCenter}', [\App\Http\Controllers\IngenieroProcesosController::class, 'getWorkCenterBalance'])->name('balance');
+        });
+        // ============================================
+        // FIN ROLLBACK
+        // ============================================
+
         // Ruta dinámica de programas (debe ir al final, después de las rutas específicas)
         Route::get('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'show'])->name('show');
         Route::delete('/{program}', [\App\Http\Controllers\IngenieroProcesosController::class, 'destroy'])->name('destroy');

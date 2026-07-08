@@ -97,6 +97,17 @@ class IngenieroProcesosController extends Controller
     
     public function show(Program $program, Request $request)
     {
+        // ============================================
+        // ROLLBACK: Eliminar este bloque condicional para volver al comportamiento original
+        // ============================================
+        // Si es un programa de recuperación, mostrar vista especial
+        if (isset($program->program_type) && $program->program_type === 'recovery') {
+            return $this->showRecoveryProgram($program, $request);
+        }
+        // ============================================
+        // FIN ROLLBACK
+        // ============================================
+
         $program->load('creator');
         
         // Formatear fechas para la vista (evitar problemas de zona horaria)
@@ -932,6 +943,63 @@ class IngenieroProcesosController extends Controller
         return $schedule;
     }
 
+    /**
+     * Calcular fechas de fase para programas de recuperación
+     * Basado en la fase del centro de trabajo seleccionado
+     */
+    private function calculateRecoveryPhaseDates($selectedDate, $workCenterPhase)
+    {
+        $selectedDate = \Carbon\Carbon::parse($selectedDate);
+        
+        // Definir las fechas de fase basadas en la fase del centro de trabajo
+        // La fecha seleccionada es la fecha de la fase del centro
+        switch ($workCenterPhase) {
+            case 1:
+                // Fase 1: fecha seleccionada
+                $fase1 = $selectedDate->copy();
+                $fase2 = Program::addWorkingDays($fase1, 1);
+                $fase3 = Program::addWorkingDays($fase2, 1);
+                $fechaEntrega = Program::addWorkingDays($fase3, 1);
+                break;
+            case 2:
+                // Fase 2: fecha seleccionada
+                $fase2 = $selectedDate->copy();
+                $fase1 = Program::addWorkingDays($fase2, -1);
+                $fase3 = Program::addWorkingDays($fase2, 1);
+                $fechaEntrega = Program::addWorkingDays($fase3, 1);
+                break;
+            case 3:
+                // Fase 3: fecha seleccionada
+                $fase3 = $selectedDate->copy();
+                $fase2 = Program::addWorkingDays($fase3, -1);
+                $fase1 = Program::addWorkingDays($fase2, -1);
+                $fechaEntrega = Program::addWorkingDays($fase3, 1);
+                break;
+            case 4:
+                // Fase 4 (entrega): fecha seleccionada
+                $fechaEntrega = $selectedDate->copy();
+                $fase3 = Program::addWorkingDays($fechaEntrega, -1);
+                $fase2 = Program::addWorkingDays($fase3, -1);
+                $fase1 = Program::addWorkingDays($fase2, -1);
+                break;
+            default:
+                // Por defecto, fase 1
+                $fase1 = $selectedDate->copy();
+                $fase2 = Program::addWorkingDays($fase1, 1);
+                $fase3 = Program::addWorkingDays($fase2, 1);
+                $fechaEntrega = Program::addWorkingDays($fase3, 1);
+                break;
+        }
+        
+        return [
+            'fecha_entrega' => $fechaEntrega->format('Y-m-d'),
+            'fase1' => $fase1->format('Y-m-d'),
+            'fase2' => $fase2->format('Y-m-d'),
+            'fase3' => $fase3->format('Y-m-d'),
+            'fase4' => $fechaEntrega->format('Y-m-d'),
+        ];
+    }
+
     // ============================================
     // AJUSTES DE PRODUCCIÓN
     // ============================================
@@ -1232,4 +1300,343 @@ class IngenieroProcesosController extends Controller
         $writer->save('php://output');
         exit;
     }
+
+    // ============================================
+    // CRUD DE PROGRAMAS DE RECUPERACIÓN (ATRASOS)
+    // ============================================
+    // ROLLBACK: Eliminar toda esta sección para volver al comportamiento original
+    // ============================================
+
+    /**
+     * Mostrar vista especial para programas de recuperación
+     */
+    private function showRecoveryProgram(Program $program, Request $request)
+    {
+        $program->load('creator');
+        
+        // Obtener DailyPrograms asociados a este programa de recuperación
+        $dailyPrograms = \App\Models\DailyProgram::where('program_id', $program->id)
+            ->with(['workCenter', 'schedules.productionLine'])
+            ->get()
+            ->map(function ($dp) {
+                $totalProduced = $dp->schedules->sum('produced');
+                $totalRejected = $dp->schedules->sum('rejected') ?? 0;
+                
+                return [
+                    'id' => $dp->id,
+                    'date' => $dp->date,
+                    'date_formatted' => $dp->date ? \Carbon\Carbon::parse($dp->date)->format('d/m/Y') : null,
+                    'shift' => $dp->shift,
+                    'work_center' => $dp->workCenter->name,
+                    'work_center_id' => $dp->workCenter->id,
+                    'programmed' => $dp->programmed,
+                    'backwardness' => $dp->backwardness,
+                    'advanced' => $dp->advanced,
+                    'total_produced' => $totalProduced,
+                    'total_rejected' => $totalRejected,
+                    'shift_hours' => $dp->shift_hours,
+                ];
+            });
+
+        $programData = [
+            'id' => $program->id,
+            'codigo' => $program->codigo,
+            'fecha_entrega' => $program->fecha_entrega,
+            'fecha_entrega_formatted' => $program->fecha_entrega ? \Carbon\Carbon::parse($program->fecha_entrega)->format('d/m/Y') : null,
+            'program_type' => $program->program_type ?? 'normal',
+            'created_at' => $program->created_at,
+            'created_at_formatted' => $program->created_at ? \Carbon\Carbon::parse($program->created_at)->format('d/m/Y H:i') : null,
+            'creator' => $program->creator,
+        ];
+
+        return Inertia::render('IngenieroProcesos/ViewRecoveryProgram', [
+            'program' => $programData,
+            'dailyPrograms' => $dailyPrograms,
+        ]);
+    }
+
+    /**
+     * Listar programas de recuperación
+     */
+    public function recoveryIndex()
+    {
+        $recoveryPrograms = Program::where('program_type', 'recovery')
+            ->with('creator')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($program) {
+                return [
+                    'id' => $program->id,
+                    'codigo' => $program->codigo,
+                    'fecha_entrega' => $program->fecha_entrega,
+                    'fecha_entrega_formatted' => $program->fecha_entrega ? \Carbon\Carbon::parse($program->fecha_entrega)->format('d/m/Y') : null,
+                    'created_at' => $program->created_at,
+                    'created_at_formatted' => $program->created_at ? \Carbon\Carbon::parse($program->created_at)->format('d/m/Y') : null,
+                    'creator' => $program->creator,
+                ];
+            });
+
+        return Inertia::render('IngenieroProcesos/RecoveryIndex', [
+            'programs' => $recoveryPrograms,
+        ]);
+    }
+
+    /**
+     * Mostrar formulario para crear programa de recuperación
+     */
+    public function createRecovery()
+    {
+        $workCenters = WorkCenter::orderBy('name')->get();
+        
+        return Inertia::render('IngenieroProcesos/CreateRecovery', [
+            'workCenters' => $workCenters,
+        ]);
+    }
+
+    /**
+     * Obtener balance acumulado de un centro de trabajo
+     */
+    public function getWorkCenterBalance($workCenterId)
+    {
+        $balance = \App\Models\WorkCenterBalance::where('id_work_center', $workCenterId)->first();
+        
+        return response()->json([
+            'accumulated_backwardness' => $balance ? $balance->accumulated_backwardness : 0,
+            'accumulated_advanced' => $balance ? $balance->accumulated_advanced : 0,
+        ]);
+    }
+
+    /**
+     * Guardar programa de recuperación
+     */
+    public function storeRecovery(Request $request)
+    {
+        $request->validate([
+            'work_center_id' => 'required|exists:work_centers,id',
+            'date' => 'required|date',
+            'shift' => 'required|in:matutino,vespertino,nocturno',
+            'cantidad_piezas' => 'required|integer|min:1',
+            'shift_hours' => 'nullable|numeric|min:1|max:24',
+            'observaciones' => 'nullable|string|max:500',
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            // Obtener el centro de trabajo para conocer su fase
+            $workCenter = WorkCenter::findOrFail($request->work_center_id);
+            $workCenterPhase = $workCenter->phase;
+            
+            // Calcular fechas de fase basadas en la fase del centro de trabajo
+            // La fecha seleccionada es la fecha de la fase del centro
+            $phaseDates = $this->calculateRecoveryPhaseDates($request->date, $workCenterPhase);
+            
+            // Crear Program de recuperación
+            $program = Program::create([
+                'codigo' => 'REC-' . now()->format('Ymd-His'),
+                'fecha_entrega' => $phaseDates['fecha_entrega'],
+                'fecha_fase1' => $phaseDates['fase1'],
+                'fecha_fase2' => $phaseDates['fase2'],
+                'fecha_fase3' => $phaseDates['fase3'],
+                'fecha_fase4' => $phaseDates['fase4'],
+                'program_type' => 'recovery',
+                'created_by' => auth()->id(),
+            ]);
+
+            // Crear DailyProgram
+            $dailyProgram = \App\Models\DailyProgram::create([
+                'date' => $request->date,
+                'id_work_center' => $request->work_center_id,
+                'shift' => $request->shift,
+                'programmed' => $request->cantidad_piezas,
+                'backwardness' => 0,
+                'advanced' => 0,
+                'shift_hours' => $request->shift_hours ?? 9.0,
+                'program_id' => $program->id,
+            ]);
+
+            // Generar schedules para todas las líneas del centro
+            $productionLines = $workCenter->productionLines;
+            
+            if ($productionLines->count() === 0) {
+                \Log::warning('No production lines found for work center', ['work_center_id' => $request->work_center_id]);
+            }
+            
+            $this->generateSchedulesForProgram($dailyProgram, $productionLines);
+
+            // Reducir el atraso acumulado del centro de trabajo
+            $balance = \App\Models\WorkCenterBalance::getOrCreateForWorkCenter($request->work_center_id);
+            $newBackwardness = max(0, $balance->accumulated_backwardness - $request->cantidad_piezas);
+            $balance->accumulated_backwardness = $newBackwardness;
+            $balance->last_calculated_at = now();
+            $balance->save();
+
+            DB::commit();
+            
+            return redirect()->route('ingeniero-procesos.recovery.show', $program->id)
+                ->with('success', 'Programa de recuperación creado exitosamente. Atraso actualizado de ' . ($balance->accumulated_backwardness + $request->cantidad_piezas) . ' a ' . $newBackwardness . '.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al crear el programa: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mostrar programa de recuperación individual
+     */
+    public function showRecovery(Program $program)
+    {
+        // Verificar que sea un programa de recuperación
+        if (!isset($program->program_type) || $program->program_type !== 'recovery') {
+            return redirect()->route('ingeniero-procesos.show', $program->id);
+        }
+
+        return $this->showRecoveryProgram($program, request());
+    }
+
+    /**
+     * Eliminar programa de recuperación
+     */
+    public function destroyRecovery(Program $program)
+    {
+        // Verificar que sea un programa de recuperación
+        if (!isset($program->program_type) || $program->program_type !== 'recovery') {
+            return back()->with('error', 'Solo se pueden eliminar programas de recuperación.');
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            // Obtener los daily programs asociados
+            $dailyPrograms = \App\Models\DailyProgram::where('program_id', $program->id)->get();
+            
+            // Verificar si hay strikes asociados
+            $hasStrikes = \App\Models\Strike::whereIn('id_daily_program', $dailyPrograms->pluck('id'))->exists();
+            if ($hasStrikes) {
+                return back()->with('error', 'No se puede eliminar el programa porque tiene paros registrados.');
+            }
+            
+            // Verificar si hay rejected pieces asociados
+            $hasRejectedPieces = \App\Models\RejectedPiece::whereIn('id_daily_program', $dailyPrograms->pluck('id'))->exists();
+            if ($hasRejectedPieces) {
+                return back()->with('error', 'No se puede eliminar el programa porque tiene piezas rechazadas registradas.');
+            }
+            
+            // Eliminar schedules de cada daily program
+            foreach ($dailyPrograms as $dailyProgram) {
+                \App\Models\Schedule::where('id_daily_program', $dailyProgram->id)->delete();
+            }
+            
+            // Eliminar daily programs
+            \App\Models\DailyProgram::where('program_id', $program->id)->delete();
+            
+            // Eliminar el programa (no tiene program_details)
+            $program->delete();
+            
+            DB::commit();
+            
+            return redirect()->route('ingeniero-procesos.recovery.index')
+                ->with('success', 'Programa de recuperación eliminado exitosamente.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al eliminar el programa: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Editar programa de recuperación
+     */
+    public function editRecovery(Program $program)
+    {
+        // Verificar que sea un programa de recuperación
+        if (!isset($program->program_type) || $program->program_type !== 'recovery') {
+            return back()->with('error', 'Solo se pueden editar programas de recuperación.');
+        }
+
+        $dailyPrograms = \App\Models\DailyProgram::where('program_id', $program->id)
+            ->with('workCenter')
+            ->get();
+
+        $workCenters = WorkCenter::orderBy('name')->get();
+
+        // Cargar el creador del programa
+        $program->load('creator');
+
+        // Preparar datos del programa para la vista
+        $programData = [
+            'id' => $program->id,
+            'codigo' => $program->codigo,
+            'fecha_entrega' => $program->fecha_entrega,
+            'fecha_entrega_formatted' => $program->fecha_entrega ? \Carbon\Carbon::parse($program->fecha_entrega)->format('d/m/Y') : null,
+            'fecha_fase1' => $program->fecha_fase1,
+            'fecha_fase1_formatted' => $program->fecha_fase1 ? \Carbon\Carbon::parse($program->fecha_fase1)->format('d/m/Y') : null,
+            'fecha_fase2' => $program->fecha_fase2,
+            'fecha_fase2_formatted' => $program->fecha_fase2 ? \Carbon\Carbon::parse($program->fecha_fase2)->format('d/m/Y') : null,
+            'fecha_fase3' => $program->fecha_fase3,
+            'fecha_fase3_formatted' => $program->fecha_fase3 ? \Carbon\Carbon::parse($program->fecha_fase3)->format('d/m/Y') : null,
+            'fecha_fase4' => $program->fecha_fase4,
+            'fecha_fase4_formatted' => $program->fecha_fase4 ? \Carbon\Carbon::parse($program->fecha_fase4)->format('d/m/Y') : null,
+            'program_type' => $program->program_type ?? 'normal',
+            'created_at' => $program->created_at,
+            'created_at_formatted' => $program->created_at ? \Carbon\Carbon::parse($program->created_at)->format('d/m/Y H:i') : null,
+            'creator' => $program->creator,
+        ];
+
+        return Inertia::render('IngenieroProcesos/EditRecovery', [
+            'program' => $programData,
+            'dailyPrograms' => $dailyPrograms,
+            'workCenters' => $workCenters,
+        ]);
+    }
+
+    /**
+     * Actualizar programa de recuperación
+     */
+    public function updateRecovery(Request $request, Program $program)
+    {
+        // Verificar que sea un programa de recuperación
+        if (!isset($program->program_type) || $program->program_type !== 'recovery') {
+            return back()->with('error', 'Solo se pueden actualizar programas de recuperación.');
+        }
+
+        $request->validate([
+            'daily_programs' => 'required|array',
+            'daily_programs.*.id' => 'required|exists:daily_programs,id',
+            'daily_programs.*.programmed' => 'required|integer|min:0',
+            'daily_programs.*.shift_hours' => 'nullable|numeric|min:1|max:24',
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            foreach ($request->daily_programs as $dpData) {
+                $dailyProgram = \App\Models\DailyProgram::findOrFail($dpData['id']);
+                
+                // Verificar que pertenezca a este programa
+                if ($dailyProgram->program_id !== $program->id) {
+                    throw new \Exception('El DailyProgram no pertenece a este programa.');
+                }
+
+                $dailyProgram->update([
+                    'programmed' => $dpData['programmed'],
+                    'shift_hours' => $dpData['shift_hours'] ?? $dailyProgram->shift_hours,
+                ]);
+            }
+
+            DB::commit();
+            
+            return redirect()->route('ingeniero-procesos.recovery.show', $program->id)
+                ->with('success', 'Programa de recuperación actualizado exitosamente.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al actualizar el programa: ' . $e->getMessage());
+        }
+    }
+
+    // ============================================
+    // FIN CRUD DE PROGRAMAS DE RECUPERACIÓN
+    // ============================================
 }
