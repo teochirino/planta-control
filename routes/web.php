@@ -173,6 +173,14 @@ Route::middleware('auth')->group(function () {
         Route::put('/work-centers/{workCenter}', [\App\Http\Controllers\WorkCenterController::class, 'update'])->name('work-centers.update');
         Route::delete('/work-centers/{workCenter}', [\App\Http\Controllers\WorkCenterController::class, 'destroy'])->name('work-centers.destroy');
 
+        // Configuración de Balance Inicial por Centro de Trabajo
+        Route::prefix('work-center-balances')->name('work-center-balances.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\WorkCenterBalanceController::class, 'index'])->name('index');
+            Route::get('/{workCenterId}/edit', [\App\Http\Controllers\WorkCenterBalanceController::class, 'edit'])->name('edit');
+            Route::put('/{workCenterId}', [\App\Http\Controllers\WorkCenterBalanceController::class, 'update'])->name('update');
+            Route::get('/history', [\App\Http\Controllers\WorkCenterBalanceController::class, 'history'])->name('history');
+        });
+
         // Importación de productos desde Excel
         Route::get('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProductsView'])->name('import.products');
         Route::post('/importar-productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'importProducts'])->name('import.products.store');

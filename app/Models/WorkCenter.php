@@ -39,4 +39,9 @@ class WorkCenter extends Model
     {
         return $this->hasMany(Attribute::class, 'id_work_center')->orderBy('order');
     }
+    
+    public function balance()
+    {
+        return $this->hasOne(WorkCenterBalance::class, 'id_work_center');
+    }
 }
