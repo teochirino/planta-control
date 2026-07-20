@@ -30,6 +30,8 @@
                             <option value="vespertino">Vespertino</option>
                             <option value="nocturno">Nocturno</option>
                         </select>
+                        
+                        <CurrentTimeDisplay />
                     </div>
                     
                     <div class="flex gap-2">
@@ -185,6 +187,7 @@ import { Link } from '@inertiajs/vue3'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
 import SemaforosArea from '@/Components/SemaforosArea.vue'
 import DisplayModeToggle from '@/Components/DisplayModeToggle.vue'
+import CurrentTimeDisplay from '@/Components/CurrentTimeDisplay.vue'
 import { useDisplayMode } from '@/Composables/useDisplayMode'
 
 const { isTVMode } = useDisplayMode()
