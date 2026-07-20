@@ -455,4 +455,95 @@ class OperadorController extends Controller
             'all_closed' => $closedLines >= $totalLines,
         ]);
     }
+
+    public function informationPanel(Request $request)
+    {
+        $user = auth()->user();
+        
+        // Obtener líneas de producción asignadas al operador
+        $productionLines = $this->productionLineService->getUserProductionLines($user);
+        
+        if ($productionLines->isEmpty()) {
+            return Inertia::render('Operador/NoProductionLines');
+        }
+        
+        // Obtener centros de trabajo únicos basados en las líneas asignadas
+        $workCenterIds = $productionLines->pluck('id_work_center')->unique();
+        $workCenters = \App\Models\WorkCenter::whereIn('id', $workCenterIds)->get();
+        
+        // Obtener parámetros de selección
+        $selectedWorkCenterId = $request->get('work_center_id');
+        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedShift = $request->get('shift', 'matutino');
+        
+        // Si no se seleccionó centro, usar el primero
+        if (!$selectedWorkCenterId && $workCenters->isNotEmpty()) {
+            $selectedWorkCenterId = $workCenters->first()->id;
+        }
+        
+        $selectedWorkCenter = null;
+        $dailyProgram = null;
+        $productionLinesForCenter = collect();
+        $allKPIs = collect();
+        $centerKPIs = null;
+        
+        if ($selectedWorkCenterId) {
+            $selectedWorkCenter = $workCenters->where('id', $selectedWorkCenterId)->first();
+            
+            if ($selectedWorkCenter) {
+                // Obtener líneas de producción de este centro que el operador tiene asignadas
+                $productionLinesForCenter = $productionLines->where('id_work_center', $selectedWorkCenterId);
+                
+                // Obtener programa diario
+                $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
+                    ->where('id_work_center', $selectedWorkCenterId)
+                    ->where('date', $selectedDate)
+                    ->where('shift', $selectedShift)
+                    ->first();
+                
+                if ($dailyProgram) {
+                    // Calcular KPIs a nivel de centro de trabajo (similar al supervisor)
+                    $allSchedules = $dailyProgram->schedules;
+                    $allStrikes = $dailyProgram->strikes;
+                    
+                    // Calcular KPIs del centro
+                    $centerKPIs = $this->kpiService->calculateCenterKPIs($dailyProgram, $selectedWorkCenter);
+                    
+                    // Calcular KPIs individuales por línea para mostrar detalles
+                    foreach ($productionLinesForCenter as $line) {
+                        $schedules = $dailyProgram->schedules()
+                            ->where('id_production_line', $line->id)
+                            ->orderBy('start_time')
+                            ->get();
+                        
+                        $strikes = $dailyProgram->strikes()
+                            ->where('id_production_lines', $line->id)
+                            ->orderBy('start_time')
+                            ->get();
+                        
+                        $kpis = $this->kpiService->calculateLineKPIs($dailyProgram, $line, $schedules, $strikes);
+                        
+                        $allKPIs->push([
+                            'line' => $line,
+                            'kpis' => $kpis,
+                            'schedules' => $schedules,
+                            'strikes' => $strikes,
+                        ]);
+                    }
+                }
+            }
+        }
+        
+        return Inertia::render('Operador/InformationPanel', [
+            'workCenters' => $workCenters,
+            'productionLines' => $productionLines,
+            'selectedWorkCenter' => $selectedWorkCenter,
+            'selectedDate' => $selectedDate,
+            'selectedShift' => $selectedShift,
+            'dailyProgram' => $dailyProgram,
+            'productionLinesForCenter' => $productionLinesForCenter,
+            'allKPIs' => $allKPIs,
+            'centerKPIs' => $centerKPIs,
+        ]);
+    }
 }

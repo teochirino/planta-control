@@ -55,6 +55,17 @@ const toggleSidebar = () => {
                     <span v-if="!sidebarCollapsed">Dashboard</span>
                 </NavLink>
 
+                <!-- Panel de Información (para Operador de Planta) -->
+                <NavLink
+                    v-if="$page.props.auth.user.id_profile === 8"
+                    :href="route('operador.information-panel')"
+                    :active="route().current('operador.information-panel')"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-[#174060]"
+                >
+                    📊
+                    <span v-if="!sidebarCollapsed">Panel de Información</span>
+                </NavLink>
+
                 <!-- Ajustes de Producción (para Supervisor e Ingeniero de Procesos) -->
                 <NavLink
                     v-if="$page.props.auth.user.id_profile === 5 || $page.props.auth.user.id_profile === 2"

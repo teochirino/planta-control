@@ -270,6 +270,7 @@ Route::middleware('auth')->group(function () {
     // ============================================
     Route::prefix('operador')->name('operador.')->middleware('operador')->group(function () {
         Route::get('/dashboard', [OperadorController::class, 'index'])->name('dashboard');
+        Route::get('/information-panel', [OperadorController::class, 'informationPanel'])->name('information-panel');
         
         // API endpoints para AJAX
         Route::post('/schedule/update', [OperadorController::class, 'updateScheduleProduction'])->name('schedule.update');
