@@ -1,108 +1,115 @@
 <template>
     <AuthenticatedLayout>
+        <DisplayModeToggle />
         <div class="flex flex-col gap-2.5">
             <!-- Selector de Línea de Producción -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <div class="px-4 py-3 flex items-center gap-4 flex-wrap">
-                    <span class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Línea de Producción:</span>
+                <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="flex items-center gap-4 flex-wrap">
+                    <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070]">Línea de Producción:</span>
                     
                     <div class="flex items-center gap-3 flex-1">
                         <select v-model="selectedLineId" @change="cambiarLinea"
-                                class="border border-[#d4dee8] rounded-md px-3 py-2 text-sm font-bold text-[#0c1c28] bg-white focus:outline-none focus:border-[#174060]">
+                                :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white focus:outline-none focus:border-[#174060]">
                             <option v-for="line in productionLinesData" :key="line.id" :value="line.id">
                                 {{ line.title }}
                             </option>
                         </select>
                         
                         <input type="date" v-model="fechaSeleccionada" @change="cambiarFecha"
-                               class="border border-[#d4dee8] rounded-md px-3 py-2 text-sm font-bold text-[#0c1c28]">
+                               :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                               class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
                         
                         <select v-model="turnoSeleccionado" @change="cambiarTurno"
-                                class="border border-[#d4dee8] rounded-md px-3 py-2 text-sm font-bold text-[#0c1c28] bg-white">
+                               :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                               class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
                             <option value="nocturno">Nocturno</option>
                         </select>
+                        
+                        <CurrentTimeDisplay />
                     </div>
                 </div>
             </div>
             
             <!-- Información de la Línea -->
-            <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm p-6">
-                <h2 class="text-xl font-extrabold text-[#0b2a40] mb-2">{{ selectedLineData?.title || 'Cargando...' }}</h2>
-                <p class="text-sm text-[#6a8090] mb-4">
+            <div :class="isTVMode() ? 'p-8' : 'p-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
+                <h2 :class="isTVMode() ? 'text-3xl' : 'text-xl'" class="font-extrabold text-[#0b2a40] mb-2">{{ selectedLineData?.title || 'Cargando...' }}</h2>
+                <p :class="isTVMode() ? 'text-base' : 'text-sm'" class="text-[#6a8090] mb-4">
                     Centro de Trabajo: <strong>{{ selectedLineData?.work_center?.name || '-' }}</strong>
                 </p>
                 
                 <!-- KPIs -->
-                <div v-if="kpisData" class="mb-6 p-4 bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
+                <div v-if="kpisData" :class="isTVMode() ? 'mb-8 p-6' : 'mb-6 p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-bold text-[#0b2a40]">Indicadores de la Línea</h3>
-                        <span class="text-xs font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
+                        <h3 :class="isTVMode() ? 'text-base' : 'text-sm'" class="font-bold text-[#0b2a40]">Indicadores de la Línea</h3>
+                        <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="p-4 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-2">Fabricadas</div>
-                            <div class="text-4xl font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.fabricated) }}</div>
-                            <div class="text-xs text-[#6a8090] mt-1">piezas</div>
+                    <div :class="isTVMode() ? 'gap-6' : 'gap-4'" class="grid grid-cols-1 md:grid-cols-3">
+                        <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-2">Fabricadas</div>
+                            <div :class="isTVMode() ? 'text-5xl' : 'text-4xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.fabricated) }}</div>
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">piezas</div>
                         </div>
                         
-                        <div class="p-4 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-2">Min. Paro</div>
-                            <div class="text-4xl font-extrabold" :class="strikeMinutesClass">
+                        <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-2">Min. Paro</div>
+                            <div :class="[isTVMode() ? 'text-5xl' : 'text-4xl', 'font-extrabold', strikeMinutesClass]">
                                 {{ formatNumber(kpisData.strike_minutes || 0) }}
                             </div>
-                            <div class="text-xs text-[#6a8090] mt-1">minutos</div>
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">minutos</div>
                         </div>
                         
-                        <div class="p-4 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-2">Costo de Paro</div>
-                            <div class="text-4xl font-extrabold text-[#ba2418]">${{ formatNumber(kpisData.strike_cost || 0) }}</div>
-                            <div class="text-xs text-[#6a8090] mt-1">pesos</div>
+                        <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-2">Costo de Paro</div>
+                            <div :class="isTVMode() ? 'text-5xl' : 'text-4xl'" class="font-extrabold text-[#ba2418]">${{ formatNumber(kpisData.strike_cost || 0) }}</div>
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">pesos</div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Mensaje cuando no hay programa -->
-                <div v-else-if="!dailyProgramId" class="mb-6 p-6 bg-[#fff6da] border border-[#e8d488] rounded-lg text-center">
-                    <div class="text-4xl mb-3">📋</div>
-                    <h3 class="text-lg font-bold text-[#0b2a40] mb-2">No hay programa diario registrado</h3>
-                    <p class="text-sm text-[#6a8090]">
+                <div v-else-if="!dailyProgramId" :class="isTVMode() ? 'mb-8 p-8' : 'mb-6 p-6'" class="bg-[#fff6da] border border-[#e8d488] rounded-lg text-center">
+                    <div :class="isTVMode() ? 'text-6xl mb-5' : 'text-4xl mb-3'">📋</div>
+                    <h3 :class="isTVMode() ? 'text-2xl mb-3' : 'text-lg mb-2'" class="font-bold text-[#0b2a40]">No hay programa diario registrado</h3>
+                    <p :class="isTVMode() ? 'text-base' : 'text-sm'" class="text-[#6a8090]">
                         No existe un programa para <strong>{{ selectedLineData?.title }}</strong> en el turno <strong>{{ turnoLabel }}</strong> del <strong>{{ fechaFormateada }}</strong>.
                     </p>
-                    <p class="text-xs text-[#6a8090] mt-2">
+                    <p :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-2">
                         El supervisor debe crear el programa diario primero.
                     </p>
                 </div>
                 
                 <!-- Tabla de Producción por Hora -->
-                <div v-if="dailyProgramId && schedulesData.length > 0" class="mb-6">
-                    <h3 class="text-sm font-bold text-[#0b2a40] mb-3">📊 Producción por Hora</h3>
+                <div v-if="dailyProgramId && schedulesData.length > 0" :class="isTVMode() ? 'mb-8' : 'mb-6'">
+                    <h3 :class="isTVMode() ? 'text-base mb-4' : 'text-sm mb-3'" class="font-bold text-[#0b2a40]">📊 Producción por Hora</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full border-collapse">
                             <thead>
                                 <tr class="bg-[#0b2a40] text-white">
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase">Hora</th>
-                                    <th class="px-4 py-3 text-center text-xs font-bold uppercase">Producido</th>
+                                    <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Hora</th>
+                                    <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Producido</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="schedule in schedulesData" :key="schedule.id" class="border-b border-[#d4dee8] hover:bg-[#f8f9fb]">
-                                    <td class="px-4 py-3 text-sm font-semibold text-[#0b2a40]">
+                                    <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="font-semibold text-[#0b2a40]">
                                         {{ formatTime(schedule.start_time) }} - {{ formatTime(schedule.end_time) }}
                                     </td>
-                                    <td class="px-4 py-3 text-center">
+                                    <td :class="isTVMode() ? 'px-5 py-4' : 'px-4 py-3'" class="text-center">
                                         <input type="number" 
                                                min="0" 
                                                v-model="produccionValues[schedule.id]"
                                                @input="guardarProduccion(schedule.id)"
-                                               class="w-24 px-3 py-2 border border-[#d4dee8] rounded-md text-center font-bold text-[#0b2a40] focus:outline-none focus:border-[#174060]">
+                                               :class="isTVMode() ? 'w-32 px-4 py-3 text-base' : 'w-24 px-3 py-2 text-sm'"
+                                               class="border border-[#d4dee8] rounded-md text-center font-bold text-[#0b2a40] focus:outline-none focus:border-[#174060]">
                                     </td>
                                 </tr>
                                 <tr class="bg-[#f4f7fa] font-bold">
-                                    <td class="px-4 py-3 text-sm text-[#0b2a40]">TOTAL</td>
-                                    <td class="px-4 py-3 text-center text-lg font-extrabold text-[#0b2a40]">
+                                    <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-[#0b2a40]">TOTAL</td>
+                                    <td :class="isTVMode() ? 'px-5 py-4 text-2xl' : 'px-4 py-3 text-lg'" class="text-center font-extrabold text-[#0b2a40]">
                                         {{ formatNumber(totalProducido) }}
                                     </td>
                                 </tr>
@@ -114,8 +121,8 @@
                 <!-- Registro de Paros -->
                 <div v-if="dailyProgramId">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-bold text-[#0b2a40]">⚠️ Registro de Paros</h3>
-                        <button @click="abrirModalParo" class="px-4 py-2 bg-[#ba2418] text-white rounded-md text-xs font-bold hover:opacity-85 transition">
+                        <h3 :class="isTVMode() ? 'text-base' : 'text-sm'" class="font-bold text-[#0b2a40]">⚠️ Registro de Paros</h3>
+                        <button @click="abrirModalParo" :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'" class="bg-[#ba2418] text-white rounded-md font-bold hover:opacity-85 transition">
                             + Registrar Paro
                         </button>
                     </div>
@@ -124,29 +131,30 @@
                         <table class="w-full border-collapse">
                             <thead>
                                 <tr class="bg-[#0b2a40] text-white">
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase">Inicio</th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase">Fin</th>
-                                    <th class="px-4 py-3 text-left text-xs font-bold uppercase">Descripción</th>
-                                    <th class="px-4 py-3 text-center text-xs font-bold uppercase">Duración</th>
-                                    <th class="px-4 py-3 text-center text-xs font-bold uppercase">Acciones</th>
+                                    <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Inicio</th>
+                                    <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Fin</th>
+                                    <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Descripción</th>
+                                    <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Duración</th>
+                                    <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="strike in strikesList" :key="strike.id" class="border-b border-[#d4dee8]">
-                                    <td class="px-4 py-3 text-sm text-[#0b2a40]">{{ formatTime(strike.start_time) }}</td>
-                                    <td class="px-4 py-3 text-sm text-[#0b2a40]">
+                                    <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-[#0b2a40]">{{ formatTime(strike.start_time) }}</td>
+                                    <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-[#0b2a40]">
                                         <span v-if="strike.end_time">{{ formatTime(strike.end_time) }}</span>
                                         <span v-else class="text-[#f59e0b] font-bold">En curso...</span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-[#6a8090]">{{ strike.description }}</td>
-                                    <td class="px-4 py-3 text-center text-sm font-bold" :class="strike.end_time ? 'text-[#ba2418]' : 'text-[#f59e0b]'">
+                                    <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-[#6a8090]">{{ strike.description }}</td>
+                                    <td :class="[isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm', 'text-center font-bold', strike.end_time ? 'text-[#ba2418]' : 'text-[#f59e0b]']">
                                         <span v-if="strike.end_time">{{ strike.minutes || calcularDuracion(strike) }} min</span>
                                         <span v-else>{{ tiempoTranscurrido(strike) }}</span>
                                     </td>
-                                    <td class="px-4 py-3 text-center">
+                                    <td :class="isTVMode() ? 'px-5 py-4' : 'px-4 py-3'" class="text-center">
                                         <button v-if="!strike.end_time" 
                                                 @click="finalizarParo(strike)"
-                                                class="px-3 py-1 bg-[#0b8a3d] text-white rounded text-xs font-bold hover:opacity-85">
+                                                :class="isTVMode() ? 'px-4 py-2 text-sm' : 'px-3 py-1 text-xs'"
+                                                class="bg-[#0b8a3d] text-white rounded font-bold hover:opacity-85">
                                             Finalizar
                                         </button>
                                     </td>
@@ -154,18 +162,18 @@
                             </tbody>
                         </table>
                     </div>
-                    <div v-else class="p-6 bg-[#f0fdf4] border border-[#86efac] rounded-lg text-center">
-                        <div class="text-3xl mb-2">✅</div>
-                        <p class="text-sm text-[#0b8a3d] font-semibold">No hay paros registrados</p>
+                    <div v-else :class="isTVMode() ? 'p-8' : 'p-6'" class="bg-[#f0fdf4] border border-[#86efac] rounded-lg text-center">
+                        <div :class="isTVMode() ? 'text-5xl mb-3' : 'text-3xl mb-2'">✅</div>
+                        <p :class="isTVMode() ? 'text-base' : 'text-sm'" class="text-[#0b8a3d] font-semibold">No hay paros registrados</p>
                     </div>
                 </div>
 
                 <!-- Botón Cerrar Turno -->
-                <div v-if="dailyProgramId" class="mt-6 p-4 bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
+                <div v-if="dailyProgramId" :class="isTVMode() ? 'mt-8 p-6' : 'mt-6 p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-sm font-bold text-[#0b2a40]">🔒 Cierre de Turno - {{ selectedLineData?.title || 'Línea seleccionada' }}</h3>
-                            <p class="text-xs text-[#6a8090] mt-1">
+                            <h3 :class="isTVMode() ? 'text-base' : 'text-sm'" class="font-bold text-[#0b2a40]">🔒 Cierre de Turno - {{ selectedLineData?.title || 'Línea seleccionada' }}</h3>
+                            <p :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">
                                 <span v-if="isLineClosed" class="text-[#0b8a3d] font-semibold">
                                     ✓ Línea cerrada el {{ formatDateTime(lineClosedAt) }}
                                 </span>
@@ -178,7 +186,8 @@
                             v-if="!isLineClosed"
                             @click="cerrarTurno"
                             :disabled="cerrandoTurno"
-                            class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85 transition disabled:opacity-50">
+                            :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'"
+                            class="bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85 transition disabled:opacity-50">
                             {{ cerrandoTurno ? 'Cerrando...' : 'Cerrar Turno' }}
                         </button>
                     </div>
@@ -188,7 +197,7 @@
         
         <!-- Modal para Registrar Paro -->
         <div v-if="modalVisible" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div :class="isTVMode() ? 'p-8 max-w-2xl' : 'p-6 max-w-md'" class="bg-white rounded-lg shadow-xl w-full">
                 <h3 class="text-lg font-bold text-[#0b2a40] mb-4">Registrar Paro</h3>
                 <div class="space-y-4">
                     <div v-if="machines && machines.length > 0">
@@ -253,7 +262,11 @@ import { router } from '@inertiajs/vue3'
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import DisplayModeToggle from '@/Components/DisplayModeToggle.vue'
+import CurrentTimeDisplay from '@/Components/CurrentTimeDisplay.vue'
+import { useDisplayMode } from '@/Composables/useDisplayMode'
 
+const { isTVMode } = useDisplayMode()
 const toast = useToast()
 
 // Props
