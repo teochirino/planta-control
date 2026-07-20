@@ -1,7 +1,9 @@
 <template>
-    <AuthenticatedLayout>
+    <div class="min-h-screen" style="background: #eaf0f5;">
+        <OperadorSidebar />
         <DisplayModeToggle />
-        <div class="flex flex-col gap-2.5">
+        <div :class="isTVMode() ? 'p-8' : 'p-6'">
+            <div class="flex flex-col gap-2.5">
             <!-- Selector de Centro de Trabajo -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="flex items-center gap-4 flex-wrap">
@@ -196,13 +198,14 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+        </div>
+    </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import OperadorSidebar from '@/Components/OperadorSidebar.vue'
 import DisplayModeToggle from '@/Components/DisplayModeToggle.vue'
 import CurrentTimeDisplay from '@/Components/CurrentTimeDisplay.vue'
 import { useDisplayMode } from '@/Composables/useDisplayMode'
