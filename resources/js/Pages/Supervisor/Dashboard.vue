@@ -1,27 +1,31 @@
 <template>
     <div class="min-h-screen" style="background: #eaf0f5;">
         <SupervisorSidebar />
+        <DisplayModeToggle />
         
-        <div class="p-6 ml-16">
+        <div :class="isTVMode() ? 'p-8 ml-16' : 'p-6 ml-16'">
             <div class="flex flex-col gap-2.5">
             <!-- Selector de Centro de Trabajo -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <div class="px-4 py-3 flex items-center gap-4 flex-wrap">
-                    <span class="text-xs font-bold tracking-widest uppercase text-[#4e6070]">Centro de Trabajo:</span>
+                <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="flex items-center gap-4 flex-wrap">
+                    <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070]">Centro de Trabajo:</span>
                     
                     <div class="flex items-center gap-3 flex-1">
                         <select v-model="selectedWorkCenterId" @change="cambiarCentro"
-                                class="border border-[#d4dee8] rounded-md px-3 py-2 text-sm font-bold text-[#0c1c28] bg-white focus:outline-none focus:border-[#174060]">
+                                :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white focus:outline-none focus:border-[#174060]">
                             <option v-for="wc in workCentersData" :key="wc.id" :value="wc.id">
                                 {{ wc.name }}
                             </option>
                         </select>
                         
                         <input type="date" v-model="fechaSeleccionada" @change="cambiarFecha"
-                               class="border border-[#d4dee8] rounded-md px-3 py-2 text-sm font-bold text-[#0c1c28]">
+                               :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                               class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
                         
                         <select v-model="turnoSeleccionado" @change="cambiarTurno"
-                                class="border border-[#d4dee8] rounded-md px-3 py-2 text-sm font-bold text-[#0c1c28] bg-white">
+                                :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
                             <option value="nocturno">Nocturno</option>
@@ -30,11 +34,13 @@
                     
                     <div class="flex gap-2">
                         <Link v-if="kpisData" :href="route('supervisor.daily-production', { work_center_id: selectedWorkCenterId, date: fechaSeleccionada, shift: turnoSeleccionado })"
-                              class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85 transition">
+                              :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'"
+                              class="bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85 transition">
                             📝 Registro Diario de Producción
                         </Link>
                         <button v-else disabled
-                                class="px-4 py-2 bg-gray-300 text-gray-500 rounded-md text-xs font-bold cursor-not-allowed">
+                                :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'"
+                                class="bg-gray-300 text-gray-500 rounded-md font-bold cursor-not-allowed">
                             📝 Registro Diario de Producción
                         </button>
                     </div>
@@ -42,69 +48,69 @@
             </div>
             
             <!-- Información del Centro -->
-            <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm p-6">
-                <h2 class="text-xl font-extrabold text-[#0b2a40] mb-4">{{ selectedWorkCenterData?.name || 'Cargando...' }}</h2>
+            <div :class="isTVMode() ? 'p-8' : 'p-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
+                <h2 :class="isTVMode() ? 'text-3xl' : 'text-xl'" class="font-extrabold text-[#0b2a40] mb-4">{{ selectedWorkCenterData?.name || 'Cargando...' }}</h2>
                 
                 <!-- Tarjetas de KPIs -->
-                <div v-if="kpisData" class="mb-6 p-4 bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
+                <div v-if="kpisData" :class="isTVMode() ? 'mb-8 p-6' : 'mb-6 p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-bold text-[#0b2a40]">Programa del Turno</h3>
-                        <span class="text-xs font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
+                        <h3 :class="isTVMode() ? 'text-lg' : 'text-sm'" class="font-bold text-[#0b2a40]">Programa del Turno</h3>
+                        <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
                     </div>
                     
-                    <div class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2">
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Programado</div>
-                            <div class="text-2xl font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.programmed) }}</div>
+                    <div :class="isTVMode() ? 'gap-4' : 'gap-2'" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10">
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Programado</div>
+                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.programmed) }}</div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Atraso</div>
-                            <div class="text-2xl font-extrabold text-[#ba2418]">{{ formatNumber(kpisData.backwardness) }}</div>
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Atraso</div>
+                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#ba2418]">{{ formatNumber(kpisData.backwardness) }}</div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Adelantadas</div>
-                            <div class="text-2xl font-extrabold text-[#0b8a3d]">{{ formatNumber(kpisData.advanced) }}</div>
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Adelantadas</div>
+                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b8a3d]">{{ formatNumber(kpisData.advanced) }}</div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Total a Producir</div>
-                            <div class="text-2xl font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.total_to_produce) }}</div>
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Total a Producir</div>
+                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.total_to_produce) }}</div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Fabricadas</div>
-                            <div class="text-2xl font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.fabricated) }}</div>
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Fabricadas</div>
+                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.fabricated) }}</div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Diferencia</div>
-                            <div class="text-2xl font-extrabold" :class="kpisData.difference >= 0 ? 'text-[#0b8a3d]' : 'text-[#ba2418]'">
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Diferencia</div>
+                            <div :class="[isTVMode() ? 'text-4xl' : 'text-2xl', 'font-extrabold', kpisData.difference >= 0 ? 'text-[#0b8a3d]' : 'text-[#ba2418]']">
                                 {{ kpisData.difference >= 0 ? '+' : '' }}{{ formatNumber(kpisData.difference) }}
                             </div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Cumplimiento</div>
-                            <div class="text-2xl font-extrabold" :class="complianceClass">
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Cumplimiento</div>
+                            <div :class="[isTVMode() ? 'text-4xl' : 'text-2xl', 'font-extrabold', complianceClass]">
                                 {{ kpisData.compliance }}%
                             </div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Real vs Ideal</div>
-                            <div class="text-2xl font-extrabold text-[#0b2a40]">{{ kpisData.real_vs_ideal }}%</div>
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Real vs Ideal</div>
+                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ kpisData.real_vs_ideal }}%</div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Ahorro Activos</div>
-                            <div class="text-xl font-extrabold text-[#0b8a3d]">${{ formatNumber(kpisData.saved_amount) }}</div>
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Ahorro Activos</div>
+                            <div :class="isTVMode() ? 'text-3xl' : 'text-xl'" class="font-extrabold text-[#0b8a3d]">${{ formatNumber(kpisData.saved_amount) }}</div>
                         </div>
                         
-                        <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Cap. Instalada</div>
-                            <div class="text-2xl font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.installed_capacity) }}</div>
+                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Cap. Instalada</div>
+                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.installed_capacity) }}</div>
                         </div>
                     </div>
                 </div>
@@ -125,35 +131,35 @@
                 </div>
                 
                 <!-- Estadísticas generales -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="p-4 bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
-                        <div class="text-xs font-bold tracking-widest uppercase text-[#4e6070] mb-1">Capacidad Instalada</div>
-                        <div class="text-3xl font-extrabold text-[#0b2a40]">{{ formatNumber(selectedWorkCenterData?.installed_capacity) }}</div>
-                        <div class="text-xs text-[#6a8090] mt-1">piezas/hora</div>
+                <div :class="isTVMode() ? 'gap-6' : 'gap-4'" class="grid grid-cols-1 md:grid-cols-3">
+                    <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
+                        <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070] mb-1">Capacidad Instalada</div>
+                        <div :class="isTVMode() ? 'text-4xl' : 'text-3xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(selectedWorkCenterData?.installed_capacity) }}</div>
+                        <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">piezas/hora</div>
                     </div>
                     
-                    <div class="p-4 bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
-                        <div class="text-xs font-bold tracking-widest uppercase text-[#4e6070] mb-1">Líneas de Producción</div>
-                        <div class="text-3xl font-extrabold text-[#0b2a40]">{{ selectedWorkCenterData?.production_lines?.length || 0 }}</div>
-                        <div class="text-xs text-[#6a8090] mt-1">líneas activas</div>
+                    <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
+                        <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070] mb-1">Líneas de Producción</div>
+                        <div :class="isTVMode() ? 'text-4xl' : 'text-3xl'" class="font-extrabold text-[#0b2a40]">{{ selectedWorkCenterData?.production_lines?.length || 0 }}</div>
+                        <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">líneas activas</div>
                     </div>
                     
-                    <div class="p-4 bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
-                        <div class="text-xs font-bold tracking-widest uppercase text-[#4e6070] mb-1">Fecha Actual</div>
-                        <div class="text-xl font-extrabold text-[#0b2a40]">{{ fechaFormateada }}</div>
-                        <div class="text-xs text-[#6a8090] mt-1">{{ nombreDia }}</div>
+                    <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
+                        <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070] mb-1">Fecha Actual</div>
+                        <div :class="isTVMode() ? 'text-2xl' : 'text-xl'" class="font-extrabold text-[#0b2a40]">{{ fechaFormateada }}</div>
+                        <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">{{ nombreDia }}</div>
                     </div>
                 </div>
                 
                 <!-- Líneas de Producción y Semáforos -->
-                <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div :class="isTVMode() ? 'mt-8 gap-6' : 'mt-6 gap-4'" class="grid grid-cols-1 lg:grid-cols-3">
                     <!-- Líneas de Producción (2/3 del ancho) -->
                     <div class="lg:col-span-2">
-                        <h3 class="text-sm font-bold text-[#0b2a40] mb-3">Líneas de Producción</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                            <div v-for="line in (selectedWorkCenterData?.production_lines || [])" :key="line.id" class="p-3 border border-[#d4dee8] rounded-lg bg-white">
-                                <div class="font-bold text-[#0b2a40]">{{ line.title }}</div>
-                                <div class="text-xs text-[#6a8090] mt-1">
+                        <h3 :class="isTVMode() ? 'text-lg mb-4' : 'text-sm mb-3'" class="font-bold text-[#0b2a40]">Líneas de Producción</h3>
+                        <div :class="isTVMode() ? 'gap-4' : 'gap-3'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                            <div v-for="line in (selectedWorkCenterData?.production_lines || [])" :key="line.id" :class="isTVMode() ? 'p-5' : 'p-3'" class="border border-[#d4dee8] rounded-lg bg-white">
+                                <div :class="isTVMode() ? 'text-lg' : ''" class="font-bold text-[#0b2a40]">{{ line.title }}</div>
+                                <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">
                                     Cap: {{ formatNumber(line.installed_capacity) }} pzs/h | 
                                     Costo: ${{ formatNumber(line.cost) }}/min
                                 </div>
@@ -178,6 +184,10 @@ import { router } from '@inertiajs/vue3'
 import { Link } from '@inertiajs/vue3'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
 import SemaforosArea from '@/Components/SemaforosArea.vue'
+import DisplayModeToggle from '@/Components/DisplayModeToggle.vue'
+import { useDisplayMode } from '@/Composables/useDisplayMode'
+
+const { isTVMode } = useDisplayMode()
 
 // Props
 const props = defineProps({

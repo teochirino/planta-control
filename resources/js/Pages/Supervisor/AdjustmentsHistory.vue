@@ -1,18 +1,19 @@
 <template>
     <AuthenticatedLayout>
+        <DisplayModeToggle />
         <div class="flex flex-col gap-2.5">
             <!-- Header -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <div class="px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+                <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="flex items-center justify-between gap-4 flex-wrap">
                     <div>
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-[#174060]">Historial de Ajustes</span>
-                        <h1 class="text-2xl font-extrabold text-[#0b2a40] leading-none">{{ workCenter?.name || 'Cargando...' }}</h1>
+                        <span :class="isTVMode() ? 'text-xs' : 'text-[10px]'" class="font-bold tracking-widest uppercase text-[#174060]">Historial de Ajustes</span>
+                        <h1 :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40] leading-none">{{ workCenter?.name || 'Cargando...' }}</h1>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <input type="date" v-model="startDate" @change="cargarHistorial" class="px-3 py-2 border border-[#d4dee8] rounded-md text-xs font-bold text-[#0c1c28]">
-                        <span class="text-xs font-bold text-[#4e6070]">a</span>
-                        <input type="date" v-model="endDate" @change="cargarHistorial" class="px-3 py-2 border border-[#d4dee8] rounded-md text-xs font-bold text-[#0c1c28]">
-                        <button @click="cargarHistorial" class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85">
+                        <input type="date" v-model="startDate" @change="cargarHistorial" :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
+                        <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold text-[#4e6070]">a</span>
+                        <input type="date" v-model="endDate" @change="cargarHistorial" :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
+                        <button @click="cargarHistorial" :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'" class="bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85">
                             Actualizar
                         </button>
                     </div>
@@ -20,77 +21,77 @@
             </div>
 
             <!-- Resumen -->
-            <div v-if="adjustments.length > 0" class="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <div class="p-3 bg-white border border-[#d4dee8] rounded-lg">
-                    <div class="text-[11px] font-bold tracking-widest uppercase text-[#4e6070]">Total Ajustes</div>
-                    <div class="text-2xl font-extrabold text-[#0b2a40]">{{ adjustments.length }}</div>
+            <div v-if="adjustments.length > 0" :class="isTVMode() ? 'gap-4' : 'gap-2'" class="grid grid-cols-1 md:grid-cols-4">
+                <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
+                    <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">Total Ajustes</div>
+                    <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ adjustments.length }}</div>
                 </div>
-                <div class="p-3 bg-white border border-[#d4dee8] rounded-lg">
-                    <div class="text-[11px] font-bold tracking-widest uppercase text-[#4e6070]">Correcciones</div>
-                    <div class="text-2xl font-extrabold text-[#f59e0b]">{{ correctionsCount }}</div>
+                <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
+                    <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">Correcciones</div>
+                    <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#f59e0b]">{{ correctionsCount }}</div>
                 </div>
-                <div class="p-3 bg-white border border-[#d4dee8] rounded-lg">
-                    <div class="text-[11px] font-bold tracking-widest uppercase text-[#4e6070]">Conteos Físicos</div>
-                    <div class="text-2xl font-extrabold text-[#0b8a3d]">{{ manualCountCount }}</div>
+                <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
+                    <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">Conteos Físicos</div>
+                    <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b8a3d]">{{ manualCountCount }}</div>
                 </div>
-                <div class="p-3 bg-white border border-[#d4dee8] rounded-lg">
-                    <div class="text-[11px] font-bold tracking-widest uppercase text-[#4e6070]">Ajustes Inventario</div>
-                    <div class="text-2xl font-extrabold text-[#ba2418]">{{ inventoryCount }}</div>
+                <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
+                    <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">Ajustes Inventario</div>
+                    <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#ba2418]">{{ inventoryCount }}</div>
                 </div>
             </div>
 
             <!-- Tabla de Ajustes -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm overflow-hidden">
-                <div class="px-4 py-3 border-b border-[#d4dee8]">
-                    <h2 class="text-base font-extrabold text-[#0b2a40]">Registro de Ajustes</h2>
+                <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="border-b border-[#d4dee8]">
+                    <h2 :class="isTVMode() ? 'text-xl' : 'text-base'" class="font-extrabold text-[#0b2a40]">Registro de Ajustes</h2>
                 </div>
                 <div v-if="adjustments.length > 0" class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
                             <tr class="bg-[#0b2a40] text-white">
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase">Fecha</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase">Tipo</th>
-                                <th class="px-4 py-3 text-center text-xs font-bold uppercase">Valor Anterior</th>
-                                <th class="px-4 py-3 text-center text-xs font-bold uppercase">Valor Nuevo</th>
-                                <th class="px-4 py-3 text-center text-xs font-bold uppercase">Diferencia</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase">Motivo</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold uppercase">Usuario</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Fecha</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Tipo</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Valor Anterior</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Valor Nuevo</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Diferencia</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Motivo</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Usuario</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="adjustment in adjustments" :key="adjustment.id" class="border-b border-[#e8eff4] hover:bg-[#eef5fa]">
-                                <td class="px-4 py-3 text-sm font-semibold text-[#0c1c28]">
+                                <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="font-semibold text-[#0c1c28]">
                                     {{ formatDateTime(adjustment.created_at) }}
                                 </td>
-                                <td class="px-4 py-3">
-                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="getTipoClass(adjustment.adjustment_type)">
+                                <td :class="isTVMode() ? 'px-5 py-4' : 'px-4 py-3'">
+                                    <span :class="[isTVMode() ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs', 'rounded font-bold', getTipoClass(adjustment.adjustment_type)]">
                                         {{ getTipoLabel(adjustment.adjustment_type) }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-center text-sm font-semibold text-[#0c1c28]">
+                                <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-center font-semibold text-[#0c1c28]">
                                     {{ formatNumber(adjustment.previous_value) }}
                                 </td>
-                                <td class="px-4 py-3 text-center text-sm font-semibold text-[#0c1c28]">
+                                <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-center font-semibold text-[#0c1c28]">
                                     {{ formatNumber(adjustment.new_value) }}
                                 </td>
-                                <td class="px-4 py-3 text-center text-sm font-bold" :class="adjustment.difference >= 0 ? 'text-[#0b8a3d]' : 'text-[#ba2418]'">
+                                <td :class="[isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm', 'text-center font-bold', adjustment.difference >= 0 ? 'text-[#0b8a3d]' : 'text-[#ba2418]']">
                                     {{ adjustment.difference >= 0 ? '+' : '' }}{{ formatNumber(adjustment.difference) }}
                                 </td>
-                                <td class="px-4 py-3 text-sm text-[#4e6070]">
+                                <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-[#4e6070]">
                                     {{ adjustment.reason }}
-                                    <p v-if="adjustment.notes" class="text-xs text-[#6a8090] mt-1">{{ adjustment.notes }}</p>
+                                    <p v-if="adjustment.notes" :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">{{ adjustment.notes }}</p>
                                 </td>
-                                <td class="px-4 py-3 text-sm text-[#4e6070]">
+                                <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-[#4e6070]">
                                     {{ adjustment.adjusted_by_name || 'Usuario ' + adjustment.adjusted_by }}
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div v-else class="p-6 text-center">
-                    <div class="text-4xl mb-3">📋</div>
-                    <h3 class="text-lg font-bold text-[#0b2a40] mb-2">No hay ajustes registrados</h3>
-                    <p class="text-sm text-[#6a8090]">
+                <div v-else :class="isTVMode() ? 'p-10' : 'p-6'" class="text-center">
+                    <div :class="isTVMode() ? 'text-6xl mb-5' : 'text-4xl mb-3'">📋</div>
+                    <h3 :class="isTVMode() ? 'text-2xl mb-3' : 'text-lg mb-2'" class="font-bold text-[#0b2a40]">No hay ajustes registrados</h3>
+                    <p :class="isTVMode() ? 'text-base' : 'text-sm'" class="text-[#6a8090]">
                         No se encontraron ajustes en el período seleccionado.
                     </p>
                 </div>
@@ -104,6 +105,10 @@ import { ref, computed, onMounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import DisplayModeToggle from '@/Components/DisplayModeToggle.vue'
+import { useDisplayMode } from '@/Composables/useDisplayMode'
+
+const { isTVMode } = useDisplayMode()
 
 const page = usePage()
 const props = page.props
