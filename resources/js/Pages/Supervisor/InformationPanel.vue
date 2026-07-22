@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen" style="background: #eaf0f5;">
-        <OperadorSidebar />
+        <SupervisorSidebar />
         <DisplayModeToggle />
         <div :class="isTVMode() ? 'p-8 2xl:p-12' : 'p-6'">
             <div class="flex flex-col gap-2.5">
@@ -23,8 +23,8 @@
                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
                         
                         <select v-model="turnoSeleccionado" @change="cambiarTurno"
-                                :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-sm'"
-                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
+                               :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-sm'"
+                               class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
                             <option value="nocturno">Nocturno</option>
@@ -111,7 +111,7 @@
                         No existe un programa para <strong>{{ selectedWorkCenterData.name }}</strong> en el turno <strong>{{ turnoLabel }}</strong> del <strong>{{ fechaFormateada }}</strong>.
                     </p>
                     <p :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-2">
-                        El supervisor debe crear el programa diario primero.
+                        Debe crear el programa diario primero.
                     </p>
                 </div>
             </div>
@@ -205,7 +205,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
-import OperadorSidebar from '@/Components/OperadorSidebar.vue'
+import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
 import DisplayModeToggle from '@/Components/DisplayModeToggle.vue'
 import CurrentTimeDisplay from '@/Components/CurrentTimeDisplay.vue'
 import { useDisplayMode } from '@/Composables/useDisplayMode'
@@ -290,7 +290,7 @@ const complianceClass = computed(() => {
 })
 
 function cambiarCentro() {
-    router.get(route('operador.information-panel'), {
+    router.get(route('supervisor.information-panel'), {
         work_center_id: selectedWorkCenterId.value,
         date: fechaSeleccionada.value,
         shift: turnoSeleccionado.value
@@ -298,7 +298,7 @@ function cambiarCentro() {
 }
 
 function cambiarFecha() {
-    router.get(route('operador.information-panel'), {
+    router.get(route('supervisor.information-panel'), {
         work_center_id: selectedWorkCenterId.value,
         date: fechaSeleccionada.value,
         shift: turnoSeleccionado.value
@@ -306,7 +306,7 @@ function cambiarFecha() {
 }
 
 function cambiarTurno() {
-    router.get(route('operador.information-panel'), {
+    router.get(route('supervisor.information-panel'), {
         work_center_id: selectedWorkCenterId.value,
         date: fechaSeleccionada.value,
         shift: turnoSeleccionado.value
@@ -314,7 +314,7 @@ function cambiarTurno() {
 }
 
 function refreshData() {
-    router.get(route('operador.information-panel'), {
+    router.get(route('supervisor.information-panel'), {
         work_center_id: selectedWorkCenterId.value,
         date: fechaSeleccionada.value,
         shift: turnoSeleccionado.value

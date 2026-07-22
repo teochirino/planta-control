@@ -3,25 +3,25 @@
         <SupervisorSidebar />
         <DisplayModeToggle />
         
-        <div :class="isTVMode() ? 'p-8 ml-16' : 'p-6 ml-16'">
+        <div :class="isTVMode() ? 'p-8 ml-16 2xl:p-12 2xl:ml-20' : 'p-6 ml-16'">
             <div class="flex flex-col gap-2.5">
             <!-- Top Bar -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="flex items-center justify-between gap-4 flex-wrap">
+                <div :class="isTVMode() ? 'px-6 py-4 2xl:px-8 2xl:py-5' : 'px-4 py-3'" class="flex items-center justify-between gap-4 flex-wrap">
                     <div>
-                        <span :class="isTVMode() ? 'text-xs' : 'text-[10px]'" class="font-bold tracking-widest uppercase text-[#174060]">Registro Diario de Producción</span>
-                        <h1 :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40] leading-none">{{ workCenter?.name || 'Cargando...' }}</h1>
-                        <div :class="isTVMode() ? 'text-base' : 'text-sm'" class="text-[#4e6070] font-semibold mt-1">{{ formattedDateLong }}</div>
+                        <span :class="isTVMode() ? 'text-xs 2xl:text-sm' : 'text-[10px]'" class="font-bold tracking-widest uppercase text-[#174060]">Registro Diario de Producción</span>
+                        <h1 :class="isTVMode() ? 'text-4xl 2xl:text-6xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40] leading-none">{{ workCenter?.name || 'Cargando...' }}</h1>
+                        <div :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="text-[#4e6070] font-semibold mt-1">{{ formattedDateLong }}</div>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <input type="date" v-model="selectedDate" @change="cambiarFecha" :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
-                        <select v-model="selectedShift" @change="cambiarTurno" :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
+                        <input type="date" v-model="selectedDate" @change="cambiarFecha" :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
+                        <select v-model="selectedShift" @change="cambiarTurno" :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
                             <option value="nocturno">Nocturno</option>
                         </select>
-                        <div :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-xs'" class="rounded-full bg-[#0b2a40] text-white font-bold">{{ currentTime }}</div>
-                        <Link :href="route('supervisor.dashboard')" :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'" class="bg-[#174060] text-white rounded-md font-bold hover:opacity-85">
+                        <div :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-xs'" class="rounded-full bg-[#0b2a40] text-white font-bold">{{ currentTime }}</div>
+                        <Link :href="route('supervisor.dashboard')" :class="isTVMode() ? 'px-6 py-3 text-base 2xl:px-8 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-xs'" class="bg-[#174060] text-white rounded-md font-bold hover:opacity-85">
                             Principal
                         </Link>
                     </div>
@@ -29,7 +29,7 @@
             </div>
 
             <!-- KPIs -->
-            <div :class="isTVMode() ? 'gap-4' : 'gap-2'" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10">
+            <div :class="isTVMode() ? 'gap-4 2xl:gap-6' : 'gap-2'" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 2xl:grid-cols-12">
                 <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
                     <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">Programado</div>
                     <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(programData.programmed) }}</div>

@@ -3,18 +3,18 @@
         <SupervisorSidebar />
         <DisplayModeToggle />
         
-        <div :class="isTVMode() ? 'p-8 ml-16' : 'p-6 ml-16'">
-            <div :class="isTVMode() ? 'mb-8' : 'mb-6'">
-                <h1 :class="isTVMode() ? 'text-5xl' : 'text-3xl'" class="font-bold text-[#0b2a40]">Registrar Ajustes de Producción</h1>
+        <div :class="isTVMode() ? 'p-8 ml-16 2xl:p-12 2xl:ml-20' : 'p-6 ml-16'">
+            <div :class="isTVMode() ? 'mb-8 2xl:mb-10' : 'mb-6'">
+                <h1 :class="isTVMode() ? 'text-5xl 2xl:text-7xl' : 'text-3xl'" class="font-bold text-[#0b2a40]">Registrar Ajustes de Producción</h1>
             </div>
 
-            <div :class="isTVMode() ? 'p-8' : 'p-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
+            <div :class="isTVMode() ? 'p-8 2xl:p-12' : 'p-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <!-- Selección de Programa, Centro y Fase -->
-                <div :class="isTVMode() ? 'gap-8 mb-8' : 'gap-6 mb-6'" class="grid grid-cols-1 md:grid-cols-3">
+                <div :class="isTVMode() ? 'gap-8 mb-8 2xl:gap-10 2xl:mb-10' : 'gap-6 mb-6'" class="grid grid-cols-1 md:grid-cols-3 2xl:grid-cols-3">
                     <div>
-                        <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Programa *</label>
+                        <label :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Programa *</label>
                         <select v-model="selectedProgramId" @change="onProgramChange"
-                                :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                 class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                             <option value="">Seleccione un programa</option>
                             <option v-for="program in programs" :key="program.id" :value="program.id">
@@ -23,9 +23,9 @@
                         </select>
                     </div>
                     <div>
-                        <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Centro de Trabajo *</label>
+                        <label :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Centro de Trabajo *</label>
                         <select v-model="selectedWorkCenterId" @change="loadDailyPrograms"
-                                :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                 class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                             <option value="">Seleccione un centro</option>
                             <option v-for="center in workCenters" :key="center.id" :value="center.id">
@@ -34,10 +34,10 @@
                         </select>
                     </div>
                     <div>
-                        <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Fase *</label>
+                        <label :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Fase *</label>
                         <select v-model="selectedPhase" @change="loadDailyPrograms"
                                 :disabled="!selectedProgramId"
-                                :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                 class="w-full rounded-lg font-semibold focus:outline-none disabled:opacity-50 bg-white text-[#0c1c28] border border-[#d4dee8]">
                             <option value="">Seleccione una fase</option>
                             <option v-if="selectedProgram" value="fecha_fase1">Fase 1 - {{ selectedProgram.fecha_fase1_formatted || '' }}</option>
@@ -109,19 +109,19 @@
                                 <div>
                                     <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Programado</label>
                                     <input type="number" v-model.number="editForm.programmed" min="0"
-                                           :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                           :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                            class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                                 </div>
                                 <div>
                                     <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Atrasos</label>
                                     <input type="number" v-model.number="editForm.backwardness" min="0"
-                                           :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                           :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                            class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                                 </div>
                                 <div>
                                     <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Adelantos</label>
                                     <input type="number" v-model.number="editForm.advanced" min="0"
-                                           :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                           :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                            class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                                 </div>
                             </div>
@@ -130,14 +130,14 @@
                                 <div>
                                     <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Total Fabricado</label>
                                     <input type="number" v-model.number="editForm.total_produced" min="0"
-                                           :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                           :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                            class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                                     <p :class="isTVMode() ? 'text-sm' : 'text-xs'" class="mt-1 text-[#6a8090]">Valor actual: {{ editingProgram.total_produced || 0 }}</p>
                                 </div>
                                 <div>
                                     <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-2 text-[#4e6070]">Total Rechazado</label>
                                     <input type="number" v-model.number="editForm.total_rejected" min="0"
-                                           :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                           :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                            class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                                     <p :class="isTVMode() ? 'text-sm' : 'text-xs'" class="mt-1 text-[#6a8090]">Valor actual: {{ editingProgram.total_rejected || 0 }}</p>
                                 </div>

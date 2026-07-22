@@ -3,18 +3,18 @@
         <SupervisorSidebar />
         <DisplayModeToggle />
         
-        <div :class="isTVMode() ? 'p-8 ml-16' : 'p-6 ml-16'">
-            <div :class="isTVMode() ? 'mb-8' : 'mb-6'">
-                <h1 :class="isTVMode() ? 'text-5xl' : 'text-3xl'" class="font-bold text-[#0b2a40]">Historial de Ajustes</h1>
+        <div :class="isTVMode() ? 'p-8 ml-16 2xl:p-12 2xl:ml-20' : 'p-6 ml-16'">
+            <div :class="isTVMode() ? 'mb-8 2xl:mb-10' : 'mb-6'">
+                <h1 :class="isTVMode() ? 'text-5xl 2xl:text-7xl' : 'text-3xl'" class="font-bold text-[#0b2a40]">Historial de Ajustes</h1>
             </div>
 
             <!-- Filtros -->
-            <div :class="isTVMode() ? 'p-6 mb-8' : 'p-4 mb-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <div :class="isTVMode() ? 'gap-6' : 'gap-4'" class="grid grid-cols-1 md:grid-cols-3">
+            <div :class="isTVMode() ? 'p-6 mb-8 2xl:p-8 2xl:mb-10' : 'p-4 mb-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
+                <div :class="isTVMode() ? 'gap-6 2xl:gap-8' : 'gap-4'" class="grid grid-cols-1 md:grid-cols-3 2xl:grid-cols-3">
                     <div>
-                        <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-1 text-[#4e6070]">Centro de Trabajo</label>
+                        <label :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="block font-semibold mb-1 text-[#4e6070]">Centro de Trabajo</label>
                         <select v-model="filters.work_center_id" @change="applyFilters"
-                                :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                                :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                 class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                             <option value="">Todos los centros</option>
                             <option v-for="center in workCenters" :key="center.id" :value="center.id">
@@ -23,15 +23,15 @@
                         </select>
                     </div>
                     <div>
-                        <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-1 text-[#4e6070]">Fecha Desde</label>
+                        <label :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="block font-semibold mb-1 text-[#4e6070]">Fecha Desde</label>
                         <input type="date" v-model="filters.date_from" @change="applyFilters"
-                               :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                               :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                     </div>
                     <div>
-                        <label :class="isTVMode() ? 'text-base' : 'text-sm'" class="block font-semibold mb-1 text-[#4e6070]">Fecha Hasta</label>
+                        <label :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="block font-semibold mb-1 text-[#4e6070]">Fecha Hasta</label>
                         <input type="date" v-model="filters.date_to" @change="applyFilters"
-                               :class="isTVMode() ? 'px-5 py-3 text-base' : 'px-4 py-2 text-sm'"
+                               :class="isTVMode() ? 'px-5 py-3 text-base 2xl:px-6 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-sm'"
                                class="w-full rounded-lg font-semibold focus:outline-none bg-white text-[#0c1c28] border border-[#d4dee8]">
                     </div>
                 </div>

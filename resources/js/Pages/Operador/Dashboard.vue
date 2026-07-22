@@ -2,16 +2,16 @@
     <div class="min-h-screen" style="background: #eaf0f5;">
         <OperadorSidebar />
         <DisplayModeToggle />
-        <div :class="isTVMode() ? 'p-8' : 'p-6'">
+        <div :class="isTVMode() ? 'p-8 2xl:p-12' : 'p-6'">
             <div class="flex flex-col gap-2.5">
             <!-- Selector de Línea de Producción -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="flex items-center gap-4 flex-wrap">
-                    <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070]">Línea de Producción:</span>
+                <div :class="isTVMode() ? 'px-6 py-4 2xl:px-8 2xl:py-5' : 'px-4 py-3'" class="flex items-center gap-4 flex-wrap">
+                    <span :class="isTVMode() ? 'text-sm 2xl:text-base' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070]">Línea de Producción:</span>
                     
                     <div class="flex items-center gap-3 flex-1">
                         <select v-model="selectedLineId" @change="cambiarLinea"
-                                :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                                :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-sm'"
                                 class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white focus:outline-none focus:border-[#174060]">
                             <option v-for="line in productionLinesData" :key="line.id" :value="line.id">
                                 {{ line.title }}
@@ -19,11 +19,11 @@
                         </select>
                         
                         <input type="date" v-model="fechaSeleccionada" @change="cambiarFecha"
-                               :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                               :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-sm'"
                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
                         
                         <select v-model="turnoSeleccionado" @change="cambiarTurno"
-                               :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                               :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-sm'"
                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
@@ -36,17 +36,17 @@
             </div>
             
             <!-- Información de la Línea -->
-            <div :class="isTVMode() ? 'p-8' : 'p-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <h2 :class="isTVMode() ? 'text-3xl' : 'text-xl'" class="font-extrabold text-[#0b2a40] mb-2">{{ selectedLineData?.title || 'Cargando...' }}</h2>
-                <p :class="isTVMode() ? 'text-base' : 'text-sm'" class="text-[#6a8090] mb-4">
+            <div :class="isTVMode() ? 'p-8 2xl:p-12' : 'p-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
+                <h2 :class="isTVMode() ? 'text-3xl 2xl:text-5xl' : 'text-xl'" class="font-extrabold text-[#0b2a40] mb-2">{{ selectedLineData?.title || 'Cargando...' }}</h2>
+                <p :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="text-[#6a8090] mb-4">
                     Centro de Trabajo: <strong>{{ selectedLineData?.work_center?.name || '-' }}</strong>
                 </p>
                 
                 <!-- KPIs -->
-                <div v-if="kpisData" :class="isTVMode() ? 'mb-8 p-6' : 'mb-6 p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
+                <div v-if="kpisData" :class="isTVMode() ? 'mb-8 p-6 2xl:mb-10 2xl:p-8' : 'mb-6 p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 :class="isTVMode() ? 'text-base' : 'text-sm'" class="font-bold text-[#0b2a40]">Indicadores de la Línea</h3>
-                        <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
+                        <h3 :class="isTVMode() ? 'text-base 2xl:text-lg' : 'text-sm'" class="font-bold text-[#0b2a40]">Indicadores de la Línea</h3>
+                        <span :class="isTVMode() ? 'text-sm 2xl:text-base' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
                     </div>
                     
                     <div :class="isTVMode() ? 'gap-6' : 'gap-4'" class="grid grid-cols-1 md:grid-cols-3">

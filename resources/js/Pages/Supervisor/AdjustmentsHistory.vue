@@ -1,19 +1,19 @@
 <template>
     <AuthenticatedLayout>
         <DisplayModeToggle />
-        <div class="flex flex-col gap-2.5">
+        <div :class="isTVMode() ? 'p-8 2xl:p-12' : 'p-6'" class="flex flex-col gap-2.5">
             <!-- Header -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="flex items-center justify-between gap-4 flex-wrap">
+                <div :class="isTVMode() ? 'px-6 py-4 2xl:px-8 2xl:py-5' : 'px-4 py-3'" class="flex items-center justify-between gap-4 flex-wrap">
                     <div>
-                        <span :class="isTVMode() ? 'text-xs' : 'text-[10px]'" class="font-bold tracking-widest uppercase text-[#174060]">Historial de Ajustes</span>
-                        <h1 :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40] leading-none">{{ workCenter?.name || 'Cargando...' }}</h1>
+                        <span :class="isTVMode() ? 'text-xs 2xl:text-sm' : 'text-[10px]'" class="font-bold tracking-widest uppercase text-[#174060]">Historial de Ajustes</span>
+                        <h1 :class="isTVMode() ? 'text-4xl 2xl:text-6xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40] leading-none">{{ workCenter?.name || 'Cargando...' }}</h1>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <input type="date" v-model="startDate" @change="cargarHistorial" :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
-                        <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold text-[#4e6070]">a</span>
-                        <input type="date" v-model="endDate" @change="cargarHistorial" :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
-                        <button @click="cargarHistorial" :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'" class="bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85">
+                        <input type="date" v-model="startDate" @change="cargarHistorial" :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
+                        <span :class="isTVMode() ? 'text-sm 2xl:text-base' : 'text-xs'" class="font-bold text-[#4e6070]">a</span>
+                        <input type="date" v-model="endDate" @change="cargarHistorial" :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
+                        <button @click="cargarHistorial" :class="isTVMode() ? 'px-6 py-3 text-base 2xl:px-8 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-xs'" class="bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85">
                             Actualizar
                         </button>
                     </div>
@@ -21,7 +21,7 @@
             </div>
 
             <!-- Resumen -->
-            <div v-if="adjustments.length > 0" :class="isTVMode() ? 'gap-4' : 'gap-2'" class="grid grid-cols-1 md:grid-cols-4">
+            <div v-if="adjustments.length > 0" :class="isTVMode() ? 'gap-4 2xl:gap-6' : 'gap-2'" class="grid grid-cols-1 md:grid-cols-4 2xl:grid-cols-4">
                 <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
                     <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">Total Ajustes</div>
                     <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ adjustments.length }}</div>

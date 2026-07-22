@@ -231,6 +231,7 @@ Route::middleware('auth')->group(function () {
     // ============================================
     Route::prefix('supervisor')->name('supervisor.')->group(function () {
         Route::get('/dashboard', [SupervisorController::class, 'index'])->name('dashboard');
+        Route::get('/information-panel', [SupervisorController::class, 'informationPanel'])->name('information-panel');
         Route::get('/daily-production', [SupervisorController::class, 'dailyProduction'])->name('daily-production');
         
         // 🔧 Ruta para obtener paros (GET)

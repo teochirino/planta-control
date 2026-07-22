@@ -3,16 +3,16 @@
         <SupervisorSidebar />
         <DisplayModeToggle />
         
-        <div :class="isTVMode() ? 'p-8 ml-16' : 'p-6 ml-16'">
+        <div :class="isTVMode() ? 'p-8 ml-16 2xl:p-12 2xl:ml-20' : 'p-6 ml-16'">
             <div class="flex flex-col gap-2.5">
             <!-- Selector de Centro de Trabajo -->
             <div class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <div :class="isTVMode() ? 'px-6 py-4' : 'px-4 py-3'" class="flex items-center gap-4 flex-wrap">
-                    <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070]">Centro de Trabajo:</span>
+                <div :class="isTVMode() ? 'px-6 py-4 2xl:px-8 2xl:py-5' : 'px-4 py-3'" class="flex items-center gap-4 flex-wrap">
+                    <span :class="isTVMode() ? 'text-sm 2xl:text-base' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070]">Centro de Trabajo:</span>
                     
                     <div class="flex items-center gap-3 flex-1">
                         <select v-model="selectedWorkCenterId" @change="cambiarCentro"
-                                :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                                :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-sm'"
                                 class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white focus:outline-none focus:border-[#174060]">
                             <option v-for="wc in workCentersData" :key="wc.id" :value="wc.id">
                                 {{ wc.name }}
@@ -20,11 +20,11 @@
                         </select>
                         
                         <input type="date" v-model="fechaSeleccionada" @change="cambiarFecha"
-                               :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                               :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-sm'"
                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
                         
                         <select v-model="turnoSeleccionado" @change="cambiarTurno"
-                                :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                                :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-sm'"
                                 class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
@@ -36,12 +36,12 @@
                     
                     <div class="flex gap-2">
                         <Link v-if="kpisData" :href="route('supervisor.daily-production', { work_center_id: selectedWorkCenterId, date: fechaSeleccionada, shift: turnoSeleccionado })"
-                              :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'"
+                              :class="isTVMode() ? 'px-6 py-3 text-base 2xl:px-8 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-xs'"
                               class="bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85 transition">
                             📝 Registro Diario de Producción
                         </Link>
                         <button v-else disabled
-                                :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'"
+                                :class="isTVMode() ? 'px-6 py-3 text-base 2xl:px-8 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-xs'"
                                 class="bg-gray-300 text-gray-500 rounded-md font-bold cursor-not-allowed">
                             📝 Registro Diario de Producción
                         </button>
@@ -50,8 +50,8 @@
             </div>
             
             <!-- Información del Centro -->
-            <div :class="isTVMode() ? 'p-8' : 'p-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
-                <h2 :class="isTVMode() ? 'text-3xl' : 'text-xl'" class="font-extrabold text-[#0b2a40] mb-4">{{ selectedWorkCenterData?.name || 'Cargando...' }}</h2>
+            <div :class="isTVMode() ? 'p-8 2xl:p-12' : 'p-6'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
+                <h2 :class="isTVMode() ? 'text-3xl 2xl:text-5xl' : 'text-xl'" class="font-extrabold text-[#0b2a40] mb-4">{{ selectedWorkCenterData?.name || 'Cargando...' }}</h2>
                 
                 <!-- Tarjetas de KPIs -->
                 <div v-if="kpisData" :class="isTVMode() ? 'mb-8 p-6' : 'mb-6 p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
