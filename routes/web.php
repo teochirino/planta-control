@@ -153,15 +153,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'productsIndex'])->name('products.index');
         Route::get('/productos/create', [\App\Http\Controllers\IngenieroProcesosController::class, 'productCreate'])->name('products.create');
         Route::post('/productos', [\App\Http\Controllers\IngenieroProcesosController::class, 'productStore'])->name('products.store');
-        Route::get('/productos/{modelo}/edit', [\App\Http\Controllers\IngenieroProcesosController::class, 'productEdit'])
-            ->where('modelo', '.*')
-            ->name('products.edit');
-        Route::put('/productos/{modelo}', [\App\Http\Controllers\IngenieroProcesosController::class, 'productUpdate'])
-            ->where('modelo', '.*')
-            ->name('products.update');
-        Route::delete('/productos/{modelo}', [\App\Http\Controllers\IngenieroProcesosController::class, 'productDestroy'])
-            ->where('modelo', '.*')
-            ->name('products.destroy');
+        Route::get('/productos/edit', [\App\Http\Controllers\IngenieroProcesosController::class, 'productEdit'])->name('products.edit');
+        Route::put('/productos/update', [\App\Http\Controllers\IngenieroProcesosController::class, 'productUpdate'])->name('products.update');
+        Route::delete('/productos/destroy', [\App\Http\Controllers\IngenieroProcesosController::class, 'productDestroy'])->name('products.destroy');
 
         // CRUD de Líneas de Producción
         Route::get('/production-lines', [ProductionLineController::class, 'index'])->name('production-lines.index');

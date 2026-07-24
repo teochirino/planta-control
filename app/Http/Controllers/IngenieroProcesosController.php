@@ -488,9 +488,9 @@ class IngenieroProcesosController extends Controller
         }
     }
     
-    public function productEdit($modelo)
+    public function productEdit(Request $request)
     {
-        $modelo = urldecode($modelo);
+        $modelo = $request->input('modelo');
         $products = Product::where('modelo', $modelo)
             ->with('workCenter')
             ->get()
@@ -523,9 +523,9 @@ class IngenieroProcesosController extends Controller
         ]);
     }
     
-    public function productUpdate(Request $request, $modelo)
+    public function productUpdate(Request $request)
     {
-        $modelo = urldecode($modelo);
+        $modelo = $request->input('modelo');
         $request->validate([
             'modelo' => 'required|string|max:20',
             'work_centers' => 'required|array|min:1',
@@ -561,9 +561,9 @@ class IngenieroProcesosController extends Controller
         }
     }
     
-    public function productDestroy($modelo)
+    public function productDestroy(Request $request)
     {
-        $modelo = urldecode($modelo);
+        $modelo = $request->input('modelo');
         try {
             Product::where('modelo', $modelo)->delete();
             
