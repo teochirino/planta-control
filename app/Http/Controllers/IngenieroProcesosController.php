@@ -490,6 +490,7 @@ class IngenieroProcesosController extends Controller
     
     public function productEdit($modelo)
     {
+        $modelo = urldecode($modelo);
         $products = Product::where('modelo', $modelo)
             ->with('workCenter')
             ->get()
@@ -524,6 +525,7 @@ class IngenieroProcesosController extends Controller
     
     public function productUpdate(Request $request, $modelo)
     {
+        $modelo = urldecode($modelo);
         $request->validate([
             'modelo' => 'required|string|max:20',
             'work_centers' => 'required|array|min:1',
@@ -561,6 +563,7 @@ class IngenieroProcesosController extends Controller
     
     public function productDestroy($modelo)
     {
+        $modelo = urldecode($modelo);
         try {
             Product::where('modelo', $modelo)->delete();
             

@@ -166,6 +166,6 @@ function getWorkCenterName(workCenterId) {
 }
 
 function submit() {
-    router.put(route('ingeniero-procesos.products.update', props.modelo), form);
+    router.put(route('ingeniero-procesos.products.update', encodeURIComponent(props.modelo)), form);
 }
 </script>

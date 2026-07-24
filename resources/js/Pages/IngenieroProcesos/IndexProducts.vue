@@ -32,7 +32,7 @@
                     <div class="px-6 py-4 flex justify-between items-center" style="background: #174060;">
                         <h2 class="text-xl font-bold" style="color: #fff;">{{ modelo }}</h2>
                         <div class="space-x-2">
-                            <Link :href="route('ingeniero-procesos.products.edit', modelo)" 
+                            <Link :href="route('ingeniero-procesos.products.edit', encodeURIComponent(modelo))"
                                   class="px-3 py-1 rounded transition font-semibold text-sm"
                                   style="background: #0b2a40; color: #fff;">
                                 Editar
@@ -107,7 +107,7 @@ watch(search, (value) => {
 
 function confirmDelete(modelo) {
     if (confirm(`¿Estás seguro de que deseas eliminar el producto ${modelo}?`)) {
-        router.delete(route('ingeniero-procesos.products.destroy', modelo));
+        router.delete(route('ingeniero-procesos.products.destroy', encodeURIComponent(modelo)));
     }
 }
 </script>
