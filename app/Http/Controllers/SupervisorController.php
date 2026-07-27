@@ -195,6 +195,9 @@ class SupervisorController extends Controller
             $selectedWorkCenter = $workCenters->where('id', $selectedWorkCenterId)->first();
 
             if ($selectedWorkCenter) {
+                // Cargar attributes del centro de trabajo
+                $selectedWorkCenter->load('attributes');
+
                 // Obtener todas las líneas de producción de este centro
                 $productionLinesForCenter = ProductionLine::where('id_work_center', $selectedWorkCenterId)->get();
 
@@ -248,6 +251,7 @@ class SupervisorController extends Controller
             'productionLinesForCenter' => $productionLinesForCenter,
             'allKPIs' => $allKPIs,
             'centerKPIs' => $centerKPIs,
+            'attributes' => $selectedWorkCenter ? $selectedWorkCenter->attributes : collect(),
         ]);
     }
 

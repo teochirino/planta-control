@@ -211,6 +211,10 @@ const props = defineProps({
     centerKPIs: {
         type: Object,
         default: null
+    },
+    attributes: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -251,13 +255,42 @@ const diaSemana = computed(() => {
     return date.toLocaleDateString('es-ES', { weekday: 'long' })
 })
 
-const semaforosData = ref([
-    { area: 'Materia Prima', estado: 'ok', desde: '5d 18h' },
-    { area: 'MOD', estado: 'ok', desde: '50d 17h' },
-    { area: 'Programa', estado: 'ok', desde: '50d 17h' },
-    { area: 'Calidad', estado: 'ok', desde: '50d 17h' },
-    { area: 'Ingeniería', estado: 'ok', desde: '50d 17h' },
-])
+const semaforosData = computed(() => {
+    return props.attributes.map(attr => {
+        const colorMap = {
+            'verde': 'ok',
+            'amarillo': 'warn',
+            'rojo': 'bad',
+            'gris': 'default'
+        }
+        return {
+            area: attr.name,
+            estado: colorMap[attr.color] || 'default',
+            desde: attr.elapsed_time || getElapsedTime(attr.color_changed_at)
+        }
+    })
+})
+
+function getElapsedTime(colorChangedAt) {
+    if (!colorChangedAt) return 'Sin datos'
+
+    const now = new Date()
+    const changed = new Date(colorChangedAt)
+    const diffMs = now - changed
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffDays > 0) {
+        const remainingHours = diffHours % 24
+        return `${diffDays}d ${remainingHours}h`
+    } else if (diffHours > 0) {
+        const remainingMins = diffMins % 60
+        return `${diffHours}h ${remainingMins}m`
+    } else {
+        return `${diffMins}m`
+    }
+}
 
 function cambiarCentro() {
     router.get(route('supervisor.tv-panels'), {
@@ -295,15 +328,24 @@ function getComplianceTone(value) {
 
 // Reloj de bloques
 let clockInterval = null
+let semaforosInterval = null
 
 onMounted(() => {
     initClock()
     clockInterval = setInterval(updateClock, 1000)
+    // Actualizar tiempo de semáforos cada minuto
+    semaforosInterval = setInterval(() => {
+        // Forzar re-render de computed property
+        const temp = semaforosData.value
+    }, 60000)
 })
 
 onUnmounted(() => {
     if (clockInterval) {
         clearInterval(clockInterval)
+    }
+    if (semaforosInterval) {
+        clearInterval(semaforosInterval)
     }
 })
 
@@ -743,6 +785,10 @@ function restartAnim(key) {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 2px rgba(220, 38, 38, 0.4);
 }
 
+.semaforo-row.estado-default {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
 .tl-housing {
     display: inline-flex;
     align-items: center;
@@ -779,6 +825,11 @@ function restartAnim(key) {
     background: radial-gradient(circle at 35% 30%, #f87171, #dc2626 70%);
     box-shadow: 0 0 10px 2px rgba(220, 38, 38, 0.75), inset 0 0 3px rgba(255, 255, 255, 0.6);
     animation: lampPulse 2.4s ease-in-out infinite;
+}
+
+.lamp.on-default {
+    background: radial-gradient(circle at 35% 30%, #9ca3af, #6b7280 70%);
+    box-shadow: 0 0 6px 1px rgba(107, 114, 128, 0.5), inset 0 0 3px rgba(255, 255, 255, 0.4);
 }
 
 @keyframes lampPulse {
