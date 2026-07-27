@@ -174,6 +174,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
+import axios from 'axios'
 
 const props = defineProps({
     workCenters: {
@@ -329,6 +330,7 @@ function getComplianceTone(value) {
 // Reloj de bloques
 let clockInterval = null
 let semaforosInterval = null
+let dataRefreshInterval = null
 
 onMounted(() => {
     initClock()
@@ -338,6 +340,8 @@ onMounted(() => {
         // Forzar re-render de computed property
         const temp = semaforosData.value
     }, 60000)
+    // Actualizar datos completos cada 3 minutos
+    dataRefreshInterval = setInterval(refreshData, 180000)
 })
 
 onUnmounted(() => {
@@ -347,7 +351,22 @@ onUnmounted(() => {
     if (semaforosInterval) {
         clearInterval(semaforosInterval)
     }
+    if (dataRefreshInterval) {
+        clearInterval(dataRefreshInterval)
+    }
 })
+
+async function refreshData() {
+    try {
+        await router.reload({
+            only: ['dailyProgram', 'allKPIs', 'centerKPIs', 'attributes'],
+            preserveState: true,
+            preserveScroll: true
+        })
+    } catch (error) {
+        console.error('Error al actualizar datos:', error)
+    }
+}
 
 function initClock() {
     const t = horaEnBloques()
