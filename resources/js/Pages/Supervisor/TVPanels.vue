@@ -329,27 +329,18 @@ function getComplianceTone(value) {
 
 // Reloj de bloques
 let clockInterval = null
-let semaforosInterval = null
 let dataRefreshInterval = null
 
 onMounted(() => {
     initClock()
     clockInterval = setInterval(updateClock, 1000)
-    // Actualizar tiempo de semáforos cada minuto
-    semaforosInterval = setInterval(() => {
-        // Forzar re-render de computed property
-        const temp = semaforosData.value
-    }, 60000)
-    // Actualizar datos completos cada 3 minutos
-    dataRefreshInterval = setInterval(refreshData, 180000)
+    // Actualizar datos completos (incluyendo semáforos) cada 1 minuto
+    dataRefreshInterval = setInterval(refreshData, 60000)
 })
 
 onUnmounted(() => {
     if (clockInterval) {
         clearInterval(clockInterval)
-    }
-    if (semaforosInterval) {
-        clearInterval(semaforosInterval)
     }
     if (dataRefreshInterval) {
         clearInterval(dataRefreshInterval)
