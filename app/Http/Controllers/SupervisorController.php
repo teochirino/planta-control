@@ -162,7 +162,95 @@ class SupervisorController extends Controller
             'centerKPIs' => $centerKPIs,
         ]);
     }
-    
+
+    // Panel TV - Vista optimizada para pantallas grandes con diseño específico
+    public function tvPanels(Request $request)
+    {
+        $user = auth()->user();
+
+        // Obtener centros de trabajo asignados al supervisor
+        $workCenters = $user->workCenters;
+
+        if ($workCenters->isEmpty()) {
+            return Inertia::render('Supervisor/NoWorkCenters');
+        }
+
+        // Obtener parámetros de selección
+        $selectedWorkCenterId = $request->get('work_center_id');
+        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedShift = $request->get('shift', 'matutino');
+
+        // Si no se seleccionó centro, usar el primero
+        if (!$selectedWorkCenterId && $workCenters->isNotEmpty()) {
+            $selectedWorkCenterId = $workCenters->first()->id;
+        }
+
+        $selectedWorkCenter = null;
+        $dailyProgram = null;
+        $productionLinesForCenter = collect();
+        $allKPIs = collect();
+        $centerKPIs = null;
+
+        if ($selectedWorkCenterId) {
+            $selectedWorkCenter = $workCenters->where('id', $selectedWorkCenterId)->first();
+
+            if ($selectedWorkCenter) {
+                // Obtener todas las líneas de producción de este centro
+                $productionLinesForCenter = ProductionLine::where('id_work_center', $selectedWorkCenterId)->get();
+
+                // Obtener programa diario
+                $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
+                    ->where('id_work_center', $selectedWorkCenterId)
+                    ->where('date', $selectedDate)
+                    ->where('shift', $selectedShift)
+                    ->first();
+
+                if ($dailyProgram) {
+                    // Calcular KPIs a nivel de centro de trabajo
+                    $allSchedules = $dailyProgram->schedules;
+                    $allStrikes = $dailyProgram->strikes;
+
+                    // Calcular KPIs del centro
+                    $centerKPIs = $this->kpiService->calculateCenterKPIs($dailyProgram, $selectedWorkCenter);
+
+                    // Calcular KPIs individuales por línea para mostrar detalles
+                    foreach ($productionLinesForCenter as $line) {
+                        $schedules = $dailyProgram->schedules()
+                            ->where('id_production_line', $line->id)
+                            ->orderBy('start_time')
+                            ->get();
+
+                        $strikes = $dailyProgram->strikes()
+                            ->where('id_production_lines', $line->id)
+                            ->orderBy('start_time')
+                            ->get();
+
+                        $kpis = $this->kpiService->calculateLineKPIs($dailyProgram, $line, $schedules, $strikes);
+
+                        $allKPIs->push([
+                            'line' => $line,
+                            'kpis' => $kpis,
+                            'schedules' => $schedules,
+                            'strikes' => $strikes,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return Inertia::render('Supervisor/TVPanels', [
+            'workCenters' => $workCenters,
+            'productionLines' => $productionLinesForCenter,
+            'selectedWorkCenter' => $selectedWorkCenter,
+            'selectedDate' => $selectedDate,
+            'selectedShift' => $selectedShift,
+            'dailyProgram' => $dailyProgram,
+            'productionLinesForCenter' => $productionLinesForCenter,
+            'allKPIs' => $allKPIs,
+            'centerKPIs' => $centerKPIs,
+        ]);
+    }
+
     // Registro diario de producción
     public function dailyProduction(Request $request)
     {
