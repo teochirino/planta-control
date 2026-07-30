@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\PermisosController;
 use App\Http\Controllers\SupervisorController;
+use App\Http\Controllers\VideoProgramadoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,7 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
     
     // Producción
     Route::get('/produccion/{date}', [ProductionController::class, 'getByDate']);
@@ -58,4 +59,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Atributos - Semáforos del Área
     Route::post('/attributes/{attribute}/change-color', [\App\Http\Controllers\AttributeController::class, 'changeColor']);
     Route::get('/attributes/{attribute}/history', [\App\Http\Controllers\AttributeController::class, 'getHistory']);
+    
+    // Videos Programados
+    Route::get('/videos-programados', [VideoProgramadoController::class, 'index']);
+    Route::post('/videos-programados', [VideoProgramadoController::class, 'store']);
+    Route::get('/videos-programados/scheduled', [VideoProgramadoController::class, 'getScheduledVideos']);
+    Route::get('/videos-programados/{id}', [VideoProgramadoController::class, 'show']);
+    Route::put('/videos-programados/{id}', [VideoProgramadoController::class, 'update']);
+    Route::delete('/videos-programados/{id}', [VideoProgramadoController::class, 'destroy']);
+    Route::post('/videos-programados/{id}/register-playback', [VideoProgramadoController::class, 'registerPlayback']);
 });

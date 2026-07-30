@@ -167,6 +167,37 @@
                 </section>
             </main>
         </div>
+
+        <!-- Video RRHH Modal -->
+        <div v-if="showVideoModal && currentVideo" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
+            <div class="relative w-full max-w-5xl mx-4">
+                <button
+                    @click="closeVideoModal"
+                    class="absolute -top-12 right-0 text-white hover:text-gray-300 transition"
+                >
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                
+                <div class="bg-black rounded-lg overflow-hidden shadow-2xl">
+                    <video
+                        ref="videoPlayerRef"
+                        :src="getVideoUrl(currentVideo.ruta_video)"
+                        class="w-full"
+                        autoplay
+                        @ended="onVideoEnded"
+                    ></video>
+                    
+                    <div class="bg-gray-900 text-white p-4">
+                        <h3 class="text-xl font-bold">{{ currentVideo.nombre }}</h3>
+                        <p class="text-gray-400 text-sm mt-1">
+                            Programado: {{ currentVideo.hora_reproduccion }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -174,7 +205,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
-import axios from 'axios'
 
 const props = defineProps({
     workCenters: {
@@ -221,6 +251,13 @@ const props = defineProps({
 
 const selectedWorkCenterId = ref(props.selectedWorkCenter?.id || null)
 const isDarkMode = ref(false)
+
+// Video RRHH Modal
+const showVideoModal = ref(false)
+const currentVideo = ref(null)
+const videoPlayerRef = ref(null)
+const videosReproducedToday = ref([])
+const videoCheckInterval = ref(null)
 
 // Detectar zona horaria según entorno
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -336,6 +373,13 @@ onMounted(() => {
     clockInterval = setInterval(updateClock, 1000)
     // Actualizar datos completos (incluyendo semáforos) cada 1 minuto
     dataRefreshInterval = setInterval(refreshData, 60000)
+    
+    // Initialize video RRHH system
+    loadVideosReproducedToday()
+    // Check for videos immediately on mount
+    checkForScheduledVideos()
+    // Check for videos every 5 minutes
+    videoCheckInterval.value = setInterval(checkForScheduledVideos, 300000)
 })
 
 onUnmounted(() => {
@@ -344,6 +388,9 @@ onUnmounted(() => {
     }
     if (dataRefreshInterval) {
         clearInterval(dataRefreshInterval)
+    }
+    if (videoCheckInterval.value) {
+        clearInterval(videoCheckInterval.value)
     }
 })
 
@@ -421,6 +468,99 @@ function restartAnim(key) {
     void el.offsetWidth
     el.classList.add('bounce')
     group.classList.add('roll')
+}
+
+// Video RRHH Functions
+function loadVideosReproducedToday() {
+    const today = new Date().toDateString()
+    const stored = localStorage.getItem('videos_reproduced_' + today)
+    videosReproducedToday.value = stored ? JSON.parse(stored) : []
+}
+
+function saveVideosReproducedToday() {
+    const today = new Date().toDateString()
+    localStorage.setItem('videos_reproduced_' + today, JSON.stringify(videosReproducedToday.value))
+}
+
+async function checkForScheduledVideos() {
+    try {
+        const now = new Date()
+        console.log('Checking for scheduled videos at:', now.toLocaleTimeString())
+        
+        const response = await window.axios.get('/api/videos-programados/scheduled')
+        const videos = response.data
+        
+        console.log('Scheduled videos from API:', videos)
+        console.log('Videos already reproduced today:', videosReproducedToday.value)
+        
+        // Filter out videos already reproduced today
+        const newVideos = videos.filter(video => {
+            const notInLocalStorage = !videosReproducedToday.value.includes(video.id)
+            const notReproducedToday = !wasReproducedToday(video.ultima_reproduccion)
+            console.log(`Video ${video.id}: localStorage=${notInLocalStorage}, backend=${notReproducedToday}, ultima_reproduccion=${video.ultima_reproduccion}`)
+            return notInLocalStorage && notReproducedToday
+        })
+        
+        console.log('New videos to play:', newVideos)
+        
+        if (newVideos.length > 0) {
+            // Play the first video
+            await playVideo(newVideos[0])
+        }
+    } catch (error) {
+        console.error('Error checking for scheduled videos:', error)
+    }
+}
+
+function wasReproducedToday(ultimaReproduccion) {
+    if (!ultimaReproduccion) return false
+    const lastPlayback = new Date(ultimaReproduccion)
+    const today = new Date()
+    return lastPlayback.toDateString() === today.toDateString()
+}
+
+async function playVideo(video) {
+    try {
+        // Register playback before starting
+        await window.axios.post(`/api/videos-programados/${video.id}/register-playback`)
+        
+        // Update localStorage
+        videosReproducedToday.value.push(video.id)
+        saveVideosReproducedToday()
+        
+        // Set current video and show modal
+        currentVideo.value = video
+        showVideoModal.value = true
+        
+        // Auto-play video
+        setTimeout(() => {
+            if (videoPlayerRef.value) {
+                videoPlayerRef.value.play().catch(error => {
+                    console.error('Autoplay failed:', error)
+                })
+            }
+        }, 100)
+    } catch (error) {
+        console.error('Error playing video:', error)
+    }
+}
+
+function onVideoEnded() {
+    showVideoModal.value = false
+    currentVideo.value = null
+}
+
+function closeVideoModal() {
+    if (videoPlayerRef.value) {
+        videoPlayerRef.value.pause()
+        videoPlayerRef.value.currentTime = 0
+    }
+    showVideoModal.value = false
+    currentVideo.value = null
+}
+
+function getVideoUrl(path) {
+    return '/storage/' + path
 }
 </script>
 

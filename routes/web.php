@@ -86,6 +86,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/notification-recipients/{notificationRecipient}/edit', [NotificationRecipientController::class, 'edit'])->name('notification-recipients.edit');
         Route::put('/notification-recipients/{notificationRecipient}', [NotificationRecipientController::class, 'update'])->name('notification-recipients.update');
         Route::delete('/notification-recipients/{notificationRecipient}', [NotificationRecipientController::class, 'destroy'])->name('notification-recipients.destroy');
+        
+        // Videos Programados RRHH
+        Route::get('/videos', function () {
+            return Inertia::render('Admin/Videos/Index');
+        })->name('videos.index');
     });
     
     // ============================================

@@ -89,6 +89,21 @@
                                 <span>Destinatarios</span>
                             </Link>
                         </div>
+
+                        <!-- Sección RRHH -->
+                        <div class="mb-4">
+                            <p class="text-xs font-semibold uppercase tracking-wider mb-2 px-4" style="color: #6a8090;">RRHH</p>
+                            <Link 
+                                :href="route('admin.videos.index')" 
+                                class="sidebar-link"
+                                :class="{ 'active': route().current('admin.videos.index') }"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                <span>Videos Programados</span>
+                            </Link>
+                        </div>
                     </nav>
 
                     <div class="p-4 border-t" style="border-color: #174060;">
