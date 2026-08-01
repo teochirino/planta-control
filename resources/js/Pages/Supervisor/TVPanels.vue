@@ -1,5 +1,7 @@
 <template>
-    <div class="dashboard">
+    <div>
+        <SupervisorSidebar :hide-button="isFullscreen" />
+        <div class="dashboard">
         <header class="topbar">
             <div class="brand" aria-label="Línea Italia">
                 <div class="brand-mark">LI</div>
@@ -264,6 +266,7 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
 </template>
 
@@ -329,6 +332,7 @@ const props = defineProps({
 
 const selectedWorkCenterId = ref(props.selectedWorkCenter?.id || null)
 const isDarkMode = ref(false)
+const isFullscreen = ref(false)
 const currentTime = ref('')
 const currentPeriod = ref('')
 
@@ -408,10 +412,12 @@ function toggleFullscreen() {
         document.documentElement.requestFullscreen().catch(err => {
             console.warn('No fue posible activar pantalla completa', err)
         })
+        isFullscreen.value = true
     } else {
         document.exitFullscreen().catch(err => {
             console.warn('No fue posible salir de pantalla completa', err)
         })
+        isFullscreen.value = false
     }
 }
 
@@ -603,6 +609,8 @@ onMounted(() => {
     
     // ESC key listener for fullscreen
     document.addEventListener('keydown', handleEscKey)
+    // Listener para detectar cambios en el estado de pantalla completa
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
 })
 
 onUnmounted(() => {
@@ -616,6 +624,7 @@ onUnmounted(() => {
         clearInterval(videoCheckInterval.value)
     }
     document.removeEventListener('keydown', handleEscKey)
+    document.removeEventListener('fullscreenchange', handleFullscreenChange)
 })
 
 function handleEscKey(event) {
@@ -623,7 +632,12 @@ function handleEscKey(event) {
         document.exitFullscreen().catch(err => {
             console.warn('No fue posible salir de pantalla completa', err)
         })
+        isFullscreen.value = false
     }
+}
+
+function handleFullscreenChange() {
+    isFullscreen.value = !!document.fullscreenElement
 }
 
 async function refreshData() {
