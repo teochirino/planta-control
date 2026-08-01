@@ -109,12 +109,6 @@
                     <div class="text-2xl font-extrabold text-[#0b2a40]">{{ number_format($kpis['real_vs_ideal'], 1) }}%</div>
                 </div>
                 
-                {{-- Ahorro Activos --}}
-                <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                    <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Ahorro Activos</div>
-                    <div class="text-xl font-extrabold text-[#0b8a3d]">${{ number_format($kpis['saved_amount'], 0) }}</div>
-                </div>
-                
                 {{-- Capacidad Instalada --}}
                 <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
                     <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Cap. Instalada</div>
@@ -141,7 +135,7 @@
             <div class="p-4 bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
                 <div class="text-xs font-bold tracking-widest uppercase text-[#4e6070] mb-1">Capacidad Instalada</div>
                 <div class="text-3xl font-extrabold text-[#0b2a40]">{{ number_format($selectedWorkCenter->installed_capacity) }}</div>
-                <div class="text-xs text-[#6a8090] mt-1">piezas/hora</div>
+                <div class="text-xs text-[#6a8090] mt-1">piezas/día</div>
             </div>
             
             <div class="p-4 bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
@@ -164,7 +158,7 @@
                     <div class="p-3 border border-[#d4dee8] rounded-lg bg-white">
                         <div class="font-bold text-[#0b2a40]">{{ $line->title }}</div>
                         <div class="text-xs text-[#6a8090] mt-1">
-                            Cap: {{ number_format($line->installed_capacity) }} pzs/h | 
+                            Cap: {{ number_format($line->installed_capacity) }} pzs/día | 
                             Costo: ${{ number_format($line->cost, 2) }}/min
                         </div>
                     </div>

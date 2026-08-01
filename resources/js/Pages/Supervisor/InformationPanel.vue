@@ -92,11 +92,6 @@
                         </div>
                         
                         <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Ahorro Activos</div>
-                            <div :class="isTVMode() ? 'text-3xl' : 'text-xl'" class="font-extrabold text-[#0b8a3d]">${{ formatNumber(centerKPIsData.saved_amount) }}</div>
-                        </div>
-                        
-                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
                             <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Cap. Instalada</div>
                             <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(centerKPIsData.installed_capacity) }}</div>
                         </div>

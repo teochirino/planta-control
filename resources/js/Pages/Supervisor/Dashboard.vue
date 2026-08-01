@@ -106,11 +106,6 @@
                         </div>
                         
                         <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Ahorro Activos</div>
-                            <div :class="isTVMode() ? 'text-3xl' : 'text-xl'" class="font-extrabold text-[#0b8a3d]">${{ formatNumber(kpisData.saved_amount) }}</div>
-                        </div>
-                        
-                        <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
                             <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Cap. Instalada</div>
                             <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(kpisData.installed_capacity) }}</div>
                         </div>
@@ -137,7 +132,7 @@
                     <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
                         <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-widest uppercase text-[#4e6070] mb-1">Capacidad Instalada</div>
                         <div :class="isTVMode() ? 'text-4xl' : 'text-3xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(selectedWorkCenterData?.installed_capacity) }}</div>
-                        <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">piezas/hora</div>
+                        <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">piezas/día</div>
                     </div>
                     
                     <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-[#f4f7fa] border border-[#d4dee8] rounded-lg">
@@ -162,7 +157,7 @@
                             <div v-for="line in (selectedWorkCenterData?.production_lines || [])" :key="line.id" :class="isTVMode() ? 'p-5' : 'p-3'" class="border border-[#d4dee8] rounded-lg bg-white">
                                 <div :class="isTVMode() ? 'text-lg' : ''" class="font-bold text-[#0b2a40]">{{ line.title }}</div>
                                 <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">
-                                    Cap: {{ formatNumber(line.installed_capacity) }} pzs/h | 
+                                    Cap: {{ formatNumber(line.installed_capacity) }} pzs/día | 
                                     Costo: ${{ formatNumber(line.cost) }}/min
                                 </div>
                             </div>
