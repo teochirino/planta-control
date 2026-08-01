@@ -237,9 +237,24 @@ class SupervisorController extends Controller
                             'strikes' => $strikes,
                         ]);
                     }
+
+                    // Obtener schedules existentes agrupados por hora y línea para la tabla de producción por hora
+                    $schedulesMap = $dailyProgram->schedules
+                        ->keyBy(function($schedule) {
+                            return $schedule->start_time . '-' . $schedule->id_production_line;
+                        });
+                } else {
+                    $schedulesMap = collect();
                 }
             }
         }
+
+        // Generar horarios según el turno
+        $startTime = $selectedShift === 'matutino' ? '08:00' : ($selectedShift === 'vespertino' ? '16:00' : '00:00');
+        $hours = $this->generateHourlySchedule($startTime, 9);
+
+        // Obtener historial de cumplimiento de los últimos 3 días
+        $recentHistory = $this->getRecentComplianceHistory($selectedWorkCenterId, $selectedShift);
 
         return Inertia::render('Supervisor/TVPanels', [
             'workCenters' => $workCenters,
@@ -252,6 +267,9 @@ class SupervisorController extends Controller
             'allKPIs' => $allKPIs,
             'centerKPIs' => $centerKPIs,
             'attributes' => $selectedWorkCenter ? $selectedWorkCenter->attributes : collect(),
+            'hours' => $hours,
+            'existingSchedules' => $schedulesMap ?? collect(),
+            'recentHistory' => $recentHistory,
         ]);
     }
 
@@ -1122,5 +1140,35 @@ class SupervisorController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error al actualizar el programa: ' . $e->getMessage());
         }
+    }
+
+    // Obtener historial de cumplimiento de los últimos 3 días
+    private function getRecentComplianceHistory($workCenterId, $shift)
+    {
+        $history = [];
+        
+        for ($i = 1; $i <= 3; $i++) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            
+            $dailyProgram = DailyProgram::where('id_work_center', $workCenterId)
+                ->where('date', $date)
+                ->where('shift', $shift)
+                ->first();
+            
+            if ($dailyProgram) {
+                $totalProduced = $dailyProgram->schedules->sum('produced');
+                $totalToProduce = max($dailyProgram->programmed + $dailyProgram->backwardness - $dailyProgram->advanced, 0);
+                $compliance = $totalToProduce > 0 ? round(($totalProduced / $totalToProduce) * 100, 1) : 0;
+            } else {
+                $compliance = 0;
+            }
+            
+            $history[] = [
+                'date' => now()->subDays($i)->format('d/m/Y'),
+                'value' => $compliance
+            ];
+        }
+        
+        return array_reverse($history); // Mostrar en orden cronológico (más antiguo primero)
     }
 }

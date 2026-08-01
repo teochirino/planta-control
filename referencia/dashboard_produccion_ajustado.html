@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>Dashboard de Producción | Línea Italia</title>
+  <style>
+    :root {
+      --bg: #edf2f6;
+      --panel: #ffffff;
+      --panel-soft: #f7fafc;
+      --navy: #0d2b3e;
+      --navy-2: #143d58;
+      --blue: #1f6f9c;
+      --blue-soft: #dcecf5;
+      --text: #193142;
+      --muted: #6f8190;
+      --line: #d9e2e9;
+      --green: #18a66a;
+      --green-soft: #e4f6ee;
+      --yellow: #d59a19;
+      --yellow-soft: #fff4d9;
+      --red: #db4b55;
+      --red-soft: #fdecee;
+      --shadow: 0 10px 30px rgba(13, 43, 62, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-width: 1280px;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .dashboard {
+      width: 100vw;
+      height: 100vh;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 74px 1fr;
+      gap: 14px;
+    }
+
+    .topbar {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 320px minmax(260px, 1fr) auto auto;
+      align-items: center;
+      gap: 14px;
+      padding: 0 20px;
+      background: var(--panel);
+      border: 1px solid rgba(217, 226, 233, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 3px solid var(--navy);
+      border-radius: 7px;
+      color: var(--navy);
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .brand-copy {
+      line-height: 1;
+    }
+
+    .brand-name {
+      font-size: 23px;
+      font-weight: 770;
+      letter-spacing: -0.6px;
+      white-space: nowrap;
+    }
+
+    .brand-subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .area-control {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .area-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .select-wrap {
+      position: relative;
+      min-width: 250px;
+      max-width: 390px;
+      flex: 1;
+    }
+
+    .select-wrap select {
+      width: 100%;
+      height: 46px;
+      appearance: none;
+      padding: 0 42px 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      outline: none;
+      background: var(--panel-soft);
+      color: var(--text);
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    .select-wrap::after {
+      content: "⌄";
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-56%);
+      color: var(--muted);
+      pointer-events: none;
+      font-size: 20px;
+    }
+
+    .clock {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      min-width: 190px;
+      justify-content: flex-end;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .clock-time {
+      font-size: clamp(28px, 2.1vw, 38px);
+      font-weight: 820;
+      letter-spacing: 1px;
+      color: var(--navy);
+    }
+
+    .clock-period {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: 1px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .shift-chip {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      background: var(--navy);
+      color: white;
+      font-size: 12px;
+      font-weight: 780;
+      white-space: nowrap;
+    }
+
+    .shift-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #ffd36e;
+      box-shadow: 0 0 0 5px rgba(255, 211, 110, 0.16);
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-soft);
+      color: var(--navy);
+      cursor: pointer;
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .icon-btn:hover {
+      transform: translateY(-1px);
+      background: var(--blue-soft);
+    }
+
+    .icon-btn svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .content {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(355px, 28%) minmax(0, 72%);
+      gap: 14px;
+    }
+
+    .left-column,
+    .right-column {
+      min-height: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .left-column {
+      /* Resumen compacto y espacio flexible para los bloques operativos. */
+      grid-template-rows: 170px minmax(250px, 1.15fr) minmax(180px, 0.85fr) 126px;
+    }
+
+    .right-column {
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .panel {
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid rgba(217, 226, 233, 0.92);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 18px 12px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: clamp(15px, 1.05vw, 19px);
+      font-weight: 820;
+      letter-spacing: -0.25px;
+      color: var(--navy);
+    }
+
+    .panel-kicker {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
+    }
+
+    .refresh-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .refresh-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 5px rgba(24, 166, 106, 0.11);
+    }
+
+    .kpi-panel {
+      padding-bottom: 14px;
+    }
+
+    .kpi-grid {
+      padding: 0 14px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .kpi-card {
+      position: relative;
+      min-height: 96px;
+      overflow: hidden;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: linear-gradient(150deg, #ffffff 0%, #f7fafc 100%);
+    }
+
+    .kpi-card::after {
+      content: "";
+      position: absolute;
+      right: -20px;
+      bottom: -26px;
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background: rgba(31, 111, 156, 0.07);
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+    }
+
+    .kpi-value {
+      margin-top: 8px;
+      color: var(--navy);
+      font-size: clamp(24px, 1.85vw, 34px);
+      font-weight: 850;
+      letter-spacing: -1px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-meta {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
+    }
+
+    .kpi-card.positive .kpi-value,
+    .kpi-card.compliance .kpi-value {
+      color: var(--green);
+    }
+
+    .kpi-card.negative .kpi-value {
+      color: var(--red);
+    }
+
+    .progress-track {
+      height: 5px;
+      margin-top: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e8eef2;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: var(--green);
+      transition: width 0.5s ease;
+    }
+
+    .summary-panel {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: minmax(72px, 1fr) auto;
+      gap: 8px;
+    }
+
+    .summary-main {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 72px;
+      padding: 12px 14px;
+      border-radius: 15px;
+      background: linear-gradient(130deg, var(--navy), var(--navy-2));
+      color: white;
+    }
+
+    .summary-main .summary-label {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .summary-main .summary-value {
+      color: white;
+    }
+
+    .summary-block {
+      min-width: 0;
+      min-height: 55px;
+      padding: 9px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-soft);
+      text-align: center;
+    }
+
+    .summary-block.date-block .summary-value {
+      font-size: clamp(16px, 1.15vw, 21px);
+      letter-spacing: -0.55px;
+      white-space: nowrap;
+    }
+
+    .summary-block.difference-block {
+      background: linear-gradient(145deg, #fff 0%, var(--red-soft) 100%);
+      border-color: #f2cdd1;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      margin-top: 5px;
+      color: var(--navy);
+      font-size: clamp(20px, 1.55vw, 28px);
+      font-weight: 840;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .summary-detail {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 650;
+    }
+
+    .summary-main .summary-detail {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .capacity-ring {
+      --value: 84;
+      width: 62px;
+      height: 62px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: conic-gradient(#38c58a calc(var(--value) * 1%), rgba(255, 255, 255, 0.17) 0);
+    }
+
+    .capacity-ring::before {
+      content: attr(data-value) "%";
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--navy-2);
+      color: white;
+      font-size: 12px;
+      font-weight: 820;
+    }
+
+    .status-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .status-list {
+      min-height: 0;
+      padding: 0 14px 14px;
+      display: grid;
+      gap: 7px;
+      align-content: start;
+    }
+
+    .status-item {
+      min-height: 44px;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--panel-soft);
+    }
+
+    .status-light {
+      width: 13px;
+      height: 13px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 5px rgba(24, 166, 106, 0.11);
+    }
+
+    .status-item.warning .status-light {
+      background: var(--yellow);
+      box-shadow: 0 0 0 5px rgba(213, 154, 25, 0.12);
+    }
+
+    .status-item.danger .status-light {
+      background: var(--red);
+      box-shadow: 0 0 0 5px rgba(219, 75, 85, 0.12);
+    }
+
+    .status-name {
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .status-time {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 650;
+    }
+
+    .status-badge {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 9px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .status-item.warning .status-badge {
+      background: var(--yellow-soft);
+      color: #9f7008;
+    }
+
+    .status-item.danger .status-badge {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .line-panel {
+      padding-bottom: 14px;
+    }
+
+    .line-list {
+      padding: 0 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .line-card {
+      display: grid;
+      grid-template-columns: minmax(120px, 1fr) minmax(72px, 0.7fr) minmax(82px, 0.85fr);
+      align-items: center;
+      gap: 8px;
+      min-height: 54px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-soft);
+    }
+
+    .line-name {
+      font-size: 12px;
+      font-weight: 820;
+      white-space: nowrap;
+    }
+
+    .line-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .line-state::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .line-metric {
+      min-width: 0;
+      padding-left: 9px;
+      border-left: 1px solid var(--line);
+    }
+
+    .line-metric-label {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 850;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+    }
+
+    .line-metric-value {
+      margin-top: 3px;
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 840;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .line-metric-value small {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+    }
+
+    .history-panel {
+      padding: 14px;
+    }
+
+    .history-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      color: var(--navy);
+      font-size: 13px;
+      font-weight: 820;
+    }
+
+    .history-subtitle {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .history-card {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--panel-soft);
+      text-align: center;
+    }
+
+    .history-date {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .history-value {
+      margin-top: 4px;
+      color: var(--navy);
+      font-size: clamp(23px, 2vw, 34px);
+      font-weight: 850;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .history-bar {
+      height: 4px;
+      margin-top: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e5ecef;
+    }
+
+    .history-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+    }
+
+    .table-panel {
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .table-wrap {
+      min-height: 0;
+      overflow: hidden;
+      padding: 0 14px;
+    }
+
+    table {
+      width: 100%;
+      height: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      font-variant-numeric: tabular-nums;
+    }
+
+    thead th {
+      height: 48px;
+      padding: 8px 10px;
+      background: var(--navy);
+      color: white;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 9px;
+      font-weight: 820;
+      letter-spacing: 0.85px;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    thead th:first-child {
+      border-top-left-radius: 12px;
+      text-align: left;
+    }
+
+    thead th:last-child {
+      border-top-right-radius: 12px;
+      border-right: none;
+    }
+
+    tbody tr {
+      height: calc((100% - 48px) / 9);
+      transition: background 0.2s ease;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f7fafc;
+    }
+
+    tbody tr.current-row {
+      background: #eaf4fa;
+      box-shadow: inset 4px 0 0 var(--blue);
+    }
+
+    tbody td {
+      padding: 7px 10px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+      font-size: clamp(10px, 0.75vw, 13px);
+      font-weight: 680;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    tbody td:first-child {
+      text-align: left;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    tbody td:last-child {
+      border-right: none;
+    }
+
+    .expected-cell {
+      color: var(--blue);
+      font-weight: 820;
+    }
+
+    .value-pill {
+      min-width: 54px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
+      border-radius: 10px;
+      background: white;
+      border: 1px solid var(--line);
+      color: var(--navy);
+      font-weight: 840;
+      box-shadow: 0 2px 5px rgba(13, 43, 62, 0.035);
+    }
+
+    .value-pill.best {
+      border-color: #a9e0c8;
+      background: var(--green-soft);
+      color: #0c8956;
+    }
+
+    .row-total {
+      color: var(--navy);
+      font-size: clamp(15px, 1.1vw, 21px);
+      font-weight: 850;
+    }
+
+    .compliance-cell {
+      min-width: 112px;
+    }
+
+    .compliance-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .compliance-value {
+      color: var(--text);
+      font-weight: 840;
+    }
+
+    .mini-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--red);
+    }
+
+    .mini-status.ok {
+      background: var(--green);
+    }
+
+    .mini-status.warning {
+      background: var(--yellow);
+    }
+
+    .mini-progress {
+      width: 100%;
+      height: 5px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e5ecef;
+    }
+
+    .mini-progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--red);
+    }
+
+    .mini-progress > span.ok {
+      background: var(--green);
+    }
+
+    .mini-progress > span.warning {
+      background: var(--yellow);
+    }
+
+    .table-total {
+      display: grid;
+      grid-template-columns: 1.08fr 1fr repeat(3, 1fr) 0.75fr 1fr;
+      margin: 0 14px 14px;
+      min-height: 50px;
+      overflow: hidden;
+      border-radius: 0 0 12px 12px;
+      background: var(--navy);
+      color: white;
+    }
+
+    .table-total > div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: clamp(12px, 0.9vw, 16px);
+      font-weight: 820;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .table-total > div:first-child {
+      justify-content: flex-start;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 10px;
+    }
+
+    .table-total > div:last-child {
+      border-right: 0;
+      background: var(--navy-2);
+    }
+
+    .total-compliance {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .total-compliance::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(24, 166, 106, 0.15);
+    }
+
+    .footer-note {
+      position: absolute;
+      left: -9999px;
+    }
+
+    @media (max-height: 850px) {
+      .dashboard {
+        padding: 12px;
+        grid-template-rows: 62px 1fr;
+        gap: 10px;
+      }
+
+      .topbar {
+        padding: 0 15px;
+      }
+
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+      }
+
+      .brand-name {
+        font-size: 20px;
+      }
+
+      .left-column,
+      .right-column,
+      .content {
+        gap: 9px;
+      }
+
+      .panel-heading {
+        padding: 11px 14px 8px;
+      }
+
+      .kpi-panel {
+        padding-bottom: 10px;
+      }
+
+      .kpi-grid {
+        padding: 0 10px;
+        gap: 7px;
+      }
+
+      .kpi-card {
+        min-height: 78px;
+        padding: 10px;
+      }
+
+      .kpi-value {
+        margin-top: 6px;
+      }
+
+      .kpi-meta {
+        margin-top: 6px;
+      }
+
+      .left-column {
+        grid-template-rows: 158px minmax(210px, 1.1fr) minmax(145px, 0.9fr) 108px;
+      }
+
+      .summary-panel,
+      .history-panel {
+        padding: 8px;
+      }
+
+      .summary-panel {
+        gap: 6px;
+        grid-template-rows: minmax(62px, 1fr) auto;
+      }
+
+      .summary-main {
+        min-height: 62px;
+        padding: 9px 11px;
+      }
+
+      .summary-block {
+        min-height: 48px;
+        padding: 6px 5px;
+      }
+
+      .summary-value {
+        margin-top: 3px;
+        font-size: clamp(17px, 1.35vw, 24px);
+      }
+
+      .summary-detail {
+        margin-top: 3px;
+        font-size: 8px;
+      }
+
+      .summary-block.date-block .summary-value {
+        font-size: clamp(14px, 1.05vw, 18px);
+      }
+
+      .capacity-ring {
+        width: 52px;
+        height: 52px;
+      }
+
+      .capacity-ring::before {
+        width: 38px;
+        height: 38px;
+        font-size: 10px;
+      }
+
+      .status-list,
+      .line-list {
+        padding: 0 10px 10px;
+        gap: 5px;
+      }
+
+      .status-item {
+        min-height: 36px;
+        padding: 6px 9px;
+      }
+
+      .line-panel {
+        padding-bottom: 10px;
+      }
+
+      .line-card {
+        min-height: 44px;
+        padding: 6px 9px;
+      }
+
+      .history-title {
+        margin-bottom: 6px;
+      }
+
+      .history-grid {
+        gap: 6px;
+      }
+
+      .history-card {
+        padding: 5px;
+      }
+
+      .history-value {
+        margin-top: 3px;
+        font-size: clamp(19px, 1.65vw, 28px);
+      }
+
+      .history-bar {
+        margin-top: 5px;
+      }
+
+      thead th {
+        height: 40px;
+        padding: 6px 8px;
+      }
+
+      tbody tr {
+        height: calc((100% - 40px) / 9);
+      }
+
+      tbody td {
+        padding: 5px 8px;
+      }
+
+      .value-pill {
+        padding: 5px 8px;
+      }
+
+      .table-total {
+        min-height: 42px;
+        margin-bottom: 10px;
+      }
+    }
+
+
+    @media (max-height: 780px) {
+      .dashboard {
+        padding: 10px;
+        grid-template-rows: 58px 1fr;
+        gap: 8px;
+      }
+
+      .topbar {
+        padding: 0 12px;
+      }
+
+      .left-column,
+      .right-column,
+      .content {
+        gap: 7px;
+      }
+
+      .left-column {
+        grid-template-rows: 146px minmax(188px, 1.12fr) minmax(126px, 0.88fr) 92px;
+      }
+
+      .panel-heading {
+        padding: 8px 11px 6px;
+      }
+
+      .panel-kicker {
+        margin-top: 2px;
+        font-size: 8px;
+      }
+
+      .summary-panel {
+        padding: 7px;
+        gap: 5px;
+        grid-template-rows: minmax(57px, 1fr) auto;
+      }
+
+      .summary-main {
+        min-height: 57px;
+      }
+
+      .summary-block {
+        min-height: 43px;
+      }
+
+      .summary-label {
+        font-size: 7px;
+        letter-spacing: 0.65px;
+      }
+
+      .summary-value {
+        font-size: 17px;
+      }
+
+      .summary-block.date-block .summary-value {
+        font-size: 13px;
+      }
+
+      .summary-detail {
+        font-size: 7px;
+      }
+
+      .capacity-ring {
+        width: 46px;
+        height: 46px;
+      }
+
+      .capacity-ring::before {
+        width: 34px;
+        height: 34px;
+      }
+
+      .status-list,
+      .line-list {
+        padding: 0 8px 8px;
+        gap: 4px;
+      }
+
+      .status-item {
+        min-height: 31px;
+        padding: 4px 8px;
+      }
+
+      .status-time {
+        margin-top: 2px;
+      }
+
+      .line-card {
+        min-height: 38px;
+        padding: 4px 8px;
+      }
+
+      .line-state {
+        margin-top: 3px;
+      }
+
+      .history-panel {
+        padding: 7px;
+      }
+
+      .history-title {
+        margin-bottom: 4px;
+        font-size: 11px;
+      }
+
+      .history-card {
+        padding: 4px;
+      }
+
+      .history-value {
+        font-size: 18px;
+      }
+
+      .history-bar {
+        margin-top: 3px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <main class="dashboard">
+    <header class="topbar">
+      <div class="brand" aria-label="Línea Italia">
+        <div class="brand-mark">LI</div>
+        <div class="brand-copy">
+          <div class="brand-name">línea italia</div>
+          <div class="brand-subtitle">Mobiliario de oficina</div>
+        </div>
+      </div>
+
+      <div class="area-control">
+        <span class="area-label">Área</span>
+        <div class="select-wrap">
+          <select id="areaSelect" aria-label="Área de producción">
+            <option selected>Carpintería corte</option>
+            <option>Carpintería ensamble</option>
+            <option>Pintura</option>
+            <option>Tapicería</option>
+            <option>Empaque</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="clock" aria-live="polite">
+        <span id="clockTime" class="clock-time">12:00:00</span>
+        <span id="clockPeriod" class="clock-period">PM</span>
+      </div>
+
+      <div class="top-actions">
+        <div class="shift-chip">
+          <span class="shift-dot"></span>
+          <span id="shiftText">Turno matutino</span>
+        </div>
+        <button id="fullscreenBtn" class="icon-btn" type="button" title="Pantalla completa" aria-label="Pantalla completa">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="content">
+      <aside class="left-column">
+        <section class="panel summary-panel" aria-label="Resumen de capacidad">
+          <div class="summary-main">
+            <div>
+              <div class="summary-label">Capacidad instalada</div>
+              <div class="summary-value" id="installedCapacity">1,795</div>
+              <div class="summary-detail">piezas por hora</div>
+            </div>
+            <div class="capacity-ring" id="capacityRing" data-value="84" style="--value: 84"></div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-label">Líneas activas</div>
+            <div class="summary-value">3</div>
+            <div class="summary-detail">en operación</div>
+          </div>
+
+          <div class="summary-block date-block">
+            <div class="summary-label">Fecha actual</div>
+            <div class="summary-value" id="currentDateShort">30/07/2026</div>
+            <div class="summary-detail" id="currentDayName">jueves</div>
+          </div>
+
+          <div class="summary-block difference-block">
+            <div class="summary-label">Diferencia</div>
+            <div class="summary-value" id="differenceValue" style="color: var(--red)">-186</div>
+            <div class="summary-detail">vs. programa</div>
+          </div>
+        </section>
+
+        <section class="panel status-panel">
+          <div class="panel-heading">
+            <div>
+              <h2 class="panel-title">Semáforos de área</h2>
+              <span class="panel-kicker">Tiempo de respuesta y disponibilidad</span>
+            </div>
+          </div>
+          <div id="statusList" class="status-list"></div>
+        </section>
+
+        <section class="panel line-panel">
+          <div class="panel-heading">
+            <div>
+              <h2 class="panel-title">Líneas de producción</h2>
+              <span class="panel-kicker">Rendimiento actual por equipo</span>
+            </div>
+          </div>
+          <div id="lineList" class="line-list"></div>
+        </section>
+
+        <section class="panel history-panel">
+          <div class="history-title">
+            <span>Cumplimiento reciente</span>
+            <span class="history-subtitle">Últimos 3 días</span>
+          </div>
+          <div id="historyGrid" class="history-grid"></div>
+        </section>
+      </aside>
+
+      <section class="right-column">
+        <section class="panel kpi-panel">
+          <div class="panel-heading">
+            <div>
+              <h1 class="panel-title">Programa del turno</h1>
+              <span class="panel-kicker" id="programSubtitle">Matutino · 30/07/2026</span>
+            </div>
+            <span class="refresh-status">Actualización automática</span>
+          </div>
+          <div id="kpiGrid" class="kpi-grid"></div>
+        </section>
+
+        <section class="panel table-panel">
+          <div class="panel-heading">
+            <div>
+              <h2 class="panel-title">Producción por hora</h2>
+              <span class="panel-kicker">Avance consolidado por línea y hora</span>
+            </div>
+            <span class="refresh-status" id="lastUpdateText">Datos actualizados ahora</span>
+          </div>
+
+          <div class="table-wrap">
+            <table aria-label="Producción por hora">
+              <colgroup>
+                <col style="width: 13%" />
+                <col style="width: 12%" />
+                <col style="width: 16%" />
+                <col style="width: 16%" />
+                <col style="width: 16%" />
+                <col style="width: 10%" />
+                <col style="width: 17%" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Producción esperada</th>
+                  <th>Gabbiani</th>
+                  <th>Sellex</th>
+                  <th>Blue Elephant</th>
+                  <th>Producción</th>
+                  <th>Cumplimiento</th>
+                </tr>
+              </thead>
+              <tbody id="productionBody"></tbody>
+            </table>
+          </div>
+
+          <div id="tableTotal" class="table-total"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <span class="footer-note">Dashboard de producción diseñado para visualización en pantalla grande.</span>
+
+  <script>
+    /*
+      CONFIGURACIÓN PRINCIPAL
+      Modifica los valores de este objeto para conectar el dashboard con tu API.
+      Por ahora utiliza datos de demostración para mostrar el diseño completo.
+    */
+    const dashboardData = {
+      shift: {
+        name: "Matutino",
+        programmed: 828,
+        delayed: 18,
+        advanced: 6,
+        manufactured: 728
+      },
+      statuses: [
+        { name: "Materia Prima", time: "1 h 32 min", level: "ok", label: "Disponible" },
+        { name: "MOD", time: "2 d 11 h", level: "ok", label: "Estable" },
+        { name: "Programa", time: "18 h 7 min", level: "warning", label: "Atención" },
+        { name: "Calidad", time: "2 d 17 h", level: "ok", label: "Liberado" },
+        { name: "Ingeniería", time: "18 h 3 min", level: "danger", label: "Crítico" }
+      ],
+      lines: [
+        { name: "Gabbiani", state: "Operando", capacity: 44, cost: 20000 },
+        { name: "Blue Elephant", state: "Operando", capacity: 31, cost: 20000 },
+        { name: "Sellex", state: "Operando", capacity: 28, cost: 20000 }
+      ],
+      history: [
+        { date: "27/07/2026", value: 98 },
+        { date: "28/07/2026", value: 80 },
+        { date: "29/07/2026", value: 100 }
+      ],
+      production: [
+        { time: "08:00 - 09:00", expected: 103.11, gabbiani: 38, sellex: 31, blueElephant: 27 },
+        { time: "09:00 - 10:00", expected: 103.11, gabbiani: 42, sellex: 30, blueElephant: 26 },
+        { time: "10:00 - 11:00", expected: 103.11, gabbiani: 40, sellex: 33, blueElephant: 29 },
+        { time: "11:00 - 12:00", expected: 103.11, gabbiani: 37, sellex: 31, blueElephant: 28 },
+        { time: "12:00 - 13:00", expected: 103.11, gabbiani: 35, sellex: 29, blueElephant: 26 },
+        { time: "13:00 - 14:00", expected: 103.11, gabbiani: 34, sellex: 27, blueElephant: 25 },
+        { time: "14:00 - 15:00", expected: 103.11, gabbiani: 32, sellex: 26, blueElephant: 24 },
+        { time: "15:00 - 16:00", expected: 103.11, gabbiani: 31, sellex: 25, blueElephant: 22 },
+        { time: "16:00 - 17:00", expected: 0, gabbiani: 0, sellex: 0, blueElephant: 0 }
+      ]
+    };
+
+    const formatNumber = new Intl.NumberFormat("es-MX");
+    const formatCurrency = new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+      maximumFractionDigits: 0
+    });
+
+    function getTotals() {
+      return dashboardData.production.reduce(
+        (acc, row) => {
+          acc.expected += row.expected;
+          acc.gabbiani += row.gabbiani;
+          acc.sellex += row.sellex;
+          acc.blueElephant += row.blueElephant;
+          acc.production += row.gabbiani + row.sellex + row.blueElephant;
+          return acc;
+        },
+        { expected: 0, gabbiani: 0, sellex: 0, blueElephant: 0, production: 0 }
+      );
+    }
+
+    function statusClass(value) {
+      if (value >= 95) return "ok";
+      if (value >= 80) return "warning";
+      return "";
+    }
+
+    function renderKPIs() {
+      const total = dashboardData.shift.programmed;
+      const manufactured = dashboardData.shift.manufactured;
+      const compliance = total > 0 ? (manufactured / total) * 100 : 0;
+      const remaining = Math.max(total - manufactured, 0);
+
+      const cards = [
+        { label: "Programado", value: formatNumber.format(total), meta: "piezas del turno" },
+        { label: "Atraso", value: formatNumber.format(dashboardData.shift.delayed), meta: "piezas pendientes", className: "negative" },
+        { label: "Adelantadas", value: formatNumber.format(dashboardData.shift.advanced), meta: "piezas anticipadas", className: "positive" },
+        { label: "Total a producir", value: formatNumber.format(remaining), meta: "piezas restantes" },
+        { label: "Fabricadas", value: formatNumber.format(manufactured), meta: "piezas acumuladas", className: "positive" },
+        { label: "Cumplimiento", value: `${compliance.toFixed(1)}%`, meta: `${formatNumber.format(remaining)} por fabricar`, className: "compliance", progress: compliance }
+      ];
+
+      document.getElementById("kpiGrid").innerHTML = cards
+        .map(
+          (card) => `
+            <article class="kpi-card ${card.className || ""}">
+              <div class="kpi-label">${card.label}</div>
+              <div class="kpi-value">${card.value}</div>
+              <div class="kpi-meta">${card.meta}</div>
+              ${card.progress !== undefined ? `<div class="progress-track"><div class="progress-fill" style="width:${Math.min(card.progress, 100)}%"></div></div>` : ""}
+            </article>
+          `
+        )
+        .join("");
+
+      document.getElementById("differenceValue").textContent = formatNumber.format(manufactured - total);
+      document.getElementById("capacityRing").dataset.value = Math.round(compliance);
+      document.getElementById("capacityRing").style.setProperty("--value", Math.min(compliance, 100));
+    }
+
+    function renderStatuses() {
+      document.getElementById("statusList").innerHTML = dashboardData.statuses
+        .map((status) => {
+          const className = status.level === "warning" ? "warning" : status.level === "danger" ? "danger" : "";
+          return `
+            <article class="status-item ${className}">
+              <span class="status-light" aria-hidden="true"></span>
+              <div>
+                <div class="status-name">${status.name}</div>
+                <div class="status-time">${status.time}</div>
+              </div>
+              <span class="status-badge">${status.label}</span>
+            </article>
+          `;
+        })
+        .join("");
+    }
+
+    function renderLines() {
+      document.getElementById("lineList").innerHTML = dashboardData.lines
+        .map(
+          (line) => `
+            <article class="line-card">
+              <div>
+                <div class="line-name">${line.name}</div>
+                <div class="line-state">${line.state}</div>
+              </div>
+              <div class="line-metric">
+                <div class="line-metric-label">Capacidad</div>
+                <div class="line-metric-value">${line.capacity} <small>pzs/h</small></div>
+              </div>
+              <div class="line-metric">
+                <div class="line-metric-label">Costo</div>
+                <div class="line-metric-value">${formatCurrency.format(line.cost)} <small>/min</small></div>
+              </div>
+            </article>
+          `
+        )
+        .join("");
+    }
+
+    function renderHistory() {
+      document.getElementById("historyGrid").innerHTML = dashboardData.history
+        .map(
+          (item) => `
+            <article class="history-card">
+              <div class="history-date">${item.date}</div>
+              <div class="history-value">${item.value}%</div>
+              <div class="history-bar"><div class="history-fill" style="width:${Math.min(item.value, 100)}%"></div></div>
+            </article>
+          `
+        )
+        .join("");
+    }
+
+    function currentHourIndex() {
+      const hour = new Date().getHours();
+      return dashboardData.production.findIndex((row) => Number(row.time.slice(0, 2)) === hour);
+    }
+
+    function renderProductionTable() {
+      const activeIndex = currentHourIndex();
+
+      document.getElementById("productionBody").innerHTML = dashboardData.production
+        .map((row, index) => {
+          const production = row.gabbiani + row.sellex + row.blueElephant;
+          const compliance = row.expected > 0 ? (production / row.expected) * 100 : 0;
+          const rowStatus = statusClass(compliance);
+          const bestValue = Math.max(row.gabbiani, row.sellex, row.blueElephant);
+
+          return `
+            <tr class="${index === activeIndex ? "current-row" : ""}">
+              <td>${row.time}</td>
+              <td class="expected-cell">${row.expected.toFixed(2)}</td>
+              <td><span class="value-pill ${row.gabbiani === bestValue && bestValue > 0 ? "best" : ""}">${formatNumber.format(row.gabbiani)}</span></td>
+              <td><span class="value-pill ${row.sellex === bestValue && bestValue > 0 ? "best" : ""}">${formatNumber.format(row.sellex)}</span></td>
+              <td><span class="value-pill ${row.blueElephant === bestValue && bestValue > 0 ? "best" : ""}">${formatNumber.format(row.blueElephant)}</span></td>
+              <td><span class="row-total">${formatNumber.format(production)}</span></td>
+              <td class="compliance-cell">
+                <div class="compliance-top">
+                  <span class="mini-status ${rowStatus}"></span>
+                  <span class="compliance-value">${compliance.toFixed(1)}%</span>
+                </div>
+                <div class="mini-progress"><span class="${rowStatus}" style="width:${Math.min(compliance, 100)}%"></span></div>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      const totals = getTotals();
+      const totalCompliance = totals.expected > 0 ? (totals.production / totals.expected) * 100 : 0;
+
+      document.getElementById("tableTotal").innerHTML = `
+        <div>Total</div>
+        <div>${totals.expected.toFixed(2)}</div>
+        <div>${formatNumber.format(totals.gabbiani)}</div>
+        <div>${formatNumber.format(totals.sellex)}</div>
+        <div>${formatNumber.format(totals.blueElephant)}</div>
+        <div>${formatNumber.format(totals.production)}</div>
+        <div><span class="total-compliance">${totalCompliance.toFixed(1)}%</span></div>
+      `;
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const hours24 = now.getHours();
+      const period = hours24 >= 12 ? "PM" : "AM";
+      const hours12 = hours24 % 12 || 12;
+      const time = [hours12, now.getMinutes(), now.getSeconds()]
+        .map((value) => String(value).padStart(2, "0"))
+        .join(":");
+
+      document.getElementById("clockTime").textContent = time;
+      document.getElementById("clockPeriod").textContent = period;
+
+      const dateFormatter = new Intl.DateTimeFormat("es-MX", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      });
+      const dayFormatter = new Intl.DateTimeFormat("es-MX", { weekday: "long" });
+
+      const formattedDate = dateFormatter.format(now);
+      document.getElementById("currentDateShort").textContent = formattedDate;
+      document.getElementById("currentDayName").textContent = dayFormatter.format(now);
+      document.getElementById("programSubtitle").textContent = `${dashboardData.shift.name} · ${formattedDate}`;
+      document.getElementById("shiftText").textContent = `Turno ${dashboardData.shift.name.toLowerCase()}`;
+    }
+
+    function updateLastRefresh() {
+      const now = new Date();
+      const time = new Intl.DateTimeFormat("es-MX", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      }).format(now);
+      document.getElementById("lastUpdateText").textContent = `Actualizado ${time}`;
+    }
+
+    document.getElementById("fullscreenBtn").addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        } else {
+          await document.exitFullscreen();
+        }
+      } catch (error) {
+        console.warn("No fue posible activar pantalla completa", error);
+      }
+    });
+
+    document.getElementById("areaSelect").addEventListener("change", (event) => {
+      document.title = `Dashboard de Producción | ${event.target.value}`;
+      updateLastRefresh();
+    });
+
+    function initializeDashboard() {
+      renderKPIs();
+      renderStatuses();
+      renderLines();
+      renderHistory();
+      renderProductionTable();
+      updateClock();
+      updateLastRefresh();
+    }
+
+    initializeDashboard();
+    setInterval(updateClock, 1000);
+    setInterval(updateLastRefresh, 30000);
+    setInterval(renderProductionTable, 60000);
+  </script>
+</body>
+</html>

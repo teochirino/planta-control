@@ -1,172 +1,238 @@
 <template>
-    <div class="min-h-screen" :class="isDarkMode ? 'bg-[#101216]' : 'bg-[#f6f5f2]'">
-        <SupervisorSidebar />
-        
-        <div class="dash-root" :class="{ 'tema-oscuro': isDarkMode }">
-            <!-- Header -->
-            <header class="topbar">
-                <div class="topbar-inner">
-                    <img src="/logo-cliente.png" alt="Logo" class="logo" />
-                    
-                    <div class="clock-wrap">
-                        <div class="rlj" id="clock">
-                            <div class="rlj__block" data-block="h0"><div class="rlj__group"><span class="rlj__digits"></span><span class="rlj__digits"></span></div></div>
-                            <div class="rlj__block" data-block="h1"><div class="rlj__group"><span class="rlj__digits"></span><span class="rlj__digits"></span></div></div>
-                            <span class="rlj__colon">:</span>
-                            <div class="rlj__block" data-block="m0"><div class="rlj__group"><span class="rlj__digits"></span><span class="rlj__digits"></span></div></div>
-                            <div class="rlj__block" data-block="m1"><div class="rlj__group"><span class="rlj__digits"></span><span class="rlj__digits"></span></div></div>
-                            <span class="rlj__colon">:</span>
-                            <div class="rlj__block" data-block="s0"><div class="rlj__group"><span class="rlj__digits"></span><span class="rlj__digits"></span></div></div>
-                            <div class="rlj__block" data-block="s1"><div class="rlj__group"><span class="rlj__digits"></span><span class="rlj__digits"></span></div></div>
-                            <div class="rlj__block rlj__block--sm" data-block="ap"><div class="rlj__group"><span class="rlj__digits"></span><span class="rlj__digits"></span></div></div>
-                        </div>
-                    </div>
-
-                    <div class="topbar-right">
-                        <div class="selector-wrap">
-                            <select v-model="selectedWorkCenterId" @change="cambiarCentro" class="centro-select">
-                                <option v-for="wc in workCentersData" :key="wc.id" :value="wc.id">
-                                    {{ wc.name }}
-                                </option>
-                            </select>
-                            <svg class="selector-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
-                        </div>
-                        <button class="toggle-tema" :class="{ 'on': isDarkMode }" @click="toggleTheme" aria-label="Cambiar tema claro u oscuro">
-                            <span class="toggle-thumb">
-                                <svg v-if="!isDarkMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="8" height="8"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
-                                <svg v-else viewBox="0 0 24 24" fill="currentColor" width="8" height="8"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" /></svg>
-                            </span>
-                        </button>
-                    </div>
+    <div class="dashboard">
+        <header class="topbar">
+            <div class="brand" aria-label="Línea Italia">
+                <div class="brand-mark">LI</div>
+                <div class="brand-copy">
+                    <div class="brand-name">línea italia</div>
+                    <div class="brand-subtitle">Mobiliario de oficina</div>
                 </div>
-            </header>
+            </div>
 
-            <main class="dash-main">
-                <div class="top-row">
-                    <div class="info-cards">
-                        <div class="stat-card">
-                            <span class="stat-ghost" style="color: var(--mist-600)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10l6 4V10l6 4V6l6 4v11H3Z" /><path d="M7 21v-4M12 21v-4M17 21v-4" /></svg>
-                            </span>
-                            <div class="stat-body">
-                                <p class="stat-label">Capacidad instalada</p>
-                                <p class="stat-value tnum">{{ formatNumber(centerKPIsData?.installed_capacity || 0) }}<span class="stat-unit">pzs / hora</span></p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-ghost" style="color: var(--ok-600)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5Z" /><path d="M3 13l9 5 9-5M3 16.5l9 5 9-5" /></svg>
-                            </span>
-                            <div class="stat-body">
-                                <p class="stat-label">Líneas activas</p>
-                                <p class="stat-value tnum">{{ productionLinesForCenterData.length }}<span class="stat-unit">en operación</span></p>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-ghost" style="color: var(--ink-500)">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2" /><path d="M3 9h18M8 2.5v4M16 2.5v4" /><rect x="7" y="12" width="4" height="4" rx="0.5" fill="currentColor" stroke="none" /></svg>
-                            </span>
-                            <div class="stat-body">
-                                <p class="stat-label">Fecha actual</p>
-                                <p class="stat-value tnum">{{ fechaFormateada }}<span class="stat-unit">{{ diaSemana }}</span></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <section class="semaforos-panel">
-                        <h2>Semáforos de área</h2>
-                        <ul class="semaforos-list">
-                            <li v-for="semaforo in semaforosData" :key="semaforo.area" class="semaforo-row" :class="'estado-' + semaforo.estado">
-                                <div class="tl-housing">
-                                    <span class="lamp" :class="'on-' + semaforo.estado"></span>
-                                </div>
-                                <div class="semaforo-info">
-                                    <p class="semaforo-area">{{ semaforo.area }}</p>
-                                    <p class="semaforo-desde">{{ semaforo.desde }}</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </section>
+            <div class="area-control">
+                <span class="area-label">Área</span>
+                <div class="select-wrap">
+                    <select v-model="selectedWorkCenterId" @change="cambiarCentro" aria-label="Área de producción">
+                        <option v-for="wc in workCentersData" :key="wc.id" :value="wc.id">
+                            {{ wc.name }}
+                        </option>
+                    </select>
                 </div>
+            </div>
 
-                <section class="programa-turno">
-                    <div class="pt-header">
-                        <h2>Programa del Turno</h2>
-                        <span class="turno-badge">{{ turnoLabel }} · {{ fechaFormateada }}</span>
+            <div class="clock" aria-live="polite">
+                <span id="clockTime" class="clock-time">{{ currentTime }}</span>
+                <span id="clockPeriod" class="clock-period">{{ currentPeriod }}</span>
+            </div>
+
+            <div class="top-actions">
+                <div class="shift-chip">
+                    <span class="shift-dot"></span>
+                    <span id="shiftText">Turno {{ turnoLabel.toLowerCase() }}</span>
+                </div>
+                <button id="fullscreenBtn" class="icon-btn" type="button" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <section class="content">
+            <aside class="left-column">
+                <section class="panel summary-panel" aria-label="Resumen de capacidad">
+                    <div class="summary-main">
+                        <div>
+                            <div class="summary-label">Capacidad instalada</div>
+                            <div class="summary-value">{{ formatNumber(centerKPIsData?.installed_capacity || 0) }}</div>
+                            <div class="summary-detail">piezas por día</div>
+                        </div>
+                        <div class="capacity-ring" :data-value="Math.round(centerKPIsData?.compliance || 0)" :style="'--value: ' + Math.min(centerKPIsData?.compliance || 0, 100)"></div>
                     </div>
-                    <div class="kpi-rows">
-                        <div class="kpi-row">
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Programado</span>
-                                <div><span class="kpi-value tnum tone-default">{{ formatNumber(centerKPIsData?.programmed || 0) }}</span><span class="kpi-mini bg-default"></span></div>
-                            </div>
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Atraso</span>
-                                <div><span class="kpi-value tnum" :class="'tone-' + getTone(centerKPIsData?.backwardness || 0, 'bad')">{{ formatNumber(centerKPIsData?.backwardness || 0) }}</span><span class="kpi-mini" :class="'bg-' + getTone(centerKPIsData?.backwardness || 0, 'bad')"></span></div>
-                            </div>
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Adelantadas</span>
-                                <div><span class="kpi-value tnum" :class="'tone-' + getTone(centerKPIsData?.advanced || 0, 'ok')">{{ formatNumber(centerKPIsData?.advanced || 0) }}</span><span class="kpi-mini" :class="'bg-' + getTone(centerKPIsData?.advanced || 0, 'ok')"></span></div>
-                            </div>
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Total a producir</span>
-                                <div><span class="kpi-value tnum tone-default">{{ formatNumber(centerKPIsData?.total_to_produce || 0) }}</span><span class="kpi-mini bg-default"></span></div>
-                            </div>
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Fabricadas</span>
-                                <div><span class="kpi-value tnum tone-default">{{ formatNumber(centerKPIsData?.fabricated || 0) }}</span><span class="kpi-mini bg-default"></span></div>
-                            </div>
-                        </div>
-                        <div class="kpi-divider"></div>
-                        <div class="kpi-row">
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Diferencia</span>
-                                <div><span class="kpi-value tnum" :class="'tone-' + getDifferenceTone(centerKPIsData?.difference || 0)">{{ centerKPIsData?.difference >= 0 ? '+' : '' }}{{ formatNumber(centerKPIsData?.difference || 0) }}</span><span class="kpi-mini" :class="'bg-' + getDifferenceTone(centerKPIsData?.difference || 0)"></span></div>
-                            </div>
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Cumplimiento</span>
-                                <div><span class="kpi-value tnum" :class="'tone-' + getComplianceTone(centerKPIsData?.compliance || 0)">{{ centerKPIsData?.compliance || 0 }}%</span><div class="kpi-bar-track"><div class="kpi-bar-fill" :class="'bg-' + getComplianceTone(centerKPIsData?.compliance || 0)" :style="'width:' + (centerKPIsData?.compliance || 0) + '%'"></div></div></div>
-                            </div>
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Real vs ideal</span>
-                                <div><span class="kpi-value tnum tone-accent">{{ centerKPIsData?.real_vs_ideal || 0 }}%</span><div class="kpi-bar-track"><div class="kpi-bar-fill bg-accent" :style="'width:' + (centerKPIsData?.real_vs_ideal || 0) + '%'"></div></div></div>
-                            </div>
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Ahorro activos</span>
-                                <div><span class="kpi-value tnum tone-ok">${{ formatNumber(centerKPIsData?.saved_amount || 0) }}</span><span class="kpi-mini bg-ok"></span></div>
-                            </div>
-                            <div class="kpi-tile" data-vshadow>
-                                <span class="kpi-label">Cap. instalada</span>
-                                <div><span class="kpi-value tnum tone-accent">{{ formatNumber(centerKPIsData?.installed_capacity || 0) }}</span><span class="kpi-mini bg-accent"></span></div>
-                            </div>
-                        </div>
+
+                    <div class="summary-block">
+                        <div class="summary-label">Líneas activas</div>
+                        <div class="summary-value">{{ productionLinesForCenterData.length }}</div>
+                        <div class="summary-detail">en operación</div>
+                    </div>
+
+                    <div class="summary-block date-block">
+                        <div class="summary-label">Fecha actual</div>
+                        <div class="summary-value">{{ fechaFormateada }}</div>
+                        <div class="summary-detail">{{ diaSemana }}</div>
+                    </div>
+
+                    <div class="summary-block difference-block">
+                        <div class="summary-label">Diferencia</div>
+                        <div class="summary-value" :style="centerKPIsData?.difference >= 0 ? 'color: var(--green)' : 'color: var(--red)'">{{ centerKPIsData?.difference >= 0 ? '+' : '' }}{{ formatNumber(centerKPIsData?.difference || 0) }}</div>
+                        <div class="summary-detail">vs. programa</div>
                     </div>
                 </section>
 
-                <section class="lineas-produccion">
-                    <h2>Líneas de Producción</h2>
-                    <div class="lineas-grid">
-                        <div v-for="line in productionLinesForCenterData" :key="line.id" class="linea-card">
-                            <h3 class="linea-nombre">{{ line.title }}</h3>
-                            <div class="stat-chip">
-                                <div class="chip-head">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10l6 4V10l6 4V6l6 4v11H3Z" /><path d="M7 21v-4M12 21v-4M17 21v-4" /></svg>
-                                    <span>Capacidad</span>
-                                </div>
-                                <p class="chip-value tnum">{{ formatNumber(line.capacity || 0) }}<span class="chip-unit">pzs/h</span></p>
-                            </div>
-                            <div class="stat-chip">
-                                <div class="chip-head">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6 9v6M18 9v6" /></svg>
-                                    <span>Costo</span>
-                                </div>
-                                <p class="chip-value tnum">${{ formatNumber(line.cost || 0) }}<span class="chip-unit">/min</span></p>
-                            </div>
+                <section class="panel status-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h2 class="panel-title">Semáforos de área</h2>
+                            <span class="panel-kicker">Tiempo de respuesta y disponibilidad</span>
                         </div>
                     </div>
+                    <div class="status-list">
+                        <article v-for="semaforo in semaforosData" :key="semaforo.area" class="status-item" :class="getStatusClass(semaforo.estado)">
+                            <span class="status-light" aria-hidden="true"></span>
+                            <div>
+                                <div class="status-name">{{ semaforo.area }}</div>
+                                <div class="status-time">{{ semaforo.desde }}</div>
+                            </div>
+                            <span class="status-badge">{{ getStatusLabel(semaforo.estado) }}</span>
+                        </article>
+                    </div>
                 </section>
-            </main>
-        </div>
+
+                <section class="panel line-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h2 class="panel-title">Líneas de producción</h2>
+                            <span class="panel-kicker">Rendimiento actual por equipo</span>
+                        </div>
+                    </div>
+                    <div class="line-list">
+                        <article v-for="line in productionLinesForCenterData" :key="line.id" class="line-card">
+                            <div>
+                                <div class="line-name">{{ line.title }}</div>
+                                <div class="line-state">Operando</div>
+                            </div>
+                            <div class="line-metric">
+                                <div class="line-metric-label">Capacidad</div>
+                                <div class="line-metric-value">{{ formatNumber(line.installed_capacity || 0) }} <small>pzs/día</small></div>
+                            </div>
+                            <div class="line-metric">
+                                <div class="line-metric-label">Costo</div>
+                                <div class="line-metric-value">${{ formatNumber(line.cost || 0) }} <small>/min</small></div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="panel history-panel">
+                    <div class="history-title">
+                        <span>Cumplimiento reciente</span>
+                        <span class="history-subtitle">Últimos 3 días</span>
+                    </div>
+                    <div class="history-grid">
+                        <article class="history-card" v-for="(history, index) in recentHistory" :key="'history-' + index">
+                            <div class="history-date">{{ history.date }}</div>
+                            <div class="history-value">{{ history.value }}%</div>
+                            <div class="history-bar"><div class="history-fill" :style="'width:' + history.value + '%'"></div></div>
+                        </article>
+                    </div>
+                </section>
+            </aside>
+
+            <section class="right-column">
+                <section class="panel kpi-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h1 class="panel-title">Programa del turno</h1>
+                            <span class="panel-kicker">{{ turnoLabel }} · {{ fechaFormateada }}</span>
+                        </div>
+                        <span class="refresh-status">Actualización automática</span>
+                    </div>
+                    <div class="kpi-grid">
+                        <article class="kpi-card">
+                            <div class="kpi-label">Programado</div>
+                            <div class="kpi-value">{{ formatNumber(centerKPIsData?.programmed || 0) }}</div>
+                            <div class="kpi-meta">piezas del turno</div>
+                        </article>
+                        <article class="kpi-card negative">
+                            <div class="kpi-label">Atraso</div>
+                            <div class="kpi-value">{{ formatNumber(centerKPIsData?.backwardness || 0) }}</div>
+                            <div class="kpi-meta">piezas pendientes</div>
+                        </article>
+                        <article class="kpi-card positive">
+                            <div class="kpi-label">Adelantadas</div>
+                            <div class="kpi-value">{{ formatNumber(centerKPIsData?.advanced || 0) }}</div>
+                            <div class="kpi-meta">piezas anticipadas</div>
+                        </article>
+                        <article class="kpi-card">
+                            <div class="kpi-label">Total a producir</div>
+                            <div class="kpi-value">{{ formatNumber(centerKPIsData?.total_to_produce || 0) }}</div>
+                            <div class="kpi-meta">piezas restantes</div>
+                        </article>
+                        <article class="kpi-card positive">
+                            <div class="kpi-label">Fabricadas</div>
+                            <div class="kpi-value">{{ formatNumber(centerKPIsData?.fabricated || 0) }}</div>
+                            <div class="kpi-meta">piezas acumuladas</div>
+                        </article>
+                        <article class="kpi-card compliance">
+                            <div class="kpi-label">Cumplimiento</div>
+                            <div class="kpi-value">{{ (centerKPIsData?.compliance || 0).toFixed(1) }}%</div>
+                            <div class="kpi-meta">{{ formatNumber(centerKPIsData?.total_to_produce || 0) }} por fabricar</div>
+                            <div class="progress-track"><div class="progress-fill" :style="'width:' + Math.min(centerKPIsData?.compliance || 0, 100) + '%'"></div></div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="panel table-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h2 class="panel-title">Producción por hora</h2>
+                            <span class="panel-kicker">Avance consolidado por línea y hora</span>
+                        </div>
+                        <span class="refresh-status">Datos actualizados ahora</span>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table aria-label="Producción por hora">
+                            <colgroup>
+                                <col style="width: 13%" />
+                                <col style="width: 12%" />
+                                <col style="width: 16%" />
+                                <col style="width: 16%" />
+                                <col style="width: 16%" />
+                                <col style="width: 10%" />
+                                <col style="width: 17%" />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>Hora</th>
+                                    <th>Producción esperada</th>
+                                    <th v-for="line in productionLinesForCenterData" :key="'th-' + line.id">{{ line.title }}</th>
+                                    <th>Producción</th>
+                                    <th>Cumplimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(hour, index) in productionHours" :key="'hour-' + index" :class="hour.isCurrent ? 'current-row' : ''">
+                                    <td>{{ hour.time }}</td>
+                                    <td class="expected-cell">{{ formatNumber(hour.expected) }}</td>
+                                    <td v-for="line in productionLinesForCenterData" :key="'val-' + line.id + '-' + index">
+                                        <span class="value-pill" :class="getHourValueClass(hour.production[line.id], hour.expected)">{{ formatNumber(hour.production[line.id] || 0) }}</span>
+                                    </td>
+                                    <td><span class="row-total">{{ formatNumber(hour.total) }}</span></td>
+                                    <td class="compliance-cell">
+                                        <div class="compliance-top">
+                                            <span class="compliance-value">{{ hour.compliance.toFixed(1) }}%</span>
+                                            <span class="mini-status" :class="getComplianceStatus(hour.compliance)"></span>
+                                        </div>
+                                        <div class="mini-progress">
+                                            <span :class="getComplianceStatus(hour.compliance)" :style="'width:' + Math.min(hour.compliance, 100) + '%'"></span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="table-total">
+                        <div>TOTAL</div>
+                        <div>{{ formatNumber(totalExpected) }}</div>
+                        <div v-for="line in productionLinesForCenterData" :key="'total-' + line.id">{{ formatNumber(lineTotals[line.id] || 0) }}</div>
+                        <div>{{ formatNumber(totalProduced) }}</div>
+                        <div class="total-compliance">{{ totalCompliance.toFixed(1) }}%</div>
+                    </div>
+                </section>
+            </section>
+        </section>
 
         <!-- Video RRHH Modal -->
         <div v-if="showVideoModal && currentVideo" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
@@ -246,11 +312,25 @@ const props = defineProps({
     attributes: {
         type: Array,
         default: () => []
+    },
+    hours: {
+        type: Array,
+        default: () => []
+    },
+    existingSchedules: {
+        type: Object,
+        default: () => ({})
+    },
+    recentHistory: {
+        type: Array,
+        default: () => []
     }
 })
 
 const selectedWorkCenterId = ref(props.selectedWorkCenter?.id || null)
 const isDarkMode = ref(false)
+const currentTime = ref('')
+const currentPeriod = ref('')
 
 // Video RRHH Modal
 const showVideoModal = ref(false)
@@ -278,20 +358,160 @@ const turnoLabel = computed(() => {
 })
 
 const fechaFormateada = computed(() => {
-    if (!props.selectedDate) return ''
-    const date = new Date(props.selectedDate)
+    // Usar la fecha actual del sistema
+    const date = new Date()
     return date.toLocaleDateString('es-ES', { 
-        day: 'numeric', 
-        month: 'numeric', 
-        year: 'numeric' 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric'
     })
 })
 
 const diaSemana = computed(() => {
-    if (!props.selectedDate) return ''
-    const date = new Date(props.selectedDate)
-    return date.toLocaleDateString('es-ES', { weekday: 'long' })
+    // Usar la fecha actual del sistema
+    const date = new Date()
+    return date.toLocaleDateString('es-ES', { 
+        weekday: 'long'
+    })
 })
+
+// Historial de cumplimiento de los últimos 3 días (del backend)
+const recentHistory = computed(() => {
+    // Usar datos del backend si están disponibles, sino usar valores por defecto
+    if (props.recentHistory && props.recentHistory.length > 0) {
+        return props.recentHistory
+    }
+    
+    // Valores por defecto si no hay datos del backend
+    return [
+        { date: '29/07/2026', value: 98 },
+        { date: '30/07/2026', value: 85 },
+        { date: '31/07/2026', value: 92 }
+    ]
+})
+
+function updateClock() {
+    const now = new Date()
+    const hours24 = now.getHours()
+    const period = hours24 >= 12 ? 'PM' : 'AM'
+    const hours12 = hours24 % 12 || 12
+    const time = [hours12, now.getMinutes(), now.getSeconds()]
+        .map((value) => String(value).padStart(2, '0'))
+        .join(':')
+    
+    currentTime.value = time
+    currentPeriod.value = period
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.warn('No fue posible activar pantalla completa', err)
+        })
+    } else {
+        document.exitFullscreen().catch(err => {
+            console.warn('No fue posible salir de pantalla completa', err)
+        })
+    }
+}
+
+function getStatusClass(estado) {
+    if (estado === 'warn') return 'warning'
+    if (estado === 'bad') return 'danger'
+    return ''
+}
+
+function getStatusLabel(estado) {
+    const labels = {
+        'ok': 'Disponible',
+        'warn': 'Atención',
+        'bad': 'Crítico',
+        'default': 'Sin datos'
+    }
+    return labels[estado] || 'Sin datos'
+}
+
+// Datos de producción por hora usando datos reales del backend
+const productionHours = computed(() => {
+    const hours = []
+    const now = new Date()
+    const currentHour = now.getHours()
+    
+    // Usar las horas del backend o generar horarios por defecto
+    const hoursData = props.hours.length > 0 ? props.hours : [
+        { start: '08:00', end: '09:00' }, { start: '09:00', end: '10:00' },
+        { start: '10:00', end: '11:00' }, { start: '11:00', end: '12:00' },
+        { start: '12:00', end: '13:00' }, { start: '13:00', end: '14:00' },
+        { start: '14:00', end: '15:00' }, { start: '15:00', end: '16:00' },
+        { start: '16:00', end: '17:00' }
+    ]
+    
+    const expectedPerHour = centerKPIsData.value?.total_to_produce > 0 
+        ? (centerKPIsData.value.total_to_produce / hoursData.length).toFixed(2) 
+        : 0
+    
+    hoursData.forEach(hora => {
+        const hourStart = parseInt(hora.start.split(':')[0])
+        const isCurrent = hourStart === currentHour
+        
+        // Obtener producción real de cada línea desde existingSchedules
+        const production = {}
+        let total = 0
+        
+        productionLinesForCenterData.value.forEach(line => {
+            const scheduleKey = `${hora.start}-${line.id}`
+            const schedule = props.existingSchedules[scheduleKey]
+            const lineProduction = schedule?.produced || 0
+            production[line.id] = lineProduction
+            total += lineProduction
+        })
+        
+        const expected = parseFloat(expectedPerHour) || 0
+        const compliance = expected > 0 ? (total / expected) * 100 : 0
+        
+        hours.push({
+            time: hora.start,
+            expected: Math.round(expected),
+            production,
+            total,
+            compliance,
+            isCurrent
+        })
+    })
+    
+    return hours
+})
+
+const totalExpected = computed(() => {
+    return productionHours.value.reduce((sum, hour) => sum + hour.expected, 0)
+})
+
+const totalProduced = computed(() => {
+    return productionHours.value.reduce((sum, hour) => sum + hour.total, 0)
+})
+
+const lineTotals = computed(() => {
+    const totals = {}
+    productionLinesForCenterData.value.forEach(line => {
+        totals[line.id] = productionHours.value.reduce((sum, hour) => sum + (hour.production[line.id] || 0), 0)
+    })
+    return totals
+})
+
+const totalCompliance = computed(() => {
+    return totalExpected.value > 0 ? (totalProduced.value / totalExpected.value) * 100 : 0
+})
+
+function getHourValueClass(value, expected) {
+    if (value >= expected) return 'best'
+    return ''
+}
+
+function getComplianceStatus(compliance) {
+    if (compliance >= 95) return 'ok'
+    if (compliance >= 80) return 'warning'
+    return ''
+}
 
 const semaforosData = computed(() => {
     return props.attributes.map(attr => {
@@ -369,7 +589,7 @@ let clockInterval = null
 let dataRefreshInterval = null
 
 onMounted(() => {
-    initClock()
+    updateClock()
     clockInterval = setInterval(updateClock, 1000)
     // Actualizar datos completos (incluyendo semáforos) cada 1 minuto
     dataRefreshInterval = setInterval(refreshData, 60000)
@@ -380,6 +600,9 @@ onMounted(() => {
     checkForScheduledVideos()
     // Check for videos every 5 minutes
     videoCheckInterval.value = setInterval(checkForScheduledVideos, 300000)
+    
+    // ESC key listener for fullscreen
+    document.addEventListener('keydown', handleEscKey)
 })
 
 onUnmounted(() => {
@@ -392,12 +615,21 @@ onUnmounted(() => {
     if (videoCheckInterval.value) {
         clearInterval(videoCheckInterval.value)
     }
+    document.removeEventListener('keydown', handleEscKey)
 })
+
+function handleEscKey(event) {
+    if (event.key === 'Escape' && document.fullscreenElement) {
+        document.exitFullscreen().catch(err => {
+            console.warn('No fue posible salir de pantalla completa', err)
+        })
+    }
+}
 
 async function refreshData() {
     try {
         await router.reload({
-            only: ['dailyProgram', 'allKPIs', 'centerKPIs', 'attributes'],
+            only: ['dailyProgram', 'allKPIs', 'centerKPIs', 'attributes', 'existingSchedules'],
             preserveState: true,
             preserveScroll: true
         })
@@ -406,69 +638,6 @@ async function refreshData() {
     }
 }
 
-function initClock() {
-    const t = horaEnBloques()
-    paintBlock('h0', t.h0, t.h0)
-    paintBlock('h1', t.h1, t.h1)
-    paintBlock('m0', t.m0, t.m0)
-    paintBlock('m1', t.m1, t.m1)
-    paintBlock('s0', t.s0, t.s0)
-    paintBlock('s1', t.s1, t.s1)
-    paintBlock('ap', t.ap, t.ap)
-}
-
-let prevT = horaEnBloques()
-
-function horaEnBloques() {
-    const d = new Date()
-    // Convertir a la zona horaria correcta
-    const options = { timeZone, hour12: false, hour: 'numeric', minute: 'numeric', second: 'numeric' }
-    const formatter = new Intl.DateTimeFormat('en-US', options)
-    const parts = formatter.formatToParts(d)
-    const getPart = (type) => parts.find(p => p.type === type)?.value || '00'
-    let h = parseInt(getPart('hour')), m = parseInt(getPart('minute')), s = parseInt(getPart('second'))
-    const ap = h < 12 ? 'AM' : 'PM'
-    if (h === 0) h = 12
-    if (h > 12) h -= 12
-    const hh = dosDig(h), mm = dosDig(m), ss = dosDig(s)
-    return { h0: hh[0], h1: hh[1], m0: mm[0], m1: mm[1], s0: ss[0], s1: ss[1], ap }
-}
-
-function dosDig(n) {
-    return n < 10 ? '0' + n : '' + n
-}
-
-function paintBlock(key, a, b) {
-    const el = document.querySelector('[data-block="' + key + '"]')
-    if (!el) return
-    const digits = el.querySelectorAll('.rlj__digits')
-    digits[0].textContent = a
-    digits[1].textContent = b
-}
-
-function updateClock() {
-    const t = horaEnBloques()
-    const keys = ['h0', 'h1', 'm0', 'm1', 's0', 's1', 'ap']
-    keys.forEach(key => {
-        if (t[key] !== prevT[key]) {
-            paintBlock(key, prevT[key], t[key])
-            restartAnim(key)
-            setTimeout(() => paintBlock(key, t[key], t[key]), 720)
-        }
-    })
-    prevT = t
-}
-
-function restartAnim(key) {
-    const el = document.querySelector('[data-block="' + key + '"]')
-    if (!el) return
-    const group = el.querySelector('.rlj__group')
-    el.classList.remove('bounce')
-    group.classList.remove('roll')
-    void el.offsetWidth
-    el.classList.add('bounce')
-    group.classList.add('roll')
-}
 
 // Video RRHH Functions
 function loadVideosReproducedToday() {
@@ -565,652 +734,1181 @@ function getVideoUrl(path) {
 </script>
 
 <style scoped>
-/* Variables CSS */
-.dash-root {
-    --mist-500: #4a6c7e;
-    --mist-600: #3a5667;
-    --mist-700: #2f4654;
-    --mist-800: #263844;
-    --stone-50: #f6f5f2;
-    --stone-100: #ecebe4;
-    --ink-400: #9ca3af;
-    --ink-500: #6b7280;
-    --ink-800: #1f2937;
-    --ink-900: #111827;
-    --cloud-50: #f8fafc;
-    --cloud-100: #f1f5f9;
-    --cloud-200: #e2e8f0;
-    --cloud-300: #cbd5e1;
-    --ok-500: #16a34a;
-    --ok-600: #15803d;
-    --warn-500: #f59e0b;
-    --warn-600: #d97706;
-    --bad-500: #dc2626;
-    --surface: #ffffff;
-    --chip-bg: rgba(248, 250, 252, 0.7);
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    background: var(--stone-100);
-    color: var(--ink-800);
-    overflow: hidden;
+.dashboard {
+  --bg: #edf2f6;
+  --panel: #ffffff;
+  --panel-soft: #f7fafc;
+  --navy: #0d2b3e;
+  --navy-2: #143d58;
+  --blue: #1f6f9c;
+  --blue-soft: #dcecf5;
+  --text: #193142;
+  --muted: #6f8190;
+  --line: #d9e2e9;
+  --green: #18a66a;
+  --green-soft: #e4f6ee;
+  --yellow: #d59a19;
+  --yellow-soft: #fff4d9;
+  --red: #db4b55;
+  --red-soft: #fdecee;
+  --shadow: 0 10px 30px rgba(13, 43, 62, 0.08);
+  --radius: 18px;
+  
+  padding: 18px;
+  display: grid;
+  grid-template-rows: 74px 1fr;
+  gap: 14px;
 }
 
-.dash-root.tema-oscuro {
-    --cloud-50: #181b21;
-    --cloud-100: #14171c;
-    --cloud-200: #2b3038;
-    --cloud-300: #3a414b;
-    --ink-400: #8a92a0;
-    --ink-500: #a6adb8;
-    --ink-800: #e7eaee;
-    --ink-900: #f4f6f8;
-    --stone-50: #14161a;
-    --stone-100: #101216;
-    --surface: #1e222a;
-    --chip-bg: rgba(20, 23, 28, 0.6);
-}
-
-.tnum {
-    font-variant-numeric: tabular-nums;
-}
-
-/* Header */
 .topbar {
-    position: relative;
-    z-index: 5;
-    border-bottom: 1px solid var(--cloud-200);
-    background: rgba(255, 255, 255, 0.95);
-    flex-shrink: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 320px minmax(260px, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  background: var(--panel);
+  border: 1px solid rgba(217, 226, 233, 0.9);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
-.dash-root.tema-oscuro .topbar {
-    background: rgba(30, 34, 42, 0.95);
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
-.topbar-inner {
-    position: relative;
-    margin: 0 auto;
-    width: 100%;
-    max-width: 1024px;
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    padding: 12px;
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--navy);
+  border-radius: 7px;
+  color: var(--navy);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -1px;
 }
 
-.logo {
-    height: 28px;
-    width: auto;
-    flex-shrink: 0;
-    object-fit: contain;
+.brand-copy {
+  line-height: 1;
 }
 
-.clock-wrap {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+.brand-name {
+  font-size: 23px;
+  font-weight: 770;
+  letter-spacing: -0.6px;
+  white-space: nowrap;
 }
 
-.topbar-right {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.brand-subtitle {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
-.selector-wrap {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
+.area-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
-.centro-select {
-    appearance: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.35));
-    padding: 4px 24px 4px 10px;
-    font-size: 11.2px;
-    font-weight: 600;
-    color: var(--ink-800);
-    box-shadow: 0 1px 6px rgba(38, 56, 68, 0.10);
-    backdrop-filter: blur(12px);
-    outline: none;
-    font-family: inherit;
+.area-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }
 
-.selector-chevron {
-    position: absolute;
-    right: 8px;
-    width: 12px;
-    height: 12px;
-    color: var(--ink-500);
-    pointer-events: none;
+.select-wrap {
+  position: relative;
+  min-width: 250px;
+  max-width: 390px;
+  flex: 1;
 }
 
-.toggle-tema {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    height: 18px;
-    width: 32px;
-    border-radius: 9999px;
-    background: #e5e7eb;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    padding: 0;
+.select-wrap select {
+  width: 100%;
+  height: 46px;
+  appearance: none;
+  padding: 0 42px 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  outline: none;
+  background: var(--panel-soft);
+  color: var(--text);
+  font-weight: 750;
+  cursor: pointer;
 }
 
-.toggle-tema.on {
-    background: #334155;
+.select-wrap::after {
+  content: "⌄";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-56%);
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 20px;
 }
 
-.toggle-thumb {
-    position: absolute;
-    left: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 14px;
-    height: 14px;
-    border-radius: 9999px;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s;
-    color: #f59e0b;
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 190px;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
 }
 
-.toggle-tema.on .toggle-thumb {
-    transform: translateX(14px);
-    color: #334155;
+.clock-time {
+  font-size: clamp(28px, 2.1vw, 38px);
+  font-weight: 820;
+  letter-spacing: 1px;
+  color: var(--navy);
 }
 
-/* Reloj de bloques */
-.rlj {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+.clock-period {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 1px;
 }
 
-.rlj__block {
-    position: relative;
-    width: 2.05rem;
-    height: 2.05rem;
-    border-radius: 0.46rem;
-    overflow: hidden;
-    background: #fff;
-    color: #6E7178;
-    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.16);
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.rlj__block.bounce {
-    animation: rlj-bounce 0.7s;
+.shift-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--navy);
+  color: white;
+  font-size: 12px;
+  font-weight: 780;
+  white-space: nowrap;
 }
 
-.rlj__block--sm {
-    width: 1.55rem;
-    height: 1.55rem;
-    border-radius: 0.36rem;
+.shift-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #ffd36e;
+  box-shadow: 0 0 0 5px rgba(255, 211, 110, 0.16);
 }
 
-.rlj__group {
-    display: flex;
-    flex-direction: column-reverse;
-    height: 200%;
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-soft);
+  color: var(--navy);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease;
 }
 
-.rlj__group.roll {
-    animation: rlj-roll 0.7s ease-in-out forwards;
+.icon-btn:hover {
+  transform: translateY(-1px);
+  background: var(--blue-soft);
 }
 
-.rlj__digits {
-    height: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.95rem;
-    font-weight: 800;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
+.icon-btn svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
 }
 
-.rlj__block--sm .rlj__digits {
-    font-size: 0.52rem;
-    letter-spacing: 0.01em;
+.content {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(355px, 28%) minmax(0, 72%);
+  gap: 14px;
 }
 
-.rlj__colon {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #0f172a;
-    opacity: 0.5;
+.left-column,
+.right-column {
+  min-height: 0;
+  display: grid;
+  gap: 12px;
 }
 
-.dash-root.tema-oscuro .rlj__colon {
-    color: #e7eaee;
+.left-column {
+  grid-template-rows: 170px minmax(250px, 1.15fr) minmax(180px, 0.85fr) 126px;
 }
 
-@keyframes rlj-bounce {
-    from, to { transform: translateY(0); }
-    50% { transform: translateY(10%); }
+.right-column {
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
-@keyframes rlj-roll {
-    from { transform: translateY(-50%); }
-    to { transform: translateY(0); }
+.panel {
+  min-height: 0;
+  background: var(--panel);
+  border: 1px solid rgba(217, 226, 233, 0.92);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
-/* Main */
-.dash-main {
-    margin: 0 auto;
-    width: 100%;
-    max-width: 1024px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 10px;
-    min-height: 0;
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px 12px;
 }
 
-.top-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-    gap: 8px;
+.panel-title {
+  margin: 0;
+  font-size: clamp(15px, 1.05vw, 19px);
+  font-weight: 820;
+  letter-spacing: -0.25px;
+  color: var(--navy);
 }
 
-.info-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+.panel-kicker {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
 }
 
-.stat-card {
-    position: relative;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    border-radius: 8px;
-    border: 1px solid var(--cloud-200);
-    background: var(--surface);
-    padding: 6px 10px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.refresh-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.stat-ghost {
-    position: absolute;
-    bottom: -6px;
-    right: -6px;
-    opacity: 0.07;
-    pointer-events: none;
+.refresh-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 5px rgba(24, 166, 106, 0.11);
 }
 
-.stat-ghost svg {
-    width: 28px;
-    height: 28px;
+.kpi-panel {
+  padding-bottom: 14px;
 }
 
-.stat-body {
-    position: relative;
-    min-width: 0;
+.kpi-grid {
+  padding: 0 14px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.stat-label {
-    font-size: 7.2px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    color: var(--ink-500);
-    white-space: nowrap;
+.kpi-card {
+  position: relative;
+  min-height: 96px;
+  overflow: hidden;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: linear-gradient(150deg, #ffffff 0%, #f7fafc 100%);
 }
 
-.stat-value {
-    font-size: 14px;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--ink-900);
-}
-
-.stat-unit {
-    margin-left: 4px;
-    font-size: 8px;
-    font-weight: 500;
-    color: var(--ink-400);
-}
-
-/* Semáforos */
-.semaforos-panel {
-    display: flex;
-    flex-direction: column;
-    border-radius: 12px;
-    border: 1px solid var(--cloud-200);
-    background: var(--surface);
-    padding: 6px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.semaforos-panel h2 {
-    margin: 0 0 4px;
-    font-size: 10.4px;
-    font-weight: 700;
-    color: var(--ink-800);
-}
-
-.semaforos-list {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 2px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.semaforo-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 8px;
-    border: 1px solid var(--cloud-200);
-    background: var(--surface);
-    padding: 2px 6px;
-}
-
-.semaforo-row.estado-ok {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 2px rgba(22, 163, 74, 0.4);
-}
-
-.semaforo-row.estado-warn {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 2px rgba(245, 158, 11, 0.4);
-}
-
-.semaforo-row.estado-bad {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 2px rgba(220, 38, 38, 0.4);
-}
-
-.semaforo-row.estado-default {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.tl-housing {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    border-radius: 9999px;
-    padding: 4px 8px;
-    background: linear-gradient(145deg, #363b43 0%, #1b1e23 55%, #0f1114 100%);
-    border: 1px solid rgba(0, 0, 0, 0.45);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 6px rgba(0, 0, 0, 0.6), 0 3px 8px -2px rgba(0, 0, 0, 0.35);
-    flex-shrink: 0;
-}
-
-.lamp {
-    width: 6px;
-    height: 6px;
-    border-radius: 9999px;
-    background: radial-gradient(circle at 35% 30%, #2c3037, #1a1c20 75%);
-    box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-}
-
-.lamp.on-ok {
-    background: radial-gradient(circle at 35% 30%, #4ade80, #16a34a 70%);
-    box-shadow: 0 0 10px 2px rgba(34, 197, 94, 0.75), inset 0 0 3px rgba(255, 255, 255, 0.6);
-    animation: lampPulse 2.4s ease-in-out infinite;
-}
-
-.lamp.on-warn {
-    background: radial-gradient(circle at 35% 30%, #fcd34d, #f59e0b 70%);
-    box-shadow: 0 0 10px 2px rgba(245, 158, 11, 0.75), inset 0 0 3px rgba(255, 255, 255, 0.6);
-    animation: lampPulse 2.4s ease-in-out infinite;
-}
-
-.lamp.on-bad {
-    background: radial-gradient(circle at 35% 30%, #f87171, #dc2626 70%);
-    box-shadow: 0 0 10px 2px rgba(220, 38, 38, 0.75), inset 0 0 3px rgba(255, 255, 255, 0.6);
-    animation: lampPulse 2.4s ease-in-out infinite;
-}
-
-.lamp.on-default {
-    background: radial-gradient(circle at 35% 30%, #9ca3af, #6b7280 70%);
-    box-shadow: 0 0 6px 1px rgba(107, 114, 128, 0.5), inset 0 0 3px rgba(255, 255, 255, 0.4);
-}
-
-@keyframes lampPulse {
-    0%, 100% { filter: brightness(1); }
-    50% { filter: brightness(1.35); }
-}
-
-.semaforo-info {
-    min-width: 0;
-    flex: 1;
-}
-
-.semaforo-area {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 9.6px;
-    font-weight: 700;
-    line-height: 1.2;
-    color: var(--ink-900);
-}
-
-.semaforo-desde {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 8px;
-    line-height: 1.2;
-    color: var(--ink-400);
-}
-
-/* Programa del Turno */
-.programa-turno {
-    border-radius: 12px;
-    border: 1px solid var(--cloud-200);
-    background: linear-gradient(to bottom, var(--stone-50), var(--cloud-100));
-    padding: 8px;
-}
-
-.programa-turno .pt-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2px;
-    margin-bottom: 6px;
-}
-
-.programa-turno h2 {
-    margin: 0;
-    font-size: 11.2px;
-    font-weight: 700;
-    color: var(--ink-800);
-}
-
-.turno-badge {
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 2px 6px;
-    font-size: 9.6px;
-    font-weight: 600;
-    color: var(--ink-500);
-    box-shadow: 0 0 0 1px var(--cloud-200);
-}
-
-.dash-root.tema-oscuro .turno-badge {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.kpi-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.kpi-divider {
-    border-top: 1px dashed var(--cloud-300);
-}
-
-.kpi-row {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 4px;
-}
-
-.kpi-tile {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 38px;
-    overflow: hidden;
-    border-radius: 8px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    background: linear-gradient(to bottom, var(--surface), var(--cloud-100));
-    padding: 4px 8px;
-}
-
-.kpi-tile::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.7);
+.kpi-card::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  bottom: -26px;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: rgba(31, 111, 156, 0.07);
 }
 
 .kpi-label {
-    font-size: 8px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    color: var(--ink-500);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
 }
 
 .kpi-value {
-    margin-top: 2px;
-    font-size: 14px;
-    font-weight: 800;
-    line-height: 1;
+  margin-top: 8px;
+  color: var(--navy);
+  font-size: clamp(24px, 1.85vw, 34px);
+  font-weight: 850;
+  letter-spacing: -1px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.kpi-mini {
-    margin-top: 2px;
-    display: block;
-    height: 2px;
-    width: 16px;
-    border-radius: 9999px;
-    opacity: 0.7;
+.kpi-meta {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
 }
 
-.kpi-bar-track {
-    margin-top: 2px;
-    height: 4px;
-    border-radius: 9999px;
-    background: var(--cloud-200);
-    overflow: hidden;
+.kpi-card.positive .kpi-value,
+.kpi-card.compliance .kpi-value {
+  color: var(--green);
 }
 
-.kpi-bar-fill {
-    height: 100%;
-    border-radius: 9999px;
+.kpi-card.negative .kpi-value {
+  color: var(--red);
 }
 
-.tone-default { color: var(--ink-900); }
-.tone-accent { color: var(--mist-700); }
-.tone-ok { color: var(--ok-600); }
-.tone-warn { color: var(--warn-600); }
-.tone-bad { color: var(--bad-500); }
-
-.bg-default { background: var(--ink-400); }
-.bg-accent { background: var(--mist-500); }
-.bg-ok { background: var(--ok-500); }
-.bg-warn { background: var(--warn-500); }
-.bg-bad { background: var(--bad-500); }
-
-/* Líneas de Producción */
-.lineas-produccion h2 {
-    margin: 0 0 4px;
-    font-size: 11.2px;
-    font-weight: 700;
-    color: var(--ink-800);
+.progress-track {
+  height: 5px;
+  margin-top: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8eef2;
 }
 
-.lineas-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+.progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--green);
+  transition: width 0.5s ease;
 }
 
-.linea-card {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    align-items: center;
-    gap: 8px;
-    border-radius: 12px;
-    border: 1px solid var(--cloud-200);
-    background: var(--surface);
-    padding: 6px 12px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.summary-panel {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: minmax(72px, 1fr) auto;
+  gap: 8px;
 }
 
-.linea-nombre {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--ink-900);
+.summary-main {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  padding: 12px 14px;
+  border-radius: 15px;
+  background: linear-gradient(130deg, var(--navy), var(--navy-2));
+  color: white;
 }
 
-.stat-chip {
-    border-radius: 8px;
-    border: 1px solid var(--cloud-200);
-    background: var(--chip-bg);
-    padding: 4px 8px;
+.summary-main .summary-label {
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.chip-head {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--ink-400);
+.summary-main .summary-value {
+  color: white;
 }
 
-.chip-head svg {
-    width: 10px;
-    height: 10px;
+.summary-block {
+  min-width: 0;
+  min-height: 55px;
+  padding: 9px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-soft);
+  text-align: center;
 }
 
-.chip-head span {
+.summary-block.date-block .summary-value {
+  font-size: clamp(16px, 1.15vw, 21px);
+  letter-spacing: -0.55px;
+  white-space: nowrap;
+}
+
+.summary-block.difference-block {
+  background: linear-gradient(145deg, #fff 0%, var(--red-soft) 100%);
+  border-color: #f2cdd1;
+}
+
+.summary-label {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.summary-value {
+  margin-top: 5px;
+  color: var(--navy);
+  font-size: clamp(20px, 1.55vw, 28px);
+  font-weight: 840;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-detail {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.summary-main .summary-detail {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.capacity-ring {
+  --value: 84;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(#38c58a calc(var(--value) * 1%), rgba(255, 255, 255, 0.17) 0);
+}
+
+.capacity-ring::before {
+  content: attr(data-value) "%";
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--navy-2);
+  color: white;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.status-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.status-list {
+  min-height: 0;
+  padding: 0 14px 14px;
+  display: grid;
+  gap: 7px;
+  align-content: start;
+}
+
+.status-item {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--panel-soft);
+}
+
+.status-light {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 5px rgba(24, 166, 106, 0.11);
+}
+
+.status-item.warning .status-light {
+  background: var(--yellow);
+  box-shadow: 0 0 0 5px rgba(213, 154, 25, 0.12);
+}
+
+.status-item.danger .status-light {
+  background: var(--red);
+  box-shadow: 0 0 0 5px rgba(219, 75, 85, 0.12);
+}
+
+.status-name {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.status-time {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.status-badge {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.status-item.warning .status-badge {
+  background: var(--yellow-soft);
+  color: #9f7008;
+}
+
+.status-item.danger .status-badge {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.line-panel {
+  padding-bottom: 14px;
+}
+
+.line-list {
+  padding: 0 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.line-card {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(72px, 0.7fr) minmax(82px, 0.85fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 54px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-soft);
+}
+
+.line-name {
+  font-size: 12px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
+.line-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.line-state::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.line-metric {
+  min-width: 0;
+  padding-left: 9px;
+  border-left: 1px solid var(--line);
+}
+
+.line-metric-label {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.line-metric-value {
+  margin-top: 3px;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 840;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.line-metric-value small {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.history-panel {
+  padding: 14px;
+}
+
+.history-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.history-subtitle {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.history-card {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--panel-soft);
+  text-align: center;
+}
+
+.history-date {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.history-value {
+  margin-top: 4px;
+  color: var(--navy);
+  font-size: clamp(23px, 2vw, 34px);
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.history-bar {
+  height: 4px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5ecef;
+}
+
+.history-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+}
+
+.table-panel {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.table-wrap {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 14px;
+}
+
+table {
+  width: 100%;
+  height: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+
+thead th {
+  height: 48px;
+  padding: 8px 10px;
+  background: var(--navy);
+  color: white;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 9px;
+  font-weight: 820;
+  letter-spacing: 0.85px;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+thead th:first-child {
+  border-top-left-radius: 12px;
+  text-align: left;
+}
+
+thead th:last-child {
+  border-top-right-radius: 12px;
+  border-right: none;
+}
+
+tbody tr {
+  height: calc((100% - 48px) / 9);
+  transition: background 0.2s ease;
+}
+
+tbody tr:nth-child(even) {
+  background: #f7fafc;
+}
+
+tbody tr.current-row {
+  background: #eaf4fa;
+  box-shadow: inset 4px 0 0 var(--blue);
+}
+
+tbody td {
+  padding: 7px 10px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: clamp(10px, 0.75vw, 13px);
+  font-weight: 680;
+  text-align: center;
+  vertical-align: middle;
+}
+
+tbody td:first-child {
+  text-align: left;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+tbody td:last-child {
+  border-right: none;
+}
+
+.expected-cell {
+  color: var(--blue);
+  font-weight: 820;
+}
+
+.value-pill {
+  min-width: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid var(--line);
+  color: var(--navy);
+  font-weight: 840;
+  box-shadow: 0 2px 5px rgba(13, 43, 62, 0.035);
+}
+
+.value-pill.best {
+  border-color: #a9e0c8;
+  background: var(--green-soft);
+  color: #0c8956;
+}
+
+.row-total {
+  color: var(--navy);
+  font-size: clamp(15px, 1.1vw, 21px);
+  font-weight: 850;
+}
+
+.compliance-cell {
+  min-width: 112px;
+}
+
+.compliance-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.compliance-value {
+  color: var(--text);
+  font-weight: 840;
+}
+
+.mini-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--red);
+}
+
+.mini-status.ok {
+  background: var(--green);
+}
+
+.mini-status.warning {
+  background: var(--yellow);
+}
+
+.mini-progress {
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5ecef;
+}
+
+.mini-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--red);
+}
+
+.mini-progress > span.ok {
+  background: var(--green);
+}
+
+.mini-progress > span.warning {
+  background: var(--yellow);
+}
+
+.table-total {
+  display: grid;
+  grid-template-columns: 1.08fr 1fr repeat(3, 1fr) 0.75fr 1fr;
+  margin: 0 14px 14px;
+  min-height: 50px;
+  overflow: hidden;
+  border-radius: 0 0 12px 12px;
+  background: var(--navy);
+  color: white;
+}
+
+.table-total > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: clamp(12px, 0.9vw, 16px);
+  font-weight: 820;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-total > div:first-child {
+  justify-content: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 10px;
+}
+
+.table-total > div:last-child {
+  border-right: 0;
+  background: var(--navy-2);
+}
+
+.total-compliance {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.total-compliance::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 4px rgba(24, 166, 106, 0.15);
+}
+
+@media (max-height: 850px) {
+  .dashboard {
+    padding: 12px;
+    grid-template-rows: 62px 1fr;
+    gap: 10px;
+  }
+
+  .topbar {
+    padding: 0 15px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand-name {
+    font-size: 20px;
+  }
+
+  .left-column,
+  .right-column,
+  .content {
+    gap: 9px;
+  }
+
+  .panel-heading {
+    padding: 11px 14px 8px;
+  }
+
+  .kpi-panel {
+    padding-bottom: 10px;
+  }
+
+  .kpi-grid {
+    padding: 0 10px;
+    gap: 7px;
+  }
+
+  .kpi-card {
+    min-height: 78px;
+    padding: 10px;
+  }
+
+  .kpi-value {
+    margin-top: 6px;
+  }
+
+  .kpi-meta {
+    margin-top: 6px;
+  }
+
+  .left-column {
+    grid-template-rows: 158px minmax(210px, 1.1fr) minmax(145px, 0.9fr) 108px;
+  }
+
+  .summary-panel,
+  .history-panel {
+    padding: 8px;
+  }
+
+  .summary-panel {
+    gap: 6px;
+    grid-template-rows: minmax(62px, 1fr) auto;
+  }
+
+  .summary-main {
+    min-height: 62px;
+    padding: 9px 11px;
+  }
+
+  .summary-block {
+    min-height: 48px;
+    padding: 6px 5px;
+  }
+
+  .summary-value {
+    margin-top: 3px;
+    font-size: clamp(17px, 1.35vw, 24px);
+  }
+
+  .summary-detail {
+    margin-top: 3px;
     font-size: 8px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
+  }
+
+  .summary-block.date-block .summary-value {
+    font-size: clamp(14px, 1.05vw, 18px);
+  }
+
+  .capacity-ring {
+    width: 52px;
+    height: 52px;
+  }
+
+  .capacity-ring::before {
+    width: 38px;
+    height: 38px;
+    font-size: 10px;
+  }
+
+  .status-list,
+  .line-list {
+    padding: 0 10px 10px;
+    gap: 5px;
+  }
+
+  .status-item {
+    min-height: 36px;
+    padding: 6px 9px;
+  }
+
+  .line-panel {
+    padding-bottom: 10px;
+  }
+
+  .line-card {
+    min-height: 44px;
+    padding: 6px 9px;
+  }
+
+  .history-title {
+    margin-bottom: 6px;
+  }
+
+  .history-grid {
+    gap: 6px;
+  }
+
+  .history-card {
+    padding: 5px;
+  }
+
+  .history-value {
+    margin-top: 3px;
+    font-size: clamp(19px, 1.65vw, 28px);
+  }
+
+  .history-bar {
+    margin-top: 5px;
+  }
+
+  thead th {
+    height: 40px;
+    padding: 6px 8px;
+  }
+
+  tbody tr {
+    height: calc((100% - 40px) / 9);
+  }
+
+  tbody td {
+    padding: 5px 8px;
+  }
+
+  .value-pill {
+    padding: 5px 8px;
+  }
+
+  .table-total {
+    min-height: 42px;
+    margin-bottom: 10px;
+  }
 }
 
-.chip-value {
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--ink-900);
-}
+@media (max-height: 780px) {
+  .dashboard {
+    padding: 10px;
+    grid-template-rows: 58px 1fr;
+    gap: 8px;
+  }
 
-.chip-unit {
-    margin-left: 4px;
-    font-size: 8.8px;
-    font-weight: 500;
-    color: var(--ink-400);
+  .topbar {
+    padding: 0 12px;
+  }
+
+  .left-column,
+  .right-column,
+  .content {
+    gap: 7px;
+  }
+
+  .left-column {
+    grid-template-rows: 146px minmax(188px, 1.12fr) minmax(126px, 0.88fr) 92px;
+  }
+
+  .panel-heading {
+    padding: 8px 11px 6px;
+  }
+
+  .panel-kicker {
+    margin-top: 2px;
+    font-size: 8px;
+  }
+
+  .summary-panel {
+    padding: 7px;
+    gap: 5px;
+    grid-template-rows: minmax(57px, 1fr) auto;
+  }
+
+  .summary-main {
+    min-height: 57px;
+  }
+
+  .summary-block {
+    min-height: 43px;
+  }
+
+  .summary-label {
+    font-size: 7px;
+    letter-spacing: 0.65px;
+  }
+
+  .summary-value {
+    font-size: 17px;
+  }
+
+  .summary-block.date-block .summary-value {
+    font-size: 13px;
+  }
+
+  .summary-detail {
+    font-size: 7px;
+  }
+
+  .capacity-ring {
+    width: 46px;
+    height: 46px;
+  }
+
+  .capacity-ring::before {
+    width: 34px;
+    height: 34px;
+  }
+
+  .status-list,
+  .line-list {
+    padding: 0 8px 8px;
+    gap: 4px;
+  }
+
+  .status-item {
+    min-height: 31px;
+    padding: 4px 8px;
+  }
+
+  .status-time {
+    margin-top: 2px;
+  }
+
+  .line-card {
+    min-height: 38px;
+    padding: 4px 8px;
+  }
+
+  .line-state {
+    margin-top: 3px;
+  }
+
+  .history-panel {
+    padding: 7px;
+  }
+
+  .history-title {
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+
+  .history-card {
+    padding: 4px;
+  }
+
+  .history-value {
+    font-size: 18px;
+  }
+
+  .history-bar {
+    margin-top: 3px;
+  }
 }
 </style>
