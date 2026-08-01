@@ -101,7 +101,7 @@
                         <article v-for="line in productionLinesForCenterData" :key="line.id" class="line-card">
                             <div>
                                 <div class="line-name">{{ line.title }}</div>
-                                <div class="line-state">Operando</div>
+                                <div class="line-state" :class="{ 'state-stopped': getLineState(line.id) === 'En paro' }">{{ getLineState(line.id) }}</div>
                             </div>
                             <div class="line-metric">
                                 <div class="line-metric-label">Capacidad</div>
@@ -590,6 +590,18 @@ function getComplianceTone(value) {
     return 'bad'
 }
 
+function getLineState(lineId) {
+    // Buscar strikes activos para esta línea
+    const lineKPIs = props.allKPIs.find(kpi => kpi.line.id === lineId)
+    if (lineKPIs && lineKPIs.strikes) {
+        const activeStrike = lineKPIs.strikes.find(strike => !strike.end_time)
+        if (activeStrike) {
+            return 'En paro'
+        }
+    }
+    return 'Operando'
+}
+
 // Reloj de bloques
 let clockInterval = null
 let dataRefreshInterval = null
@@ -643,7 +655,7 @@ function handleFullscreenChange() {
 async function refreshData() {
     try {
         await router.reload({
-            only: ['dailyProgram', 'allKPIs', 'centerKPIs', 'attributes', 'existingSchedules'],
+            only: ['dailyProgram', 'allKPIs', 'centerKPIs', 'attributes', 'existingSchedules', 'recentHistory'],
             preserveState: true,
             preserveScroll: true
         })
@@ -1332,6 +1344,14 @@ function getVideoUrl(path) {
   height: 7px;
   border-radius: 50%;
   background: var(--green);
+}
+
+.line-state.state-stopped {
+  color: var(--red);
+}
+
+.line-state.state-stopped::before {
+  background: var(--red);
 }
 
 .line-metric {
