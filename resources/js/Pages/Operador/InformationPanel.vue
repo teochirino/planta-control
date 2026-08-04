@@ -27,7 +27,6 @@
                                 class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
-                            <option value="nocturno">Nocturno</option>
                         </select>
                         
                         <CurrentTimeDisplay />
@@ -265,8 +264,7 @@ const centerKPIsData = computed(() => props.centerKPIs)
 const turnoLabel = computed(() => {
     const labels = {
         matutino: 'Matutino',
-        vespertino: 'Vespertino',
-        nocturno: 'Nocturno'
+        vespertino: 'Vespertino'
     }
     return labels[turnoSeleccionado.value] || turnoSeleccionado.value
 })

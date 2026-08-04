@@ -258,6 +258,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/correct-operator-data', [SupervisorController::class, 'correctOperatorData'])->name('correct-operator-data');
         Route::post('/process-balance', [SupervisorController::class, 'processShiftBalance'])->name('process-balance');
         Route::post('/manual-adjustment', [SupervisorController::class, 'registerManualAdjustment'])->name('manual-adjustment');
+        Route::post('/extend-to-vespertino', [SupervisorController::class, 'extendToVespertino'])->name('extend-to-vespertino');
         Route::get('/adjustments-history', [SupervisorController::class, 'getAdjustmentsHistory'])->name('adjustments-history');
         
         // Ajustes de producción (vistas)

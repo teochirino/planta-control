@@ -22,6 +22,16 @@
                 </div>
             </div>
 
+            <div class="shift-control">
+                <span class="shift-label">Turno</span>
+                <div class="select-wrap">
+                    <select v-model="selectedShiftLocal" @change="cambiarTurno" aria-label="Turno de producción">
+                        <option value="matutino">Matutino</option>
+                        <option value="vespertino">Vespertino</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="clock" aria-live="polite">
                 <span id="clockTime" class="clock-time">{{ currentTime }}</span>
                 <span id="clockPeriod" class="clock-period">{{ currentPeriod }}</span>
@@ -331,6 +341,7 @@ const props = defineProps({
 })
 
 const selectedWorkCenterId = ref(props.selectedWorkCenter?.id || null)
+const selectedShiftLocal = ref(props.selectedShift || 'matutino')
 const isDarkMode = ref(false)
 const isFullscreen = ref(false)
 const currentTime = ref('')
@@ -355,10 +366,9 @@ const centerKPIsData = computed(() => props.centerKPIs)
 const turnoLabel = computed(() => {
     const labels = {
         matutino: 'Matutino',
-        vespertino: 'Vespertino',
-        nocturno: 'Nocturno'
+        vespertino: 'Vespertino'
     }
-    return labels[props.selectedShift] || props.selectedShift
+    return labels[selectedShiftLocal.value] || selectedShiftLocal.value
 })
 
 const fechaFormateada = computed(() => {
@@ -560,7 +570,15 @@ function cambiarCentro() {
     router.get(route('supervisor.tv-panels'), {
         work_center_id: selectedWorkCenterId.value,
         date: props.selectedDate,
-        shift: props.selectedShift
+        shift: selectedShiftLocal.value
+    }, { preserveState: true })
+}
+
+function cambiarTurno() {
+    router.get(route('supervisor.tv-panels'), {
+        work_center_id: selectedWorkCenterId.value,
+        date: props.selectedDate,
+        shift: selectedShiftLocal.value
     }, { preserveState: true })
 }
 
@@ -884,6 +902,21 @@ function getVideoUrl(path) {
   color: var(--muted);
   pointer-events: none;
   font-size: 20px;
+}
+
+.shift-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.shift-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }
 
 .clock {

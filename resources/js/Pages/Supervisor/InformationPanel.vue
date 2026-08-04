@@ -27,7 +27,6 @@
                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
-                            <option value="nocturno">Nocturno</option>
                         </select>
                         
                         <CurrentTimeDisplay />
@@ -43,7 +42,16 @@
                 <div v-if="centerKPIsData" :class="isTVMode() ? 'mb-8 p-6 2xl:mb-10 2xl:p-8' : 'mb-6 p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
                     <div class="flex items-center justify-between mb-3">
                         <h3 :class="isTVMode() ? 'text-lg 2xl:text-xl' : 'text-sm'" class="font-bold text-[#0b2a40]">Programa del Turno</h3>
-                        <span :class="isTVMode() ? 'text-sm 2xl:text-base' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
+                        <div class="flex items-center gap-3">
+                            <span :class="isTVMode() ? 'text-sm 2xl:text-base' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
+                            <button 
+                                v-if="turnoSeleccionado === 'matutino' && dailyProgramData"
+                                @click="showExtendModal = true"
+                                :class="isTVMode() ? 'px-4 py-2 text-base 2xl:px-5 2xl:py-3 2xl:text-lg' : 'px-3 py-1 text-xs'"
+                                class="bg-[#174060] text-white rounded-md font-bold hover:opacity-85 transition">
+                                🌙 Extender a Vespertino
+                            </button>
+                        </div>
                     </div>
                     
                     <div :class="isTVMode() ? 'gap-4 2xl:gap-6' : 'gap-2'" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 2xl:grid-cols-12">
@@ -194,12 +202,56 @@
             </div>
         </div>
         </div>
+        
+        <!-- Modal para Extender a Vespertino -->
+        <div v-if="showExtendModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div :class="isTVMode() ? 'p-8 2xl:p-12' : 'p-6'" class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+                <h3 :class="isTVMode() ? 'text-2xl mb-4' : 'text-xl mb-3'" class="font-extrabold text-[#0b2a40]">Extender a Turno Vespertino</h3>
+                <p :class="isTVMode() ? 'text-base mb-4' : 'text-sm mb-3'" class="text-[#6a8090]">
+                    Indique cuántas piezas del programa matutino desea pasar al turno vespertino (17:00 - 01:40).
+                </p>
+                
+                <div class="mb-4">
+                    <label :class="isTVMode() ? 'text-sm font-bold mb-2' : 'text-xs font-bold mb-1'" class="block text-[#4e6070] uppercase tracking-wider">
+                        Piezas a extender
+                    </label>
+                    <input 
+                        type="number" 
+                        v-model.number="piecesToExtend" 
+                        min="0" 
+                        :max="maxPiecesToExtend"
+                        :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                        class="w-full border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] focus:outline-none focus:border-[#174060]"
+                    >
+                    <p :class="isTVMode() ? 'text-sm mt-2' : 'text-xs mt-1'" class="text-[#6a8090]">
+                        Máximo disponible: {{ maxPiecesToExtend }} piezas
+                    </p>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        @click="showExtendModal = false"
+                        :class="isTVMode() ? 'px-4 py-2 text-base' : 'px-3 py-1 text-xs'"
+                        class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] hover:bg-[#f8f9fb] transition">
+                        Cancelar
+                    </button>
+                    <button 
+                        @click="extendToVespertino"
+                        :disabled="extending || piecesToExtend <= 0"
+                        :class="isTVMode() ? 'px-4 py-2 text-base' : 'px-3 py-1 text-xs'"
+                        class="bg-[#174060] text-white rounded-md font-bold hover:opacity-85 transition disabled:opacity-50">
+                        {{ extending ? 'Procesando...' : 'Extender' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { router } from '@inertiajs/vue3'
+import axios from 'axios'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
 import DisplayModeToggle from '@/Components/DisplayModeToggle.vue'
 import CurrentTimeDisplay from '@/Components/CurrentTimeDisplay.vue'
@@ -260,10 +312,24 @@ const centerKPIsData = computed(() => props.centerKPIs)
 const turnoLabel = computed(() => {
     const labels = {
         matutino: 'Matutino',
-        vespertino: 'Vespertino',
-        nocturno: 'Nocturno'
+        vespertino: 'Vespertino'
     }
     return labels[turnoSeleccionado.value] || turnoSeleccionado.value
+})
+
+// Modal para extender a vespertino
+const showExtendModal = ref(false)
+const piecesToExtend = ref(0)
+const extending = ref(false)
+
+const maxPiecesToExtend = computed(() => {
+    if (!centerKPIsData.value) return 0
+    return centerKPIsData.value.programmed + centerKPIsData.value.backwardness - centerKPIsData.value.advanced
+})
+
+const canExtendToVespertino = computed(() => {
+    // Solo permitir extender si es turno matutino y hay piezas disponibles
+    return turnoSeleccionado.value === 'matutino' && maxPiecesToExtend.value > 0
 })
 
 const fechaFormateada = computed(() => {
@@ -306,6 +372,34 @@ function cambiarTurno() {
         date: fechaSeleccionada.value,
         shift: turnoSeleccionado.value
     }, { preserveState: true })
+}
+
+async function extendToVespertino() {
+    if (!dailyProgramData.value || piecesToExtend.value <= 0) return
+    
+    extending.value = true
+    
+    try {
+        const response = await axios.post(route('supervisor.extend-to-vespertino'), {
+            daily_program_id: dailyProgramData.value.id,
+            pieces_to_extend: piecesToExtend.value
+        })
+        
+        if (response.data.success) {
+            alert(response.data.message)
+            showExtendModal.value = false
+            piecesToExtend.value = 0
+            // Recargar datos
+            refreshData()
+        } else {
+            alert(response.data.message || 'Error al extender el programa')
+        }
+    } catch (error) {
+        console.error('Error extending to vespertino:', error)
+        alert('Error al extender el programa. Por favor intente nuevamente.')
+    } finally {
+        extending.value = false
+    }
 }
 
 function refreshData() {

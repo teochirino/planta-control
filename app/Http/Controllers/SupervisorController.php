@@ -250,7 +250,7 @@ class SupervisorController extends Controller
         }
 
         // Generar horarios según el turno
-        $startTime = $selectedShift === 'matutino' ? '08:00' : ($selectedShift === 'vespertino' ? '16:00' : '00:00');
+        $startTime = $selectedShift === 'matutino' ? '08:00' : '17:00';
         $hours = $this->generateHourlySchedule($startTime, 9);
 
         // Obtener historial de cumplimiento de los últimos 3 días
@@ -335,7 +335,7 @@ class SupervisorController extends Controller
         }
         
         // Generar horarios (8:00 a 17:00 por defecto para turno matutino)
-        $startTime = $shift === 'matutino' ? '08:00' : ($shift === 'vespertino' ? '16:00' : '00:00');
+        $startTime = $shift === 'matutino' ? '08:00' : '17:00';
         $hours = $this->generateHourlySchedule($startTime, 9);
         
         // Generar schedules para todas las líneas si no existen
@@ -688,8 +688,7 @@ class SupervisorController extends Controller
     
     private function generateSchedulesForProgram(DailyProgram $program, $productionLines)
     {
-        $startTime = $program->shift === 'matutino' ? '08:00' : 
-                    ($program->shift === 'vespertino' ? '16:00' : '00:00');
+        $startTime = $program->shift === 'matutino' ? '08:00' : '17:00';
         
         $hours = $this->generateHourlySchedule($startTime, (int)$program->shift_hours);
         
@@ -832,6 +831,81 @@ class SupervisorController extends Controller
             'backwardness' => $result->accumulated_backwardness,
             'advanced' => $result->accumulated_advanced,
         ]);
+    }
+    
+    // Extender programa matutino a turno vespertino
+    public function extendToVespertino(Request $request)
+    {
+        $request->validate([
+            'daily_program_id' => 'required|exists:daily_programs,id',
+            'pieces_to_extend' => 'required|integer|min:0',
+        ]);
+        
+        // Verificar que sea supervisor
+        if (!auth()->user()->isSupervisor()) {
+            return response()->json(['success' => false, 'message' => 'Solo supervisores pueden extender programas'], 403);
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            $dailyProgram = DailyProgram::findOrFail($request->daily_program_id);
+            
+            // Verificar que el programa sea matutino
+            if ($dailyProgram->shift !== 'matutino') {
+                return response()->json(['success' => false, 'message' => 'Solo se pueden extender programas matutinos'], 400);
+            }
+            
+            // Verificar que no exista ya un programa vespertino para el mismo día y centro
+            $existingVespertino = DailyProgram::where('date', $dailyProgram->date)
+                ->where('id_work_center', $dailyProgram->id_work_center)
+                ->where('shift', 'vespertino')
+                ->first();
+            
+            if ($existingVespertino) {
+                return response()->json(['success' => false, 'message' => 'Ya existe un programa vespertino para este día y centro'], 400);
+            }
+            
+            $piecesToExtend = $request->pieces_to_extend;
+            
+            // Verificar que haya suficientes piezas para extender
+            $totalAvailable = $dailyProgram->programmed + $dailyProgram->backwardness - $dailyProgram->advanced;
+            if ($piecesToExtend > $totalAvailable) {
+                return response()->json(['success' => false, 'message' => "Solo hay {$totalAvailable} piezas disponibles para extender"], 400);
+            }
+            
+            // Reducir el programa matutino
+            $dailyProgram->update([
+                'programmed' => max($dailyProgram->programmed - $piecesToExtend, 0),
+            ]);
+            
+            // Crear programa vespertino
+            $vespertinoProgram = DailyProgram::create([
+                'date' => $dailyProgram->date,
+                'id_work_center' => $dailyProgram->id_work_center,
+                'shift' => 'vespertino',
+                'programmed' => $piecesToExtend,
+                'backwardness' => 0,
+                'advanced' => 0,
+                'shift_hours' => 9.0, // Vespertino: 17:00 - 01:40 (aprox 8h 40min, redondeado a 9)
+                'program_id' => $dailyProgram->program_id,
+            ]);
+            
+            // Generar schedules para el programa vespertino
+            $productionLines = ProductionLine::where('id_work_center', $dailyProgram->id_work_center)->get();
+            $this->generateSchedulesForProgram($vespertinoProgram, $productionLines);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Programa extendido exitosamente al turno vespertino con {$piecesToExtend} piezas",
+                'vespertino_program_id' => $vespertinoProgram->id,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
     
     // Registrar ajuste manual

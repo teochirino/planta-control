@@ -27,7 +27,6 @@
                                class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] bg-white">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
-                            <option value="nocturno">Nocturno</option>
                         </select>
                         
                         <CurrentTimeDisplay />
@@ -360,7 +359,7 @@ let timerInterval = null
 
 // Computed
 const turnoLabel = computed(() => {
-    const shifts = { matutino: 'Matutino', vespertino: 'Vespertino', nocturno: 'Nocturno' }
+    const shifts = { matutino: 'Matutino', vespertino: 'Vespertino' }
     return shifts[turnoSeleccionado.value] || turnoSeleccionado.value
 })
 

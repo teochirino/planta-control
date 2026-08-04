@@ -19,7 +19,6 @@ const value = computed({
 const shifts = [
     { value: 'matutino', label: 'Matutino' },
     { value: 'vespertino', label: 'Vespertino' },
-    { value: 'nocturno', label: 'Nocturno' },
 ];
 </script>
 

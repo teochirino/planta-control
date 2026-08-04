@@ -20,7 +20,6 @@
                         <option value="">Todos los turnos</option>
                         <option value="matutino">Matutino</option>
                         <option value="vespertino">Vespertino</option>
-                        <option value="nocturno">Nocturno</option>
                     </select>
                     <button @click="logout" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition">
                         Cerrar Sesión
@@ -168,8 +167,6 @@
                                         <span>Real 1: {{ item.real_1 }}</span>
                                         <span>Prog. 2: {{ item.prog_2 }}</span>
                                         <span>Real 2: {{ item.real_2 }}</span>
-                                        <span>Prog. 3: {{ item.prog_3 }}</span>
-                                        <span>Real 3: {{ item.real_3 }}</span>
                                     </div>
                                 </div>
                                 <span class="compliance-badge" :class="`badge-${item.status}`">{{ item.compliance }}%</span>
@@ -219,7 +216,7 @@ const workCenterName = computed(() => {
 });
 
 const shiftLabel = computed(() => {
-    const shifts = { matutino: 'Matutino', vespertino: 'Vespertino', nocturno: 'Nocturno' };
+    const shifts = { matutino: 'Matutino', vespertino: 'Vespertino' };
     return shifts[selectedShift.value] || 'Todos';
 });
 

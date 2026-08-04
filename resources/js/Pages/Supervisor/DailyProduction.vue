@@ -18,7 +18,6 @@
                         <select v-model="selectedShift" @change="cambiarTurno" :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-xs'" class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28]">
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
-                            <option value="nocturno">Nocturno</option>
                         </select>
                         <div :class="isTVMode() ? 'px-4 py-3 text-base 2xl:px-5 2xl:py-4 2xl:text-lg' : 'px-3 py-2 text-xs'" class="rounded-full bg-[#0b2a40] text-white font-bold">{{ currentTime }}</div>
                         <Link :href="route('supervisor.dashboard')" :class="isTVMode() ? 'px-6 py-3 text-base 2xl:px-8 2xl:py-4 2xl:text-lg' : 'px-4 py-2 text-xs'" class="bg-[#174060] text-white rounded-md font-bold hover:opacity-85">
@@ -84,8 +83,13 @@
             <div v-else :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-white border border-[#d4dee8] rounded-xl shadow-sm">
                 <div class="flex items-center justify-between mb-4">
                     <h2 :class="isTVMode() ? 'text-xl' : 'text-base'" class="font-extrabold text-[#0b2a40]">Encabezado de Turno</h2>
-                    <!-- Comentado: Los supervisores no pueden guardar programas -->
-                    <!-- <button @click="guardarPrograma" :disabled="savingProgram" class="px-4 py-2 bg-[#0b2a40] text-white rounded-md text-xs font-bold hover:opacity-85 disabled:opacity-50">💾 Guardar Programa</button> -->
+                    <button 
+                        v-if="selectedShift === 'matutino' && dailyProgramId"
+                        @click="showExtendModal = true"
+                        :class="isTVMode() ? 'px-4 py-2 text-base' : 'px-3 py-1 text-xs'"
+                        class="bg-[#174060] text-white rounded-md font-bold hover:opacity-85 transition">
+                        🌙 Extender a Vespertino
+                    </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div class="col-span-2 flex items-end space-x-4">
@@ -353,6 +357,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal para Extender a Vespertino -->
+        <div v-if="showExtendModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div :class="isTVMode() ? 'p-8' : 'p-6'" class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+                <h3 :class="isTVMode() ? 'text-2xl mb-4' : 'text-xl mb-3'" class="font-extrabold text-[#0b2a40]">Extender a Turno Vespertino</h3>
+                <p :class="isTVMode() ? 'text-base mb-4' : 'text-sm mb-3'" class="text-[#6a8090]">
+                    Indique cuántas piezas del programa matutino desea pasar al turno vespertino (17:00 - 01:40).
+                </p>
+                
+                <div class="mb-4">
+                    <label :class="isTVMode() ? 'text-sm font-bold mb-2' : 'text-xs font-bold mb-1'" class="block text-[#4e6070] uppercase tracking-wider">
+                        Piezas a extender
+                    </label>
+                    <input 
+                        type="number" 
+                        v-model.number="piecesToExtend" 
+                        min="0" 
+                        :max="maxPiecesToExtend"
+                        :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'"
+                        class="w-full border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] focus:outline-none focus:border-[#174060]"
+                    >
+                    <p :class="isTVMode() ? 'text-sm mt-2' : 'text-xs mt-1'" class="text-[#6a8090]">
+                        Máximo disponible: {{ maxPiecesToExtend }} piezas
+                    </p>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        @click="showExtendModal = false"
+                        :class="isTVMode() ? 'px-4 py-2 text-base' : 'px-3 py-1 text-xs'"
+                        class="border border-[#d4dee8] rounded-md font-bold text-[#0c1c28] hover:bg-[#f8f9fb] transition">
+                        Cancelar
+                    </button>
+                    <button 
+                        @click="extendToVespertino"
+                        :disabled="extending || piecesToExtend <= 0"
+                        :class="isTVMode() ? 'px-4 py-2 text-base' : 'px-3 py-1 text-xs'"
+                        class="bg-[#174060] text-white rounded-md font-bold hover:opacity-85 transition disabled:opacity-50">
+                        {{ extending ? 'Procesando...' : 'Extender' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -400,6 +447,11 @@ const showConfirmModal = ref(false)
 const confirmStrike = ref(null)
 const confirmEndTime = ref('')
 
+// Modal para extender a vespertino
+const showExtendModal = ref(false)
+const piecesToExtend = ref(0)
+const extending = ref(false)
+
 const programData = ref({
     programmed: props.dailyProgram?.programmed || 0,
     backwardness: props.dailyProgram?.backwardness || 0,
@@ -439,8 +491,13 @@ const getKey = (lineId, hourStart) => `${lineId}-${hourStart}`
 
 const horas = computed(() => horasBase.value)
 const shiftLabel = computed(() => {
-    const shifts = { matutino: 'Matutino', vespertino: 'Vespertino', nocturno: 'Nocturno' }
+    const shifts = { matutino: 'Matutino', vespertino: 'Vespertino' }
     return shifts[selectedShift.value] || selectedShift.value
+})
+
+const maxPiecesToExtend = computed(() => {
+    if (!programData.value) return 0
+    return programData.value.programmed + programData.value.backwardness - programData.value.advanced
 })
 const formattedDate = computed(() => {
     if (!selectedDate.value) return ''
@@ -670,11 +727,38 @@ const registrarParo = async () => {
             id_machine: nuevoParo.value.machine_id || null
         })
         toast.success('Paro registrado correctamente')
-        cerrarModalParo()
+        modalVisible.value = false
         loadStrikes()
-    } catch (error) { 
-        console.error('Error:', error)
-        toast.error('Error al registrar: ' + (error.response?.data?.message || error.message))
+    } catch (error) {
+        toast.error('Error al registrar paro: ' + (error.response?.data?.message || error.message))
+    }
+}
+
+const extendToVespertino = async () => {
+    if (!dailyProgramId.value || piecesToExtend.value <= 0) return
+    
+    extending.value = true
+    
+    try {
+        const response = await axios.post(route('supervisor.extend-to-vespertino'), {
+            daily_program_id: dailyProgramId.value,
+            pieces_to_extend: piecesToExtend.value
+        })
+        
+        if (response.data.success) {
+            toast.success(response.data.message)
+            showExtendModal.value = false
+            piecesToExtend.value = 0
+            // Recargar la página
+            router.reload()
+        } else {
+            toast.error(response.data.message || 'Error al extender el programa')
+        }
+    } catch (error) {
+        console.error('Error extending to vespertino:', error)
+        toast.error('Error al extender el programa. Por favor intente nuevamente.')
+    } finally {
+        extending.value = false
     }
 }
 

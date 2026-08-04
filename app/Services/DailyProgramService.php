@@ -110,8 +110,7 @@ class DailyProgramService
     {
         $startTime = match($shift) {
             'matutino' => '08:00',
-            'vespertino' => '16:00',
-            'nocturno' => '00:00',
+            'vespertino' => '17:00',
             default => '08:00',
         };
 
@@ -181,17 +180,29 @@ class DailyProgramService
 
     /**
      * Obtener turno actual basado en la hora
+     * Matutino: 08:00 - 17:00
+     * Vespertino: 17:00 - 01:40 (del siguiente día)
      */
     public function getCurrentShift(): string
     {
         $hour = now()->hour;
+        $minute = now()->minute;
         
-        if ($hour >= 8 && $hour < 16) {
+        // Matutino: 08:00 - 17:00
+        if ($hour >= 8 && $hour < 17) {
             return 'matutino';
-        } elseif ($hour >= 16 && $hour < 24) {
-            return 'vespertino';
-        } else {
-            return 'nocturno';
         }
+        
+        // Vespertino: 17:00 - 24:00 y 00:00 - 01:40
+        if ($hour >= 17 || ($hour >= 0 && $hour < 2)) {
+            // Si es la hora 01:00-01:59, verificar si es antes de 01:40
+            if ($hour == 1 && $minute >= 40) {
+                return 'matutino'; // Después de 01:40, consideramos matutino del siguiente día
+            }
+            return 'vespertino';
+        }
+        
+        // Entre 02:00 y 08:00, consideramos matutino del siguiente día
+        return 'matutino';
     }
 }

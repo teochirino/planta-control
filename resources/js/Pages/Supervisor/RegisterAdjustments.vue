@@ -290,7 +290,6 @@ function getShiftLabel(shift) {
         case 'night': return 'Noche';
         case 'matutino': return 'Matutino';
         case 'vespertino': return 'Vespertino';
-        case 'nocturno': return 'Nocturno';
         default: return shift;
     }
 }

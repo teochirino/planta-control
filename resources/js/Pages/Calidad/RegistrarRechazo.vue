@@ -47,7 +47,6 @@
                         >
                             <option value="matutino">Matutino</option>
                             <option value="vespertino">Vespertino</option>
-                            <option value="nocturno">Nocturno</option>
                         </select>
                     </div>
                     

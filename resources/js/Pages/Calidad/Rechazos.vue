@@ -145,8 +145,7 @@ const formatDate = (dateStr) => {
 const getTurnoLabel = (shift) => {
     const shifts = {
         matutino: 'Matutino',
-        vespertino: 'Vespertino',
-        nocturno: 'Nocturno'
+        vespertino: 'Vespertino'
     }
     return shifts[shift] || shift
 }
