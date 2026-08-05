@@ -38,7 +38,7 @@
             </div>
 
             <div class="top-actions">
-                <div class="shift-chip">
+                <div class="shift-chip" :class="selectedShiftLocal">
                     <span class="shift-dot"></span>
                     <span id="shiftText">Turno {{ turnoLabel.toLowerCase() }}</span>
                 </div>
@@ -198,9 +198,7 @@
                             <colgroup>
                                 <col style="width: 13%" />
                                 <col style="width: 12%" />
-                                <col style="width: 16%" />
-                                <col style="width: 16%" />
-                                <col style="width: 16%" />
+                                <col v-for="line in productionLinesForCenterData" :key="'col-' + line.id" style="width: 1fr" />
                                 <col style="width: 10%" />
                                 <col style="width: 17%" />
                             </colgroup>
@@ -235,7 +233,7 @@
                         </table>
                     </div>
 
-                    <div class="table-total">
+                    <div class="table-total" :style="{ gridTemplateColumns: '13% 12% repeat(' + productionLinesForCenterData.length + ', 1fr) 10% 17%' }">
                         <div>TOTAL</div>
                         <div>{{ formatNumber(totalExpected) }}</div>
                         <div v-for="line in productionLinesForCenterData" :key="'total-' + line.id">{{ formatNumber(lineTotals[line.id] || 0) }}</div>
@@ -807,7 +805,7 @@ function getVideoUrl(path) {
 .topbar {
   min-height: 0;
   display: grid;
-  grid-template-columns: 320px minmax(260px, 1fr) auto auto;
+  grid-template-columns: 320px minmax(260px, 1fr) auto auto auto;
   align-items: center;
   gap: 14px;
   padding: 0 20px;
@@ -960,6 +958,24 @@ function getVideoUrl(path) {
   font-size: 12px;
   font-weight: 780;
   white-space: nowrap;
+}
+
+.shift-chip.matutino {
+  background: var(--navy);
+}
+
+.shift-chip.matutino .shift-dot {
+  background: #ffd36e;
+  box-shadow: 0 0 0 5px rgba(255, 211, 110, 0.16);
+}
+
+.shift-chip.vespertino {
+  background: #6b21a8;
+}
+
+.shift-chip.vespertino .shift-dot {
+  background: #a78bfa;
+  box-shadow: 0 0 0 5px rgba(167, 139, 250, 0.16);
 }
 
 .shift-dot {
@@ -1650,7 +1666,6 @@ tbody td:last-child {
 
 .table-total {
   display: grid;
-  grid-template-columns: 1.08fr 1fr repeat(3, 1fr) 0.75fr 1fr;
   margin: 0 14px 14px;
   min-height: 50px;
   overflow: hidden;
