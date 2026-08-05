@@ -1045,13 +1045,14 @@ class IngenieroProcesosController extends Controller
         ]);
 
         // Buscar daily programs por fecha y centro (sin filtrar por program_id por ahora)
-        $dailyPrograms = \App\Models\DailyProgram::with(['workCenter', 'program'])
+        $dailyPrograms = \App\Models\DailyProgram::with(['workCenter', 'program', 'engineeringEditedBy'])
             ->where('date', $request->phase_date)
             ->where('id_work_center', $request->work_center_id)
             ->orderBy('shift')
             ->get()
             ->map(function ($dailyProgram) {
                 $dailyProgram->date_formatted = $dailyProgram->date ? \Carbon\Carbon::parse($dailyProgram->date)->format('d/m/Y') : null;
+                $dailyProgram->engineering_edited_at_formatted = $dailyProgram->engineering_edited_at ? \Carbon\Carbon::parse($dailyProgram->engineering_edited_at)->format('d/m/Y H:i') : null;
                 return $dailyProgram;
             });
 
@@ -1152,6 +1153,9 @@ class IngenieroProcesosController extends Controller
                 'advanced' => $request->advanced,
                 'total_produced' => $request->total_produced,
                 'total_rejected' => $request->total_rejected,
+                'manually_edited_by_engineering' => true,
+                'engineering_edited_at' => now(),
+                'engineering_edited_by' => auth()->id(),
             ]);
 
             // Registrar ajustes si hubo cambios

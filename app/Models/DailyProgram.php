@@ -22,7 +22,10 @@ class DailyProgram extends Model
         'balance_processed',
         'balance_processed_at',
         'balance_processed_by',
-        'program_id'
+        'program_id',
+        'manually_edited_by_engineering',
+        'engineering_edited_at',
+        'engineering_edited_by'
     ];
     
     protected $casts = [
@@ -53,6 +56,11 @@ class DailyProgram extends Model
     public function operatorLineClosures()
     {
         return $this->hasMany(\App\Models\OperatorLineClosure::class, 'id_daily_program');
+    }
+
+    public function engineeringEditedBy()
+    {
+        return $this->belongsTo(User::class, 'engineering_edited_by');
     }
 
     // Calcular total a producir

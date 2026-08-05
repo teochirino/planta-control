@@ -55,9 +55,16 @@
                         <div v-for="dailyProgram in dailyPrograms" :key="dailyProgram.id" 
                              :class="isTVMode() ? 'p-6' : 'p-4'" class="rounded bg-[#f4f7fa] border border-[#e8eff4]">
                             <div class="flex justify-between items-center mb-3">
-                                <h3 :class="isTVMode() ? 'text-lg' : ''" class="font-semibold text-[#0b2a40]">
-                                    Turno {{ getShiftLabel(dailyProgram.shift) }}
-                                </h3>
+                                <div class="flex items-center gap-2">
+                                    <h3 :class="isTVMode() ? 'text-lg' : ''" class="font-semibold text-[#0b2a40]">
+                                        Turno {{ getShiftLabel(dailyProgram.shift) }}
+                                    </h3>
+                                    <span v-if="dailyProgram.manually_edited_by_engineering"
+                                          :class="isTVMode() ? 'px-3 py-1 text-sm' : 'px-2 py-1 text-xs'"
+                                          class="rounded font-semibold bg-[#e8f4f8] text-[#0b5a7a] border border-[#b8dce8]">
+                                        Editado por Ingeniería
+                                    </span>
+                                </div>
                                 <button @click="editDailyProgram(dailyProgram)"
                                         :class="isTVMode() ? 'px-5 py-2 text-base' : 'px-3 py-1 text-sm'"
                                         class="rounded font-semibold bg-[#0b2a40] text-white">

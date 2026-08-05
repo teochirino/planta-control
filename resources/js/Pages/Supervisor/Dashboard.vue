@@ -247,7 +247,8 @@ const fechaFormateada = computed(() => {
 
 const nombreDia = computed(() => {
     if (!fechaSeleccionada.value) return ''
-    const fecha = new Date(fechaSeleccionada.value)
+    const [year, month, day] = fechaSeleccionada.value.split('-')
+    const fecha = new Date(year, month - 1, day)
     return fecha.toLocaleDateString('es-MX', { weekday: 'long' })
 })
 

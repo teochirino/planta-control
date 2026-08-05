@@ -62,56 +62,90 @@ class BalanceService
         // Calcular diferencia
         $totalProduced = $program->total_produced ?? 0;
         $totalRejected = $program->total_rejected ?? 0;
-        
+
         // Considerar resoluciones de rechazos
         $resolvedPieces = RejectedPiece::where('id_daily_program', $program->id)
             ->resolved()
             ->get();
-        
+
         $repairedCount = $resolvedPieces->where('resolution_status', 'reparada')->sum('quantity');
         $replacedCount = $resolvedPieces->where('resolution_status', 'reemplazada')->sum('new_pieces_quantity');
-        
+
         $netProduced = $totalProduced - $totalRejected + $repairedCount + $replacedCount;
         $totalToProduce = $program->programmed + $program->backwardness - $program->advanced;
         $difference = $netProduced - $totalToProduce;
-        
+
         // Obtener o crear balance del centro
         $balance = WorkCenterBalance::getOrCreateForWorkCenter($program->id_work_center);
-        
+
+        // Si el programa fue editado manualmente por ingeniería, registrar este hecho
+        // y usar los valores manuales para el cálculo del balance
+        if ($program->manually_edited_by_engineering) {
+            // Registrar ajuste de balance indicando que se usaron valores manuales
+            ProductionAdjustment::create([
+                'id_daily_program' => $program->id,
+                'id_work_center' => $program->id_work_center,
+                'adjustment_type' => 'balance_calculation',
+                'field_adjusted' => 'balance_with_manual_values',
+                'previous_value' => $balance->accumulated_backwardness,
+                'new_value' => $balance->accumulated_backwardness, // Se actualizará después
+                'difference' => 0,
+                'adjustment_category' => 'balance',
+                'reason' => 'Balance calculado con valores manuales de ingeniería (backwardness: ' . $program->backwardness . ', advanced: ' . $program->advanced . ')',
+                'adjusted_by' => auth()->id(),
+                'notes' => 'El programa fue editado manualmente por ingeniería el ' . $program->engineering_edited_at,
+            ]);
+        }
+
         // Nueva lógica de cálculo de balance acumulado
         // Calcular cuánto del atraso inicial se cumplió hoy (exceso de producción sobre lo programado)
         $excessProduction = max(0, $netProduced - $program->programmed);
-        
+
         // Nuevo atraso acumulado = atraso inicial - exceso de producción
         $newAccumulatedBackwardness = max(0, $balance->accumulated_backwardness - $excessProduction);
-        
+
         // Si aún falta producción después de cubrir el atraso inicial, agregarlo
         $remainingShortfall = max(0, $totalToProduce - $netProduced);
         $newAccumulatedBackwardness += $remainingShortfall;
-        
+
         // Calcular cuánto del adelanto inicial se consumió hoy (déficit de producción sobre lo programado)
         $productionDeficit = max(0, $program->programmed - $netProduced);
-        
+
         // Nuevo adelanto acumulado = adelanto inicial - déficit de producción
         $newAccumulatedAdvanced = max(0, $balance->accumulated_advanced - $productionDeficit);
-        
+
         // Si hay exceso de producción después de consumir el adelanto inicial, agregarlo
         $remainingExcess = max(0, $netProduced - $totalToProduce);
         $newAccumulatedAdvanced += $remainingExcess;
-        
+
         // Actualizar balance acumulado
         $balance->accumulated_backwardness = $newAccumulatedBackwardness;
         $balance->accumulated_advanced = $newAccumulatedAdvanced;
         $balance->last_calculated_at = now();
         $balance->save();
-        
+
+        // Si el programa fue editado manualmente, actualizar el registro de ajuste con los nuevos valores
+        if ($program->manually_edited_by_engineering) {
+            $lastAdjustment = ProductionAdjustment::where('id_daily_program', $program->id)
+                ->where('field_adjusted', 'balance_with_manual_values')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($lastAdjustment) {
+                $lastAdjustment->update([
+                    'new_value' => $newAccumulatedBackwardness,
+                    'difference' => $newAccumulatedBackwardness - $lastAdjustment->previous_value,
+                ]);
+            }
+        }
+
         // Marcar programa como procesado
         $program->update([
             'balance_processed' => true,
             'balance_processed_at' => now(),
             'balance_processed_by' => auth()->id(),
         ]);
-        
+
         return $balance;
     }
     

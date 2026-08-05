@@ -44,7 +44,8 @@ class DailyProgramService
         );
         
         // Si el programa ya existe pero no ha sido procesado, actualizar con el balance acumulado
-        if (!$program->wasRecentlyCreated && !$program->balance_processed) {
+        // SOLO si no fue editado manualmente por ingeniería
+        if (!$program->wasRecentlyCreated && !$program->balance_processed && !$program->manually_edited_by_engineering) {
             $program->update([
                 'backwardness' => $accumulatedBackwardness,
                 'advanced' => $accumulatedAdvanced,

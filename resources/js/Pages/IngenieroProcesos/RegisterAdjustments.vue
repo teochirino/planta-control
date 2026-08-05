@@ -54,9 +54,16 @@
                         <div v-for="dailyProgram in dailyPrograms" :key="dailyProgram.id" 
                              class="rounded p-4" style="background: #f4f7fa; border: 1px solid #e8eff4;">
                             <div class="flex justify-between items-center mb-3">
-                                <h3 class="font-semibold" style="color: #0b2a40;">
-                                    Turno {{ getShiftLabel(dailyProgram.shift) }}
-                                </h3>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-semibold" style="color: #0b2a40;">
+                                        Turno {{ getShiftLabel(dailyProgram.shift) }}
+                                    </h3>
+                                    <span v-if="dailyProgram.manually_edited_by_engineering"
+                                          class="px-2 py-1 rounded text-xs font-semibold"
+                                          style="background: #e8f4f8; color: #0b5a7a; border: 1px solid #b8dce8;">
+                                        Editado por Ingeniería
+                                    </span>
+                                </div>
                                 <button @click="editDailyProgram(dailyProgram)"
                                         class="px-3 py-1 rounded text-sm font-semibold"
                                         style="background: #0b2a40; color: #fff;">

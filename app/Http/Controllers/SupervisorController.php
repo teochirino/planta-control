@@ -326,7 +326,8 @@ class SupervisorController extends Controller
             ]);
         } else {
             // Si el programa ya existe pero no ha sido procesado, actualizar con el balance acumulado
-            if (!$dailyProgram->balance_processed) {
+            // SOLO si no fue editado manualmente por ingeniería
+            if (!$dailyProgram->balance_processed && !$dailyProgram->manually_edited_by_engineering) {
                 $dailyProgram->update([
                     'backwardness' => $accumulatedBackwardness,
                     'advanced' => $accumulatedAdvanced,
@@ -393,19 +394,15 @@ class SupervisorController extends Controller
             // Calcular valores de backwardness y advanced
             if ($existingProgram) {
                 // Si el programa ya existe pero no ha sido procesado, usar el balance acumulado del centro
-                if (!$existingProgram->balance_processed) {
+                // SOLO si no fue editado manualmente por ingeniería
+                if (!$existingProgram->balance_processed && !$existingProgram->manually_edited_by_engineering) {
                     $workCenterBalance = \App\Models\WorkCenterBalance::where('id_work_center', $request->id_work_center)->first();
                     $backwardness = $workCenterBalance ? $workCenterBalance->accumulated_backwardness : 0;
                     $advanced = $workCenterBalance ? $workCenterBalance->accumulated_advanced : 0;
                 } else {
-                    // Si ya fue procesado, calcular balance del día anterior
-                    $previousBalance = $this->balanceService->calculatePreviousDayBalance(
-                        $request->id_work_center,
-                        $request->date,
-                        $request->shift
-                    );
-                    $backwardness = $previousBalance['backwardness'];
-                    $advanced = $previousBalance['advanced'];
+                    // Si ya fue procesado o fue editado manualmente, mantener valores actuales
+                    $backwardness = $existingProgram->backwardness;
+                    $advanced = $existingProgram->advanced;
                 }
             } else {
                 // Si es un programa nuevo, usar el balance acumulado del centro de trabajo
@@ -1014,13 +1011,14 @@ class SupervisorController extends Controller
         }
 
         // Buscar daily programs por fecha y centro
-        $dailyPrograms = DailyProgram::with(['workCenter', 'program'])
+        $dailyPrograms = DailyProgram::with(['workCenter', 'program', 'engineeringEditedBy'])
             ->where('date', $request->phase_date)
             ->where('id_work_center', $request->work_center_id)
             ->orderBy('shift')
             ->get()
             ->map(function ($dailyProgram) {
                 $dailyProgram->date_formatted = $dailyProgram->date ? Carbon::parse($dailyProgram->date)->format('d/m/Y') : null;
+                $dailyProgram->engineering_edited_at_formatted = $dailyProgram->engineering_edited_at ? Carbon::parse($dailyProgram->engineering_edited_at)->format('d/m/Y H:i') : null;
                 return $dailyProgram;
             });
 
