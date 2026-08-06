@@ -61,7 +61,8 @@
                         <div class="mname">{{ tile.name }}</div>
                         <div class="bottom">
                             <div class="pct">{{ tile.pct }}<span>%</span></div>
-                            <div class="bar-bg"><div class="bar-fill" :style="{ width: tile.pct + '%' }"></div></div>
+                            <div class="bar-bg"><div class="bar-fill" :style="{ width: Math.min(tile.pct, 100) + '%' }"></div></div>
+                            <div v-if="tile.status !== 'gray'" class="cap-note">Aprovechamiento de capacidad: {{ tile.pct_capacity }}%</div>
                             <div v-if="tile.reason" class="reason">⚠ {{ tile.reason }}</div>
                         </div>
                     </div>
@@ -214,7 +215,7 @@ onMounted(() => {
 
     refreshInterval = setInterval(() => {
         router.reload({ only: ['machines', 'stats'], onSuccess: () => { recalcCols(); updateRecommendation(); } });
-    }, 300000);
+    }, 60000);
 });
 
 onUnmounted(() => {
@@ -301,6 +302,8 @@ header{background:var(--graphite);color:#fff;flex:0 0 auto;padding:12px 26px 12p
 .tile.red .pct{color:var(--red);}
 .tile.gray .pct{color:var(--gray);}
 .tile .pct span{font-size:.5em;color:var(--muted);font-weight:600;}
+
+.cap-note{font-size:9.5px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 .bar-bg{height:4px;background:#eef0f4;border-radius:3px;margin-top:5px;overflow:hidden;}
 .bar-fill{height:100%;border-radius:3px;}

@@ -57,38 +57,55 @@ class PlantOverviewService
         $totalToProduce = $dailyPrograms->sum(
             fn (DailyProgram $program) => max($program->programmed + $program->backwardness - $program->advanced, 0)
         );
+        $totalShiftHours = max($dailyPrograms->sum('shift_hours'), 0.1);
+        $expectedPerHourCenter = $totalToProduce / $totalShiftHours;
 
         $dailyProgramIds = $dailyPrograms->pluck('id');
         $totalCapacity = $lines->sum('installed_capacity');
 
-        $producedByLine = Schedule::whereIn('id_daily_program', $dailyProgramIds)
+        $schedulesByLine = Schedule::whereIn('id_daily_program', $dailyProgramIds)
             ->get()
-            ->groupBy('id_production_line')
-            ->map(fn ($schedules) => $schedules->sum('produced'));
+            ->groupBy('id_production_line');
 
         $strikesByLine = Strike::whereIn('id_daily_program', $dailyProgramIds)
             ->orderByDesc('id')
             ->get()
             ->groupBy('id_production_lines');
 
-        return $lines->map(function ($line) use ($workCenter, $totalToProduce, $totalCapacity, $lines, $producedByLine, $strikesByLine) {
+        return $lines->map(function ($line) use ($workCenter, $expectedPerHourCenter, $totalCapacity, $lines, $schedulesByLine, $strikesByLine) {
             $weight = $totalCapacity > 0
                 ? ($line->installed_capacity ?? 0) / $totalCapacity
                 : 1 / $lines->count();
 
-            $lineToProduce = round($totalToProduce * $weight);
-            $lineProduced = $producedByLine->get($line->id, 0);
+            $lineSchedules = $schedulesByLine->get($line->id, collect());
+            $hoursElapsed = $lineSchedules->filter(fn ($s) => $s->produced > 0)->count();
             $lineStrikes = $strikesByLine->get($line->id, collect());
 
-            $pct = $lineToProduce > 0
-                ? round(($lineProduced / $lineToProduce) * 100)
+            if ($hoursElapsed === 0) {
+                return $this->notStartedTile($workCenter, $line);
+            }
+
+            $lineProduced = $lineSchedules->sum('produced');
+
+            // Cumplimiento contra el plan: lo que le corresponde a esta línea del programa
+            // del día (repartido por su peso de capacidad), prorrateado a las horas ya transcurridas.
+            $expectedSoFarPlan = $expectedPerHourCenter * $weight * $hoursElapsed;
+            $pctPlan = $expectedSoFarPlan > 0
+                ? round(($lineProduced / $expectedSoFarPlan) * 100)
                 : ($lineProduced > 0 ? 100 : 0);
 
-            return $this->buildTile($workCenter, $line, $pct, $lineStrikes);
+            // Aprovechamiento de capacidad: lo que la línea pudo producir a su propio ritmo
+            // máximo por hora, en las horas ya transcurridas.
+            $expectedSoFarCapacity = ($line->installed_capacity ?? 0) * $hoursElapsed;
+            $pctCapacity = $expectedSoFarCapacity > 0
+                ? round(($lineProduced / $expectedSoFarCapacity) * 100)
+                : ($lineProduced > 0 ? 100 : 0);
+
+            return $this->buildTile($workCenter, $line, $pctPlan, $pctCapacity, $lineStrikes);
         })->all();
     }
 
-    private function buildTile(WorkCenter $workCenter, $line, int $pct, $strikes): array
+    private function buildTile(WorkCenter $workCenter, $line, int $pctPlan, int $pctCapacity, $strikes): array
     {
         $activeStrike = $strikes->first(fn (Strike $strike) => !$strike->end_time);
 
@@ -96,7 +113,7 @@ class PlantOverviewService
             $status = 'red';
             $reason = $activeStrike->description ?: 'Paro activo';
         } else {
-            $status = $this->statusForPct($pct);
+            $status = $this->statusForPct($pctPlan);
             $reason = null;
 
             if ($status !== 'green') {
@@ -110,7 +127,8 @@ class PlantOverviewService
             'area' => $workCenter->name,
             'phase' => $workCenter->phase,
             'name' => $line->title,
-            'pct' => $pct,
+            'pct' => $pctPlan,
+            'pct_capacity' => $pctCapacity,
             'status' => $status,
             'reason' => $reason,
         ];
@@ -123,8 +141,22 @@ class PlantOverviewService
             'phase' => $workCenter->phase,
             'name' => $line->title,
             'pct' => 0,
+            'pct_capacity' => 0,
             'status' => 'gray',
             'reason' => 'Sin programa registrado hoy',
+        ];
+    }
+
+    private function notStartedTile(WorkCenter $workCenter, $line): array
+    {
+        return [
+            'area' => $workCenter->name,
+            'phase' => $workCenter->phase,
+            'name' => $line->title,
+            'pct' => 0,
+            'pct_capacity' => 0,
+            'status' => 'gray',
+            'reason' => 'El turno aún no ha iniciado',
         ];
     }
 

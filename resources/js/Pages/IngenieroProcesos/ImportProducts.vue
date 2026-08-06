@@ -104,8 +104,8 @@
                 </div>
                 
                 <!-- Modal de confirmación para sábados -->
-                <div v-if="showSaturdayModal" class="fixed inset-0 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.6);">
-                    <div class="rounded-xl p-8 max-w-2xl w-full mx-4" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2);">
+                <div v-if="showSaturdayModal" class="fixed inset-0 flex items-center justify-center z-50 p-4" style="background: rgba(0,0,0,0.6);">
+                    <div class="rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 8px 32px rgba(11,28,40,.2);">
                         <!-- Header con icono -->
                         <div class="flex items-center gap-4 mb-6">
                             <div class="flex items-center justify-center w-16 h-16 rounded-full" style="background: #fff9e6; border: 2px solid #ffd700;">
