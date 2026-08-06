@@ -23,8 +23,8 @@
                     </div>
 
                     <nav class="flex-1 px-4 py-6 space-y-2">
-                        <Link 
-                            :href="route('gerencia.dashboard')" 
+                        <Link
+                            :href="route('gerencia.dashboard')"
                             class="sidebar-link"
                             :class="{ 'active': route().current('gerencia.dashboard') }"
                         >
@@ -34,7 +34,18 @@
                             <span>Dashboard</span>
                         </Link>
 
-                        <Link 
+                        <Link
+                            :href="route('gerencia.dashboard.detalle')"
+                            class="sidebar-link"
+                            :class="{ 'active': route().current('gerencia.dashboard.detalle') }"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v18M4 7h5m0 10H4a1 1 0 01-1-1V8a1 1 0 011-1h5m6-4h5a1 1 0 011 1v14a1 1 0 01-1 1h-5V3z" />
+                            </svg>
+                            <span>Detalle por Centro</span>
+                        </Link>
+
+                        <Link
                             :href="route('gerencia.monitoreo')" 
                             class="sidebar-link"
                             :class="{ 'active': route().current('gerencia.monitoreo') }"

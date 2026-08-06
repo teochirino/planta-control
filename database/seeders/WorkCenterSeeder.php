@@ -108,16 +108,16 @@ class WorkCenterSeeder extends Seeder
         ProductionLine::create(['id_work_center' => $wc12->id, 'title' => 'Estructura de sillas', 'installed_capacity' => 100, 'cost' => 12000]);
 
         // ========== 13. ESTRUCTURA DE MAMPARAS ==========
-        $wc13 = WorkCenter::create(['name' => 'Estructura de manparas', 'installed_capacity' => 100, 'phase' => 2]);
-        ProductionLine::create(['id_work_center' => $wc13->id, 'title' => 'Estructura de manparas', 'installed_capacity' => 100, 'cost' => 12000]);
+        $wc13 = WorkCenter::create(['name' => 'Estructura de mamparas', 'installed_capacity' => 100, 'phase' => 2]);
+        ProductionLine::create(['id_work_center' => $wc13->id, 'title' => 'Estructura de mamparas', 'installed_capacity' => 100, 'cost' => 12000]);
 
         // ========== 14. CAJAS ==========
         $wc14 = WorkCenter::create(['name' => 'Cajas', 'installed_capacity' => 100, 'phase' => 3]);
         ProductionLine::create(['id_work_center' => $wc14->id, 'title' => 'Cajas', 'installed_capacity' => 100, 'cost' => 10000]);
 
         // ========== 15. ENSAMBLE DE MAMPARAS ==========
-        $wc15 = WorkCenter::create(['name' => 'Ensamble de manparas', 'installed_capacity' => 100, 'phase' => 4]);
-        ProductionLine::create(['id_work_center' => $wc15->id, 'title' => 'Ensamble de manparas', 'installed_capacity' => 100, 'cost' => 10000]);
+        $wc15 = WorkCenter::create(['name' => 'Ensamble de mamparas', 'installed_capacity' => 100, 'phase' => 4]);
+        ProductionLine::create(['id_work_center' => $wc15->id, 'title' => 'Ensamble de mamparas', 'installed_capacity' => 100, 'cost' => 10000]);
 
         // ========== 16. ENSAMBLAJE DE SILLAS ==========
         $wc16 = WorkCenter::create(['name' => 'Ensamblaje de sillas', 'installed_capacity' => 100, 'phase' => 4]);

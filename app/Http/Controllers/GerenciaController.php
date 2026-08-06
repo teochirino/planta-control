@@ -6,6 +6,7 @@ use App\Models\WorkCenter;
 use App\Models\DailyProgram;
 use App\Models\Schedule;
 use App\Models\Strike;
+use App\Services\PlantOverviewService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,24 @@ use Inertia\Inertia;
 
 class GerenciaController extends Controller
 {
+    public function __construct(private PlantOverviewService $plantOverviewService)
+    {
+    }
+
+    /**
+     * Tablero de planta completa (todas las áreas agrupadas por fase). El
+     * calendario de referencia es el del centro de la planta (México), no el
+     * del entorno donde corre PHP, para que "hoy" coincida con el turno real.
+     */
+    public function plantOverview(Request $request)
+    {
+        $date = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
+
+        $overview = $this->plantOverviewService->build($date);
+
+        return Inertia::render('Gerencia/PlantOverview', $overview);
+    }
+
     public function dashboard(Request $request)
     {
         $user = auth()->user();

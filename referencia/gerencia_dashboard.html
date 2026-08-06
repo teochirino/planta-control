@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Línea Italia · Estado de Planta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1f6;
+    --graphite:#12151f;
+    --graphite-2:#1b2030;
+    --line:#dde1ea;
+    --card:#ffffff;
+    --text:#1a1f2c;
+    --muted:#8992a6;
+    --accent:#3355d8;
+    --green:#1f8a4c;
+    --green-soft:#e6f4ec;
+    --amber:#b8790f;
+    --amber-soft:#fbf0dd;
+    --red:#c23636;
+    --red-soft:#fbe6e6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;overflow:hidden;}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  #app{height:100vh;display:flex;flex-direction:column;}
+
+  /* ===== HEADER ===== */
+  header{
+    background:var(--graphite);
+    color:#fff;
+    flex:0 0 auto;
+    padding:12px 26px;
+  }
+  .header-top{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-icon{
+    width:34px;height:34px;border-radius:8px;
+    background:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:12px;color:#fff;flex:0 0 auto;
+  }
+  .brand-txt .name{font-size:15px;font-weight:700;letter-spacing:.2px;}
+  .brand-txt .sub{font-size:8.5px;letter-spacing:1.6px;color:#8992b8;margin-top:1px;}
+
+  .title-block{text-align:center;}
+  .title-block h1{font-size:14px;font-weight:600;letter-spacing:.3px;color:#fff;}
+  .title-block .live{
+    font-size:9.5px;color:#7fd39c;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:5px;
+  }
+  .live-dot{width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block;animation:blink 1.8s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  .clock{text-align:right;}
+  .clock .time{font-size:19px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;}
+  .clock .date{font-size:9px;color:#8992b8;text-transform:capitalize;margin-top:1px;}
+
+  /* ===== METRIC STRIP ===== */
+  .metrics{
+    display:flex;
+    margin-top:12px;
+    border-top:1px solid rgba(255,255,255,.08);
+    padding-top:10px;
+  }
+  .metric{
+    flex:1;padding:0 20px;border-right:1px solid rgba(255,255,255,.08);
+    display:flex;flex-direction:column;gap:2px;
+  }
+  .metric:last-child{border-right:none;}
+  .metric .m-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:#8992b8;font-weight:600;}
+  .metric .m-value{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace;display:flex;align-items:baseline;gap:6px;}
+  .metric .m-value .m-unit{font-size:12px;color:#8992b8;font-weight:500;}
+  .metric.ok .m-value{color:#4ade80;}
+  .metric.warn .m-value{color:#f5b942;}
+  .metric.crit .m-value{color:#f27373;}
+
+  /* ===== BOARD ===== */
+  #board{
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding:10px 16px;
+    min-height:0;
+  }
+  .phase-row{
+    display:flex;
+    gap:8px;
+    min-height:0;
+  }
+  .phase-label{
+    flex:0 0 auto;
+    width:22px;
+    border-radius:8px;
+    background:var(--graphite);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .phase-label span{
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    font-size:10px;font-weight:700;letter-spacing:1.5px;color:#9fb0e8;
+    text-transform:uppercase;white-space:nowrap;
+  }
+  .phase-tiles{
+    flex:1;
+    display:grid;
+    gap:6px;
+    min-width:0;
+    min-height:0;
+  }
+  .tile{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:9px;
+    border-left:4px solid var(--green);
+    padding:9px 12px 8px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    min-height:0;
+    overflow:hidden;
+    position:relative;
+  }
+  .tile.amber{border-left-color:var(--amber);}
+  .tile.red{border-left-color:var(--red);}
+
+  .tile .row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;}
+  .tile .area{
+    font-size:8.6px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .tile .icon-badge{
+    width:18px;height:18px;border-radius:50%;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;
+  }
+  .tile.green .icon-badge{background:var(--green-soft);color:var(--green);}
+  .tile.amber .icon-badge{background:var(--amber-soft);color:var(--amber);}
+  .tile.red .icon-badge{background:var(--red-soft);color:var(--red);}
+
+  .tile .mname{
+    font-size:clamp(11px,1.3vw,14px);font-weight:700;color:var(--text);line-height:1.15;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+
+  .tile .bottom{margin-top:auto;}
+  .tile .pct{
+    font-family:'IBM Plex Mono',monospace;font-weight:700;
+    font-size:clamp(18px,2.6vw,26px);line-height:1;
+  }
+  .tile.green .pct{color:var(--green);}
+  .tile.amber .pct{color:var(--amber);}
+  .tile.red .pct{color:var(--red);}
+  .tile .pct span{font-size:.5em;color:var(--muted);font-weight:600;}
+
+  .bar-bg{height:4px;background:#eef0f4;border-radius:3px;margin-top:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:3px;}
+  .tile.green .bar-fill{background:var(--green);}
+  .tile.amber .bar-fill{background:var(--amber);}
+  .tile.red .bar-fill{background:var(--red);}
+
+  .tile .reason{
+    font-size:11.5px;font-weight:700;margin-top:6px;
+    padding:3px 8px;border-radius:6px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    overflow:hidden;line-height:1.25;
+  }
+  .tile.amber .reason{background:var(--amber-soft);color:var(--amber);}
+  .tile.red .reason{background:var(--red-soft);color:var(--red);}
+
+  .tile.red{box-shadow:0 0 0 1px rgba(194,54,54,.15);}
+
+  /* ===== FOOTER: RECOMENDACIÓN ===== */
+  footer{
+    flex:0 0 auto;
+    background:var(--graphite);
+    border-top:1px solid rgba(255,255,255,.08);
+    padding:9px 22px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .ai-badge{
+    flex:0 0 auto;
+    width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,#3355d8,#6a7ef0);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;
+  }
+  .ai-text{flex:1;min-width:0;}
+  .ai-head{
+    display:flex;align-items:center;gap:8px;margin-bottom:2px;
+  }
+  .ai-head .lbl{
+    font-size:10px;font-weight:700;color:#fff;letter-spacing:.3px;
+  }
+  .ai-head .badge-tag{
+    font-size:8px;font-weight:700;color:#9fb0e8;background:rgba(255,255,255,.08);
+    padding:1px 6px;border-radius:8px;letter-spacing:.4px;text-transform:uppercase;
+  }
+  .ai-head .updated{
+    font-size:8.5px;color:#6b7695;margin-left:auto;font-family:'IBM Plex Mono',monospace;flex:0 0 auto;
+  }
+  .ai-msg{
+    font-size:12px;line-height:1.35;color:#d7dbec;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-icon">LI</div>
+        <div class="brand-txt">
+          <div class="name">línea italia</div>
+          <div class="sub">MOBILIARIO DE OFICINA</div>
+        </div>
+      </div>
+      <div class="title-block">
+        <h1>Estado General de Planta</h1>
+        <div class="live"><span class="live-dot"></span>Datos en vivo · todas las áreas</div>
+      </div>
+      <div class="clock">
+        <div class="time mono" id="clock">--:--:--</div>
+        <div class="date" id="fecha">—</div>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <span class="m-label">Cumplimiento promedio</span>
+        <span class="m-value" id="avgPct">0<span class="m-unit">%</span></span>
+      </div>
+      <div class="metric ok">
+        <span class="m-label">Operando en programa</span>
+        <span class="m-value" id="cntGreen">0<span class="m-unit">máq.</span></span>
+      </div>
+      <div class="metric warn">
+        <span class="m-label">Con atraso</span>
+        <span class="m-value" id="cntAmber">0<span class="m-unit">máq.</span></span>
+      </div>
+      <div class="metric crit">
+        <span class="m-label">Paradas</span>
+        <span class="m-value" id="cntRed">0<span class="m-unit">máq.</span></span>
+      </div>
+      <div class="metric">
+        <span class="m-label">Áreas monitoreadas</span>
+        <span class="m-value" id="cntAreas">0<span class="m-unit">áreas</span></span>
+      </div>
+    </div>
+  </header>
+
+  <div id="board"></div>
+
+  <footer>
+    <div class="ai-badge">🤖</div>
+    <div class="ai-text">
+      <div class="ai-head">
+        <span class="lbl">Recomendación de mejora</span>
+        <span class="badge-tag">Claude · Análisis automático</span>
+        <span class="updated" id="aiUpdated">—</span>
+      </div>
+      <div class="ai-msg" id="aiMsg">Generando recomendación…</div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+/* ===== RELOJ ===== */
+function tick(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('fecha').textContent = now.toLocaleDateString('es-MX',{weekday:'long',day:'2-digit',month:'short'});
+}
+tick(); setInterval(tick,1000);
+
+/* ===== DATOS =====
+   Actualizado con los centros de trabajo y líneas reales proporcionados
+   (tabla "Centro de trabajo / Línea"), agrupados por Fase de producción. */
+const plant = [
+  { area:"Carpintería corte", fase:1, machines:[
+      {name:"Blue Elephant", pct:0, status:"red", reason:"Falta materia prima"},
+      {name:"Gabbiani", pct:78, status:"green"},
+      {name:"Sellex", pct:64, status:"amber", reason:"Atraso vs. programa"},
+  ]},
+  { area:"Corte láser", fase:1, machines:[
+      {name:"G-Weike 1", pct:91, status:"green"},
+      {name:"G-Weike 2", pct:85, status:"green"},
+  ]},
+  { area:"Troqueles", fase:1, machines:[
+      {name:"Troqueles", pct:60, status:"amber", reason:"Cambio de herramental"},
+  ]},
+  { area:"Estructura de muebles", fase:2, machines:[
+      {name:"Detallado 1", pct:0, status:"red", reason:"Paro no programado"},
+      {name:"Detallado 2", pct:58, status:"amber", reason:"Cambio de molde"},
+  ]},
+  { area:"Enchapado", fase:2, machines:[
+      {name:"Blue Elephant", pct:73, status:"green"},
+      {name:"Curvos", pct:88, status:"green"},
+      {name:"Homag", pct:70, status:"green"},
+  ]},
+  { area:"Estructura de sillas", fase:2, machines:[
+      {name:"Estructura de sillas", pct:0, status:"red", reason:"Falla eléctrica"},
+  ]},
+  { area:"Estructura de manparas", fase:2, machines:[
+      {name:"Estructura de mamparas", pct:79, status:"green"},
+  ]},
+  { area:"Habilitado de muebles", fase:3, machines:[
+      {name:"Detallado y habilitado", pct:41, status:"amber", reason:"Falta de personal"},
+  ]},
+  { area:"Pintura", fase:3, machines:[
+      {name:"Pintura", pct:0, status:"red", reason:"Mantenimiento"},
+  ]},
+  { area:"Telas", fase:3, machines:[
+      {name:"Corte y costura", pct:69, status:"amber", reason:"Atraso vs. programa"},
+  ]},
+  { area:"Cajas", fase:3, machines:[
+      {name:"Cajas", pct:92, status:"green"},
+  ]},
+  { area:"Ensamble archiveros", fase:4, machines:[
+      {name:"Ensamble archiveros", pct:83, status:"green"},
+  ]},
+  { area:"Ensamble libreros", fase:4, machines:[
+      {name:"Ensamble libreros", pct:76, status:"green"},
+  ]},
+  { area:"Ensamble de muebles", fase:4, machines:[
+      {name:"Ensamble de muebles", pct:97, status:"green"},
+  ]},
+  { area:"Ensamble de mamparas", fase:4, machines:[
+      {name:"Ensamble de mamparas", pct:71, status:"green"},
+  ]},
+  { area:"Ensamblaje de sillas", fase:4, machines:[
+      {name:"Ensamble de sillas", pct:55, status:"amber", reason:"Atraso vs. programa"},
+  ]},
+  { area:"Ensamble de sillones", fase:4, machines:[
+      {name:"Ensamble de sillones", pct:81, status:"green"},
+  ]},
+];
+
+const flat = [];
+plant.forEach(a=>a.machines.forEach(m=>flat.push({area:a.area, fase:a.fase, ...m})));
+
+const ICONS = {green:"✓", amber:"!", red:"×"};
+
+/* ===== KPIs ===== */
+function renderStats(){
+  let g=0,a=0,r=0,sum=0;
+  flat.forEach(m=>{
+    if(m.status==="green")g++; else if(m.status==="amber")a++; else r++;
+    sum+=m.pct;
+  });
+  document.getElementById('cntGreen').innerHTML = g+'<span class="m-unit">máq.</span>';
+  document.getElementById('cntAmber').innerHTML = a+'<span class="m-unit">máq.</span>';
+  document.getElementById('cntRed').innerHTML = r+'<span class="m-unit">máq.</span>';
+  document.getElementById('cntAreas').innerHTML = plant.length+'<span class="m-unit">áreas</span>';
+  document.getElementById('avgPct').innerHTML = Math.round(sum/flat.length)+'<span class="m-unit">%</span>';
+}
+
+/* ===== MOSAICO agrupado por FASE: cada fase es un carril con sus
+   propias filas/columnas, ajustado para que todo el tablero quepa
+   en una sola pantalla sin scroll. ===== */
+function buildGrid(){
+  const board = document.getElementById('board');
+  const n = flat.length;
+  const rect = board.getBoundingClientRect();
+  const targetRatio = rect.width / rect.height;
+  const cols = Math.max(1, Math.ceil(Math.sqrt(n * targetRatio)));
+
+  // Agrupar por fase manteniendo el orden 1→4
+  const fases = [1,2,3,4].map(f=>({
+    fase:f,
+    items: flat.filter(m=>m.fase===f)
+  })).filter(f=>f.items.length>0);
+
+  board.innerHTML = "";
+  board.style.display = "flex";
+  board.style.flexDirection = "column";
+
+  fases.forEach(f=>{
+    const rows = Math.ceil(f.items.length / cols);
+    const row = document.createElement('div');
+    row.className = "phase-row";
+    row.style.flex = rows; // más filas necesarias => más alto el carril
+
+    row.innerHTML = `
+      <div class="phase-label"><span>FASE ${f.fase}</span></div>
+      <div class="phase-tiles" style="grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr);">
+        ${f.items.map(m=>`
+          <div class="tile ${m.status}">
+            <div class="row-top">
+              <span class="area">${m.area}</span>
+              <span class="icon-badge">${ICONS[m.status]}</span>
+            </div>
+            <div class="mname">${m.name}</div>
+            <div class="bottom">
+              <div class="pct">${m.pct}<span>%</span></div>
+              <div class="bar-bg"><div class="bar-fill" style="width:${m.pct}%"></div></div>
+              ${m.reason?`<div class="reason">⚠ ${m.reason}</div>`:''}
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+    board.appendChild(row);
+  });
+}
+
+renderStats();
+buildGrid();
+window.addEventListener('resize', buildGrid);
+
+/* ===== RECOMENDACIÓN — análisis automático de los datos, cada hora =====
+   No hay llamada a un modelo en vivo: este bloque analiza el estado real del
+   tablero (paros, atrasos, promedio) y arma una recomendación orientada a
+   mejora. Se recalcula cada hora en punto (o al cargar la página) para que
+   el mensaje siempre refleje los datos vigentes. Si más adelante se conecta
+   una fuente de datos en vivo, esta misma función puede alimentarse de ahí. */
+function analyzePlant(){
+  const paradas = flat.filter(m=>m.status==="red");
+  const atrasos = flat.filter(m=>m.status==="amber");
+  const ok = flat.filter(m=>m.status==="green");
+  const avg = Math.round(flat.reduce((s,m)=>s+m.pct,0)/flat.length);
+  const peor = [...paradas,...atrasos].sort((a,b)=>a.pct-b.pct)[0];
+  const mejorArea = ok.length ? ok.sort((a,b)=>b.pct-a.pct)[0] : null;
+
+  // Contar motivos repetidos para detectar patrones (ej. varias paradas por materia prima)
+  const motivos = {};
+  [...paradas,...atrasos].forEach(m=>{
+    if(!m.reason) return;
+    motivos[m.reason] = (motivos[m.reason]||0)+1;
+  });
+  const motivoTop = Object.entries(motivos).sort((a,b)=>b[1]-a[1])[0];
+
+  const variantes = [];
+
+  if(paradas.length>0){
+    variantes.push(
+      `Hay ${paradas.length} máquina${paradas.length>1?'s':''} parada${paradas.length>1?'s':''} (${paradas.map(m=>m.name).join(', ')}). Prioridad inmediata: resolver "${peor.reason}" en ${peor.name} — es lo que más está afectando el cumplimiento de hoy (promedio de planta ${avg}%).`
+    );
+  }
+  if(motivoTop && motivoTop[1]>1){
+    variantes.push(
+      `Se repite "${motivoTop[0]}" en ${motivoTop[1]} máquinas distintas. Recomendación: investigar la causa raíz en lugar de atender cada paro por separado — probablemente hay una oportunidad de mejora en el proceso o en el abasto que reduciría paros recurrentes.`
+    );
+  }
+  if(atrasos.length>0){
+    variantes.push(
+      `${atrasos.length} máquina${atrasos.length>1?'s':''} con atraso vs. programa (promedio de planta ${avg}%). Sugerencia: revisar si el atraso es puntual o si conviene ajustar el programa/ritmo de esas líneas para no arrastrar el déficit al siguiente turno.`
+    );
+  }
+  if(mejorArea){
+    variantes.push(
+      `${ok.length} de ${flat.length} máquinas están cumpliendo programa; ${mejorArea.name} (${mejorArea.area}) tiene el mejor desempeño con ${mejorArea.pct}%. Vale la pena revisar qué está haciendo bien esa línea y replicarlo donde hay atraso.`
+    );
+  }
+  variantes.push(
+    `Cumplimiento promedio de planta: ${avg}%. ${paradas.length+atrasos.length===0 ? 'Todas las máquinas están dentro de programa — buen momento para revisar mantenimiento preventivo antes de que aparezcan nuevos paros.' : `Con ${paradas.length} paro(s) y ${atrasos.length} atraso(s) activos, enfocar el seguimiento de esta hora en las áreas con semáforo rojo antes de que el atraso se acumule.`}`
+  );
+
+  // Rotar variante según la hora del día, para que el mensaje cambie cada hora
+  const idx = new Date().getHours() % variantes.length;
+  return variantes[idx];
+}
+
+function updateRecommendation(){
+  document.getElementById('aiMsg').textContent = analyzePlant();
+  document.getElementById('aiUpdated').textContent =
+    'Actualizado ' + new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+}
+
+updateRecommendation();
+
+// Recalcular en el próximo cambio de hora en punto, y luego cada hora
+function scheduleHourlyUpdate(){
+  const now = new Date();
+  const msToNextHour = (60 - now.getMinutes())*60000 - now.getSeconds()*1000;
+  setTimeout(()=>{
+    updateRecommendation();
+    setInterval(updateRecommendation, 3600000);
+  }, msToNextHour);
+}
+scheduleHourlyUpdate();
+</script>
+</body>
+</html>

@@ -236,14 +236,14 @@ function updateClock() {
 
 // Métodos
 function cambiarCentro() {
-    router.get(route('gerencia.dashboard'), {
+    router.get(route('gerencia.dashboard.detalle'), {
         work_center_id: selectedWorkCenterId.value,
         shift: selectedShift.value,
     }, { preserveState: true, preserveScroll: true });
 }
 
 function cambiarTurno() {
-    router.get(route('gerencia.dashboard'), {
+    router.get(route('gerencia.dashboard.detalle'), {
         work_center_id: selectedWorkCenterId.value,
         shift: selectedShift.value,
     }, { preserveState: true, preserveScroll: true });

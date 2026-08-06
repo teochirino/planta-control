@@ -99,7 +99,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('gerencia')->name('gerencia.')->group(function () {
         // Rutas exclusivas para Gerencia (id_profile = 1)
         Route::middleware('gerencia')->group(function () {
-            Route::get('/dashboard', [GerenciaController::class, 'dashboard'])->name('dashboard');
+            Route::get('/dashboard', [GerenciaController::class, 'plantOverview'])->name('dashboard');
+            Route::get('/dashboard/detalle', [GerenciaController::class, 'dashboard'])->name('dashboard.detalle');
         });
         
         // Rutas compartidas entre Gerencia y Gerente de Produccion
