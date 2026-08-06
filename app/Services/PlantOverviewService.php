@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Attribute;
 use App\Models\DailyProgram;
 use App\Models\Schedule;
 use App\Models\Strike;
@@ -12,6 +13,20 @@ class PlantOverviewService
     const GREEN_THRESHOLD = 90;
     const AMBER_THRESHOLD = 70;
 
+    const ATTRIBUTE_COLOR_MAP = [
+        'rojo' => 'red',
+        'amarillo' => 'amber',
+        'verde' => 'green',
+        'gris' => 'gray',
+    ];
+
+    const ATTRIBUTE_COLOR_RANK = [
+        'red' => 3,
+        'amber' => 2,
+        'gray' => 1,
+        'green' => 0,
+    ];
+
     /**
      * Arma el tablero de planta completa para un día (todos los turnos del día,
      * no solo el turno en curso: un programa extendido a vespertino reparte el
@@ -20,7 +35,7 @@ class PlantOverviewService
      */
     public function build(string $date): array
     {
-        $workCenters = WorkCenter::with('productionLines')
+        $workCenters = WorkCenter::with(['productionLines', 'attributes'])
             ->orderBy('phase')
             ->orderBy('id')
             ->get();
@@ -50,8 +65,10 @@ class PlantOverviewService
             return [];
         }
 
+        $areaSummary = $this->areaAttributesSummary($workCenter);
+
         if ($dailyPrograms->isEmpty()) {
-            return $lines->map(fn ($line) => $this->idleTile($workCenter, $line))->all();
+            return $lines->map(fn ($line) => $this->idleTile($workCenter, $line, $areaSummary))->all();
         }
 
         $totalToProduce = $dailyPrograms->sum(
@@ -72,7 +89,7 @@ class PlantOverviewService
             ->get()
             ->groupBy('id_production_lines');
 
-        return $lines->map(function ($line) use ($workCenter, $expectedPerHourCenter, $totalCapacity, $totalShiftHours, $lines, $schedulesByLine, $strikesByLine) {
+        return $lines->map(function ($line) use ($workCenter, $expectedPerHourCenter, $totalCapacity, $totalShiftHours, $lines, $schedulesByLine, $strikesByLine, $areaSummary) {
             $weight = $totalCapacity > 0
                 ? ($line->installed_capacity ?? 0) / $totalCapacity
                 : 1 / $lines->count();
@@ -82,7 +99,7 @@ class PlantOverviewService
             $lineStrikes = $strikesByLine->get($line->id, collect());
 
             if ($hoursElapsed === 0) {
-                return $this->notStartedTile($workCenter, $line);
+                return $this->notStartedTile($workCenter, $line, $areaSummary);
             }
 
             $lineProduced = $lineSchedules->sum('produced');
@@ -101,11 +118,11 @@ class PlantOverviewService
                 ? round(($lineProduced / $expectedSoFarCapacity) * 100)
                 : ($lineProduced > 0 ? 100 : 0);
 
-            return $this->buildTile($workCenter, $line, $pctPlan, $pctCapacity, $lineStrikes);
+            return $this->buildTile($workCenter, $line, $pctPlan, $pctCapacity, $lineStrikes, $areaSummary);
         })->all();
     }
 
-    private function buildTile(WorkCenter $workCenter, $line, int $pctPlan, int $pctCapacity, $strikes): array
+    private function buildTile(WorkCenter $workCenter, $line, int $pctPlan, int $pctCapacity, $strikes, array $areaSummary): array
     {
         $activeStrike = $strikes->first(fn (Strike $strike) => !$strike->end_time);
 
@@ -131,10 +148,12 @@ class PlantOverviewService
             'pct_capacity' => $pctCapacity,
             'status' => $status,
             'reason' => $reason,
+            'area_status' => $areaSummary['status'],
+            'area_attributes' => $areaSummary['attributes'],
         ];
     }
 
-    private function idleTile(WorkCenter $workCenter, $line): array
+    private function idleTile(WorkCenter $workCenter, $line, array $areaSummary): array
     {
         return [
             'area' => $workCenter->name,
@@ -144,10 +163,12 @@ class PlantOverviewService
             'pct_capacity' => 0,
             'status' => 'gray',
             'reason' => 'Sin programa registrado hoy',
+            'area_status' => $areaSummary['status'],
+            'area_attributes' => $areaSummary['attributes'],
         ];
     }
 
-    private function notStartedTile(WorkCenter $workCenter, $line): array
+    private function notStartedTile(WorkCenter $workCenter, $line, array $areaSummary): array
     {
         return [
             'area' => $workCenter->name,
@@ -157,7 +178,31 @@ class PlantOverviewService
             'pct_capacity' => 0,
             'status' => 'gray',
             'reason' => 'El turno aún no ha iniciado',
+            'area_status' => $areaSummary['status'],
+            'area_attributes' => $areaSummary['attributes'],
         ];
+    }
+
+    private function areaAttributesSummary(WorkCenter $workCenter): array
+    {
+        $attributes = $workCenter->attributes->where('active', true);
+
+        if ($attributes->isEmpty()) {
+            return ['status' => 'gray', 'attributes' => []];
+        }
+
+        $mapped = $attributes->map(fn (Attribute $attribute) => [
+            'name' => $attribute->name,
+            'color' => self::ATTRIBUTE_COLOR_MAP[$attribute->color] ?? 'gray',
+            'changed_at' => $attribute->color_changed_at?->toIso8601String(),
+        ])->values();
+
+        $worst = $mapped->reduce(function ($carry, $attr) {
+            $rank = self::ATTRIBUTE_COLOR_RANK[$attr['color']] ?? 0;
+            return $rank > $carry['rank'] ? ['rank' => $rank, 'color' => $attr['color']] : $carry;
+        }, ['rank' => -1, 'color' => 'green']);
+
+        return ['status' => $worst['color'], 'attributes' => $mapped->all()];
     }
 
     private function statusForPct(int $pct): string
