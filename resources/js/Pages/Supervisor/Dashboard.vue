@@ -56,7 +56,12 @@
                 <div v-if="kpisData" :class="isTVMode() ? 'mb-8 p-6' : 'mb-6 p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
                     <div class="flex items-center justify-between mb-3">
                         <h3 :class="isTVMode() ? 'text-lg' : 'text-sm'" class="font-bold text-[#0b2a40]">Programa del Turno</h3>
-                        <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
+                        <div class="flex items-center gap-3">
+                            <span v-if="dailyProgramData?.program?.codigo" :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold text-[#174060] bg-[#e8f4f8] px-2 py-1 rounded">
+                                {{ dailyProgramData.program.codigo }}
+                            </span>
+                            <span :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
+                        </div>
                     </div>
                     
                     <div :class="isTVMode() ? 'gap-4' : 'gap-2'" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10">
@@ -175,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { Link } from '@inertiajs/vue3'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
@@ -232,6 +237,7 @@ const workCentersData = ref(props.workCenters || [])
 const selectedWorkCenterData = ref(props.selectedWorkCenter || {})
 const kpisData = ref(props.kpis)
 const attributesData = ref(props.attributes || [])
+const dailyProgramData = ref(props.dailyProgram)
 const selectedWorkCenterId = ref(props.selectedWorkCenter?.id || (props.workCenters?.[0]?.id))
 const fechaSeleccionada = ref(props.selectedDate || fechaLocalDeHoy())
 const turnoSeleccionado = ref(props.selectedShift || 'matutino')
@@ -262,6 +268,11 @@ const complianceClass = computed(() => {
     if (kpisData.value.compliance >= 100) return 'text-[#0b8a3d]'
     if (kpisData.value.compliance >= 95) return 'text-[#f59e0b]'
     return 'text-[#ba2418]'
+})
+
+// Watch para actualizar dailyProgramData cuando cambian los props
+watch(() => props.dailyProgram, (newValue) => {
+    dailyProgramData.value = newValue
 })
 
 // Métodos

@@ -43,6 +43,9 @@
                     <div class="flex items-center justify-between mb-3">
                         <h3 :class="isTVMode() ? 'text-lg 2xl:text-xl' : 'text-sm'" class="font-bold text-[#0b2a40]">Programa del Turno</h3>
                         <div class="flex items-center gap-3">
+                            <span v-if="dailyProgramData?.program?.codigo" :class="isTVMode() ? 'text-sm 2xl:text-base' : 'text-xs'" class="font-bold text-[#174060] bg-[#e8f4f8] px-2 py-1 rounded">
+                                {{ dailyProgramData.program.codigo }}
+                            </span>
                             <span :class="isTVMode() ? 'text-sm 2xl:text-base' : 'text-xs'" class="font-semibold text-[#6a8090]">{{ turnoLabel }} - {{ fechaFormateada }}</span>
                             <button 
                                 v-if="turnoSeleccionado === 'matutino' && dailyProgramData"

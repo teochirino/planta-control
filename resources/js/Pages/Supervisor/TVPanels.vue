@@ -32,6 +32,11 @@
                 </div>
             </div>
 
+            <div class="program-control" v-if="dailyProgramData?.program?.codigo">
+                <span class="program-label">Programa</span>
+                <span class="program-value">{{ dailyProgramData.program.codigo }}</span>
+            </div>
+
             <div class="clock" aria-live="polite">
                 <span id="clockTime" class="clock-time">{{ currentTime }}</span>
                 <span id="clockPeriod" class="clock-period">{{ currentPeriod }}</span>
@@ -360,6 +365,7 @@ const workCentersData = computed(() => props.workCenters)
 const selectedWorkCenterData = computed(() => props.selectedWorkCenter)
 const productionLinesForCenterData = computed(() => props.productionLinesForCenter)
 const centerKPIsData = computed(() => props.centerKPIs)
+const dailyProgramData = computed(() => props.dailyProgram)
 
 const turnoLabel = computed(() => {
     const labels = {
@@ -805,7 +811,7 @@ function getVideoUrl(path) {
 .topbar {
   min-height: 0;
   display: grid;
-  grid-template-columns: 320px minmax(260px, 1fr) auto auto auto;
+  grid-template-columns: 320px minmax(260px, 1fr) auto auto auto auto;
   align-items: center;
   gap: 14px;
   padding: 0 20px;
@@ -915,6 +921,30 @@ function getVideoUrl(path) {
   font-weight: 800;
   letter-spacing: 1.2px;
   text-transform: uppercase;
+}
+
+.program-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.program-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.program-value {
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 750;
+  background: var(--blue-soft);
+  padding: 6px 12px;
+  border-radius: 8px;
 }
 
 .clock {

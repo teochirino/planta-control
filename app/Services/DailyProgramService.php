@@ -7,8 +7,10 @@ use App\Models\WorkCenter;
 use App\Models\WorkCenterBalance;
 use App\Models\Schedule;
 use App\Models\RejectedPiece;
+use App\Models\Program;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DailyProgramService
 {
@@ -29,6 +31,32 @@ class DailyProgramService
         $accumulatedBackwardness = $workCenterBalance ? $workCenterBalance->accumulated_backwardness : 0;
         $accumulatedAdvanced = $workCenterBalance ? $workCenterBalance->accumulated_advanced : 0;
         
+        // Verificar si ya existe un programa diario
+        $existingProgram = DailyProgram::where('date', $date)
+            ->where('id_work_center', $workCenterId)
+            ->where('shift', $shift)
+            ->first();
+        
+        $programId = null;
+        
+        if (!$existingProgram) {
+            // Crear un programa principal con código único para programas automáticos
+            $mainProgram = Program::create([
+                'codigo' => Program::generateUniqueCode(),
+                'fecha_entrega' => Carbon::parse($date)->addDays(7), // Entrega en 7 días por defecto
+                'fecha_fase1' => Carbon::parse($date)->addDays(4),
+                'fecha_fase2' => Carbon::parse($date)->addDays(5),
+                'fecha_fase3' => Carbon::parse($date)->addDays(6),
+                'fecha_fase4' => Carbon::parse($date)->addDays(7),
+                'total_piezas' => 0,
+                'total_time' => 0,
+                'created_by' => Auth::id() ?? 1, // Usar ID del usuario autenticado o 1 por defecto
+            ]);
+            $programId = $mainProgram->id;
+        } elseif ($existingProgram->program_id) {
+            $programId = $existingProgram->program_id;
+        }
+        
         $program = DailyProgram::firstOrCreate(
             [
                 'date' => $date,
@@ -40,8 +68,25 @@ class DailyProgramService
                 'backwardness' => $accumulatedBackwardness,
                 'advanced' => $accumulatedAdvanced,
                 'shift_hours' => 9.0,
+                'program_id' => $programId,
             ]
         );
+        
+        // Si el programa ya existe pero no tiene program_id, asignarle uno
+        if ($program->program_id === null && $programId === null) {
+            $mainProgram = Program::create([
+                'codigo' => Program::generateUniqueCode(),
+                'fecha_entrega' => Carbon::parse($date)->addDays(7),
+                'fecha_fase1' => Carbon::parse($date)->addDays(4),
+                'fecha_fase2' => Carbon::parse($date)->addDays(5),
+                'fecha_fase3' => Carbon::parse($date)->addDays(6),
+                'fecha_fase4' => Carbon::parse($date)->addDays(7),
+                'total_piezas' => 0,
+                'total_time' => 0,
+                'created_by' => Auth::id() ?? 1,
+            ]);
+            $program->update(['program_id' => $mainProgram->id]);
+        }
         
         // Si el programa ya existe pero no ha sido procesado, actualizar con el balance acumulado
         // SOLO si no fue editado manualmente por ingeniería

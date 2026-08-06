@@ -53,7 +53,7 @@ class SupervisorController extends Controller
         $selectedShift = $request->get('shift', 'matutino');
 
         // Obtener programa diario del centro
-        $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
+        $dailyProgram = DailyProgram::with(['schedules', 'strikes', 'program'])
             ->where('id_work_center', $selectedWorkCenterId)
             ->where('date', $selectedDate)
             ->where('shift', $selectedShift)
@@ -111,7 +111,7 @@ class SupervisorController extends Controller
                 $productionLinesForCenter = ProductionLine::where('id_work_center', $selectedWorkCenterId)->get();
                 
                 // Obtener programa diario
-                $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
+                $dailyProgram = DailyProgram::with(['schedules', 'strikes', 'program'])
                     ->where('id_work_center', $selectedWorkCenterId)
                     ->where('date', $selectedDate)
                     ->where('shift', $selectedShift)
@@ -202,7 +202,7 @@ class SupervisorController extends Controller
                 $productionLinesForCenter = ProductionLine::where('id_work_center', $selectedWorkCenterId)->get();
 
                 // Obtener programa diario
-                $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
+                $dailyProgram = DailyProgram::with(['schedules', 'strikes', 'program'])
                     ->where('id_work_center', $selectedWorkCenterId)
                     ->where('date', $selectedDate)
                     ->where('shift', $selectedShift)
@@ -315,6 +315,19 @@ class SupervisorController extends Controller
         
         // Si no existe programa, crear uno vacío
         if (!$dailyProgram) {
+            // Crear un programa principal con código único para programas automáticos
+            $mainProgram = Program::create([
+                'codigo' => Program::generateUniqueCode(),
+                'fecha_entrega' => Carbon::parse($date)->addDays(7), // Entrega en 7 días por defecto
+                'fecha_fase1' => Carbon::parse($date)->addDays(4),
+                'fecha_fase2' => Carbon::parse($date)->addDays(5),
+                'fecha_fase3' => Carbon::parse($date)->addDays(6),
+                'fecha_fase4' => Carbon::parse($date)->addDays(7),
+                'total_piezas' => 0,
+                'total_time' => 0,
+                'created_by' => auth()->id() ?? 1,
+            ]);
+            
             $dailyProgram = DailyProgram::create([
                 'date' => $date,
                 'id_work_center' => $workCenterId,
@@ -323,8 +336,25 @@ class SupervisorController extends Controller
                 'backwardness' => $accumulatedBackwardness,
                 'advanced' => $accumulatedAdvanced,
                 'shift_hours' => 9.0,
+                'program_id' => $mainProgram->id,
             ]);
         } else {
+            // Si el programa ya existe pero no tiene program_id, asignarle uno
+            if (!$dailyProgram->program_id) {
+                $mainProgram = Program::create([
+                    'codigo' => Program::generateUniqueCode(),
+                    'fecha_entrega' => Carbon::parse($date)->addDays(7),
+                    'fecha_fase1' => Carbon::parse($date)->addDays(4),
+                    'fecha_fase2' => Carbon::parse($date)->addDays(5),
+                    'fecha_fase3' => Carbon::parse($date)->addDays(6),
+                    'fecha_fase4' => Carbon::parse($date)->addDays(7),
+                    'total_piezas' => 0,
+                    'total_time' => 0,
+                    'created_by' => auth()->id() ?? 1,
+                ]);
+                $dailyProgram->update(['program_id' => $mainProgram->id]);
+            }
+            
             // Si el programa ya existe pero no ha sido procesado, actualizar con el balance acumulado
             // SOLO si no fue editado manualmente por ingeniería
             if (!$dailyProgram->balance_processed && !$dailyProgram->manually_edited_by_engineering) {
@@ -411,6 +441,24 @@ class SupervisorController extends Controller
                 $advanced = $workCenterBalance ? $workCenterBalance->accumulated_advanced : 0;
             }
 
+            // Si es un programa nuevo, crear un Program principal con código único
+            if (!$existingProgram) {
+                $mainProgram = Program::create([
+                    'codigo' => Program::generateUniqueCode(),
+                    'fecha_entrega' => Carbon::parse($request->date)->addDays(7),
+                    'fecha_fase1' => Carbon::parse($request->date)->addDays(4),
+                    'fecha_fase2' => Carbon::parse($request->date)->addDays(5),
+                    'fecha_fase3' => Carbon::parse($request->date)->addDays(6),
+                    'fecha_fase4' => Carbon::parse($request->date)->addDays(7),
+                    'total_piezas' => 0,
+                    'total_time' => 0,
+                    'created_by' => auth()->id() ?? 1,
+                ]);
+                $programId = $mainProgram->id;
+            } else {
+                $programId = $existingProgram->program_id;
+            }
+
             $program = DailyProgram::updateOrCreate(
                 [
                     'date' => $request->date,
@@ -422,6 +470,7 @@ class SupervisorController extends Controller
                     'backwardness' => $backwardness,
                     'advanced' => $advanced,
                     'shift_hours' => $request->shift_hours ?? 9.0,
+                    'program_id' => $programId,
                 ]
             );
 
