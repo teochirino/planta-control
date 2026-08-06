@@ -175,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { Link } from '@inertiajs/vue3'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
@@ -218,17 +218,22 @@ const props = defineProps({
     }
 })
 
-// 🔧 FORZAR FECHA ACTUAL
-const hoy = new Date()
-const fechaActualStr = hoy.toISOString().split('T')[0]
+// El servidor recalcula "hoy" en cada request (hora de la planta, no la del navegador),
+// así que basta con usar lo que llega en selectedDate en vez de recalcularlo aquí.
+function fechaLocalDeHoy() {
+    const hoy = new Date()
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0')
+    const dia = String(hoy.getDate()).padStart(2, '0')
+    return `${hoy.getFullYear()}-${mes}-${dia}`
+}
 
-// Estados - IGNORAR props.selectedDate
+// Estados
 const workCentersData = ref(props.workCenters || [])
 const selectedWorkCenterData = ref(props.selectedWorkCenter || {})
 const kpisData = ref(props.kpis)
 const attributesData = ref(props.attributes || [])
 const selectedWorkCenterId = ref(props.selectedWorkCenter?.id || (props.workCenters?.[0]?.id))
-const fechaSeleccionada = ref(fechaActualStr)  // 🔧 FORZADO a fecha actual
+const fechaSeleccionada = ref(props.selectedDate || fechaLocalDeHoy())
 const turnoSeleccionado = ref(props.selectedShift || 'matutino')
 
 // Computed
@@ -289,10 +294,4 @@ const cambiarTurno = () => {
     })
 }
 
-onMounted(() => {
-    console.log('=== DASHBOARD SUPERVISOR ===')
-    console.log('fechaSeleccionada:', fechaSeleccionada.value)
-    console.log('fechaFormateada:', fechaFormateada.value)
-    console.log('fechaActualStr:', fechaActualStr)
-})
 </script>

@@ -48,22 +48,22 @@ class SupervisorController extends Controller
         
         $selectedWorkCenter = WorkCenter::with(['productionLines', 'attributes'])->findOrFail($selectedWorkCenterId);
         
-        // 🔧 FORZAR FECHA ACTUAL - IGNORAR COMPLETAMENTE LA SESIÓN
-        $selectedDate = now()->format('Y-m-d');
+        // Fecha del día en curso en la planta (México), no la del servidor (UTC) ni la del navegador del supervisor.
+        $selectedDate = now('America/Mexico_City')->format('Y-m-d');
         $selectedShift = $request->get('shift', 'matutino');
-        
+
         // Obtener programa diario del centro
         $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
             ->where('id_work_center', $selectedWorkCenterId)
             ->where('date', $selectedDate)
             ->where('shift', $selectedShift)
             ->first();
-        
+
         $kpis = null;
         if ($dailyProgram) {
             $kpis = $this->calculateCenterKPIs($dailyProgram, $selectedWorkCenter);
         }
-        
+
         return Inertia::render('Supervisor/Dashboard', [
             'workCenters' => $workCenters,
             'selectedWorkCenter' => $selectedWorkCenter,
@@ -89,7 +89,7 @@ class SupervisorController extends Controller
         
         // Obtener parámetros de selección
         $selectedWorkCenterId = $request->get('work_center_id');
-        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedDate = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         $selectedShift = $request->get('shift', 'matutino');
         
         // Si no se seleccionó centro, usar el primero
@@ -177,7 +177,7 @@ class SupervisorController extends Controller
 
         // Obtener parámetros de selección
         $selectedWorkCenterId = $request->get('work_center_id');
-        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedDate = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         $selectedShift = $request->get('shift', 'matutino');
 
         // Si no se seleccionó centro, usar el primero
@@ -294,10 +294,10 @@ class SupervisorController extends Controller
                 ->with('error', 'No tienes acceso a este centro de trabajo.');
         }
         
-        // 🔧 FORZAR FECHA ACTUAL - IGNORAR COMPLETAMENTE LA SESIÓN
-        $date = now()->format('Y-m-d');
+        // Fecha del día en curso en la planta (México), no la del servidor (UTC).
+        $date = now('America/Mexico_City')->format('Y-m-d');
         $shift = $request->get('shift', 'matutino');
-        
+
         $workCenter = WorkCenter::with('productionLines')->findOrFail($workCenterId);
         $productionLines = $workCenter->productionLines;
         
@@ -636,11 +636,11 @@ class SupervisorController extends Controller
     public function getProductionData(Request $request)
     {
         $workCenterId = $request->get('work_center_id');
-        $date = $request->get('date', now()->format('Y-m-d'));
+        $date = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         $shift = $request->get('shift', 'matutino');
-        
+
         $workCenter = WorkCenter::with('productionLines')->findOrFail($workCenterId);
-        
+
         // Obtener programa del centro
         $dailyProgram = DailyProgram::with(['schedules', 'strikes'])
             ->where('id_work_center', $workCenterId)
