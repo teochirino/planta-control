@@ -72,7 +72,7 @@ class PlantOverviewService
             ->get()
             ->groupBy('id_production_lines');
 
-        return $lines->map(function ($line) use ($workCenter, $expectedPerHourCenter, $totalCapacity, $lines, $schedulesByLine, $strikesByLine) {
+        return $lines->map(function ($line) use ($workCenter, $expectedPerHourCenter, $totalCapacity, $totalShiftHours, $lines, $schedulesByLine, $strikesByLine) {
             $weight = $totalCapacity > 0
                 ? ($line->installed_capacity ?? 0) / $totalCapacity
                 : 1 / $lines->count();
@@ -94,9 +94,9 @@ class PlantOverviewService
                 ? round(($lineProduced / $expectedSoFarPlan) * 100)
                 : ($lineProduced > 0 ? 100 : 0);
 
-            // Aprovechamiento de capacidad: lo que la línea pudo producir a su propio ritmo
-            // máximo por hora, en las horas ya transcurridas.
-            $expectedSoFarCapacity = ($line->installed_capacity ?? 0) * $hoursElapsed;
+            // Aprovechamiento de capacidad: la capacidad instalada es por día completo, así que se
+            // prorratea por la fracción del turno ya transcurrida, no se multiplica por hora.
+            $expectedSoFarCapacity = ($line->installed_capacity ?? 0) * ($hoursElapsed / $totalShiftHours);
             $pctCapacity = $expectedSoFarCapacity > 0
                 ? round(($lineProduced / $expectedSoFarCapacity) * 100)
                 : ($lineProduced > 0 ? 100 : 0);

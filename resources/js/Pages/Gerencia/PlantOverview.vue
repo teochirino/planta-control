@@ -62,7 +62,7 @@
                         <div class="bottom">
                             <div class="pct">{{ tile.pct }}<span>%</span></div>
                             <div class="bar-bg"><div class="bar-fill" :style="{ width: Math.min(tile.pct, 100) + '%' }"></div></div>
-                            <div v-if="tile.status !== 'gray'" class="cap-note">Aprovechamiento de capacidad: {{ tile.pct_capacity }}%</div>
+                            <div v-if="tile.status !== 'gray'" class="cap-note">Capacidad: {{ tile.pct_capacity }}%</div>
                             <div v-if="tile.reason" class="reason">⚠ {{ tile.reason }}</div>
                         </div>
                     </div>
