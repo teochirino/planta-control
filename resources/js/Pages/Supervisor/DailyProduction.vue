@@ -358,6 +358,27 @@
             </div>
         </div>
 
+        <!-- Modal de Confirmación para Procesar Balance -->
+        <div v-if="showBalanceConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-[#0b2a40]">Confirmar Procesar Balance</h3>
+                    <p class="text-[#4e6070] mt-2">¿Procesar el balance de este programa? Esto calculará los atrasos/adelantos para el siguiente día.</p>
+                </div>
+
+                <div class="flex gap-3 justify-end">
+                    <button @click="cancelProcesarBalance"
+                            class="px-4 py-2 bg-[#f4f7fa] text-[#4e6070] border border-[#d4dee8] rounded-md font-bold hover:bg-[#e8edf2]">
+                        Cancelar
+                    </button>
+                    <button @click="confirmProcesarBalance"
+                            class="px-4 py-2 bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal para Extender a Vespertino -->
         <div v-if="showExtendModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div :class="isTVMode() ? 'p-8' : 'p-6'" class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
@@ -451,6 +472,9 @@ const confirmEndTime = ref('')
 const showExtendModal = ref(false)
 const piecesToExtend = ref(0)
 const extending = ref(false)
+
+// Modal de confirmación para procesar balance
+const showBalanceConfirmModal = ref(false)
 
 const programData = ref({
     programmed: props.dailyProgram?.programmed || 0,
@@ -857,16 +881,21 @@ const guardarAjusteManual = async () => {
 }
 
 // Procesar balance
-const procesarBalance = async () => {
+const procesarBalance = () => {
     if (!dailyProgramId.value) {
         toast.error('No hay programa diario para procesar')
         return
     }
 
-    if (!confirm('¿Estás seguro de procesar el balance? Esto calculará los atrasos/adelantos para el siguiente día.')) {
-        return
-    }
+    showBalanceConfirmModal.value = true
+}
 
+const cancelProcesarBalance = () => {
+    showBalanceConfirmModal.value = false
+}
+
+const confirmProcesarBalance = async () => {
+    showBalanceConfirmModal.value = false
     procesandoBalance.value = true
     try {
         const response = await axios.post('/supervisor/process-balance', {

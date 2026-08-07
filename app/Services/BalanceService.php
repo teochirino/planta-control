@@ -85,12 +85,12 @@ class BalanceService
             ProductionAdjustment::create([
                 'id_daily_program' => $program->id,
                 'id_work_center' => $program->id_work_center,
-                'adjustment_type' => 'balance_calculation',
-                'field_adjusted' => 'balance_with_manual_values',
+                'adjustment_type' => 'correction',
+                'field_adjusted' => 'backwardness',
                 'previous_value' => $balance->accumulated_backwardness,
                 'new_value' => $balance->accumulated_backwardness, // Se actualizará después
                 'difference' => 0,
-                'adjustment_category' => 'balance',
+                'adjustment_category' => 'correction',
                 'reason' => 'Balance calculado con valores manuales de ingeniería (backwardness: ' . $program->backwardness . ', advanced: ' . $program->advanced . ')',
                 'adjusted_by' => auth()->id(),
                 'notes' => 'El programa fue editado manualmente por ingeniería el ' . $program->engineering_edited_at,
@@ -127,7 +127,8 @@ class BalanceService
         // Si el programa fue editado manualmente, actualizar el registro de ajuste con los nuevos valores
         if ($program->manually_edited_by_engineering) {
             $lastAdjustment = ProductionAdjustment::where('id_daily_program', $program->id)
-                ->where('field_adjusted', 'balance_with_manual_values')
+                ->where('field_adjusted', 'backwardness')
+                ->where('adjustment_type', 'correction')
                 ->orderBy('created_at', 'desc')
                 ->first();
 
