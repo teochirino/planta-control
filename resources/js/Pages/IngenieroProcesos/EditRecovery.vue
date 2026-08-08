@@ -39,8 +39,21 @@
             <!-- Editar Daily Programs -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Programas Diarios</h2>
-                
+
                 <form @submit.prevent="submit">
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Fecha del Programa
+                        </label>
+                        <input type="date"
+                               v-model="form.date"
+                               :disabled="!canEditDate"
+                               class="w-full md:w-64 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500">
+                        <p v-if="!canEditDate" class="text-sm text-gray-500 mt-1">
+                            No se puede editar: este programa ya tiene producción registrada, el turno cerrado, o el balance procesado.
+                        </p>
+                    </div>
+
                     <div v-if="dailyPrograms.length === 0" class="text-center py-4 text-gray-500">
                         No hay programas diarios registrados
                     </div>
@@ -114,9 +127,11 @@ const props = defineProps({
     program: Object,
     dailyPrograms: Array,
     workCenters: Array,
+    canEditDate: Boolean,
 });
 
 const form = useForm({
+    date: props.dailyPrograms[0]?.date?.slice(0, 10) || '',
     daily_programs: props.dailyPrograms.map(dp => ({
         id: dp.id,
         programmed: dp.programmed,

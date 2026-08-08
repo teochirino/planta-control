@@ -946,63 +946,6 @@ class IngenieroProcesosController extends Controller
         return $schedule;
     }
 
-    /**
-     * Calcular fechas de fase para programas de recuperación
-     * Basado en la fase del centro de trabajo seleccionado
-     */
-    private function calculateRecoveryPhaseDates($selectedDate, $workCenterPhase)
-    {
-        $selectedDate = \Carbon\Carbon::parse($selectedDate);
-        
-        // Definir las fechas de fase basadas en la fase del centro de trabajo
-        // La fecha seleccionada es la fecha de la fase del centro
-        switch ($workCenterPhase) {
-            case 1:
-                // Fase 1: fecha seleccionada
-                $fase1 = $selectedDate->copy();
-                $fase2 = Program::addWorkingDays($fase1, 1);
-                $fase3 = Program::addWorkingDays($fase2, 1);
-                $fechaEntrega = Program::addWorkingDays($fase3, 1);
-                break;
-            case 2:
-                // Fase 2: fecha seleccionada
-                $fase2 = $selectedDate->copy();
-                $fase1 = Program::addWorkingDays($fase2, -1);
-                $fase3 = Program::addWorkingDays($fase2, 1);
-                $fechaEntrega = Program::addWorkingDays($fase3, 1);
-                break;
-            case 3:
-                // Fase 3: fecha seleccionada
-                $fase3 = $selectedDate->copy();
-                $fase2 = Program::addWorkingDays($fase3, -1);
-                $fase1 = Program::addWorkingDays($fase2, -1);
-                $fechaEntrega = Program::addWorkingDays($fase3, 1);
-                break;
-            case 4:
-                // Fase 4 (entrega): fecha seleccionada
-                $fechaEntrega = $selectedDate->copy();
-                $fase3 = Program::addWorkingDays($fechaEntrega, -1);
-                $fase2 = Program::addWorkingDays($fase3, -1);
-                $fase1 = Program::addWorkingDays($fase2, -1);
-                break;
-            default:
-                // Por defecto, fase 1
-                $fase1 = $selectedDate->copy();
-                $fase2 = Program::addWorkingDays($fase1, 1);
-                $fase3 = Program::addWorkingDays($fase2, 1);
-                $fechaEntrega = Program::addWorkingDays($fase3, 1);
-                break;
-        }
-        
-        return [
-            'fecha_entrega' => $fechaEntrega->format('Y-m-d'),
-            'fase1' => $fase1->format('Y-m-d'),
-            'fase2' => $fase2->format('Y-m-d'),
-            'fase3' => $fase3->format('Y-m-d'),
-            'fase4' => $fechaEntrega->format('Y-m-d'),
-        ];
-    }
-
     // ============================================
     // AJUSTES DE PRODUCCIÓN
     // ============================================
@@ -1354,6 +1297,7 @@ class IngenieroProcesosController extends Controller
             'created_at' => $program->created_at,
             'created_at_formatted' => $program->created_at ? \Carbon\Carbon::parse($program->created_at)->format('d/m/Y H:i') : null,
             'creator' => $program->creator,
+            'observaciones' => $program->observaciones,
         ];
 
         return Inertia::render('IngenieroProcesos/ViewRecoveryProgram', [
@@ -1432,12 +1376,18 @@ class IngenieroProcesosController extends Controller
         try {
             // Obtener el centro de trabajo para conocer su fase
             $workCenter = WorkCenter::findOrFail($request->work_center_id);
-            $workCenterPhase = $workCenter->phase;
-            
-            // Calcular fechas de fase basadas en la fase del centro de trabajo
-            // La fecha seleccionada es la fecha de la fase del centro
-            $phaseDates = $this->calculateRecoveryPhaseDates($request->date, $workCenterPhase);
-            
+
+            // Un programa de recuperación es una intervención puntual de un solo día en un
+            // solo centro de trabajo, no una corrida multi-fase a través de la planta: las 4
+            // fechas de fase son la misma fecha que se capturó, sin ajuste de día laboral.
+            $phaseDates = [
+                'fecha_entrega' => $request->date,
+                'fase1' => $request->date,
+                'fase2' => $request->date,
+                'fase3' => $request->date,
+                'fase4' => $request->date,
+            ];
+
             // Crear Program de recuperación
             $program = Program::create([
                 'codigo' => 'REC-' . now()->format('Ymd-His'),
@@ -1448,6 +1398,7 @@ class IngenieroProcesosController extends Controller
                 'fecha_fase4' => $phaseDates['fase4'],
                 'program_type' => 'recovery',
                 'created_by' => auth()->id(),
+                'observaciones' => $request->observaciones,
             ]);
 
             // Crear DailyProgram
@@ -1566,6 +1517,12 @@ class IngenieroProcesosController extends Controller
             ->with('workCenter')
             ->get();
 
+        // La fecha solo se puede editar si ningún programa diario asociado ya
+        // tiene producción registrada, turno cerrado, o balance procesado.
+        $canEditDate = $dailyPrograms->every(function ($dp) {
+            return (int) $dp->total_produced === 0 && !$dp->operator_closed && !$dp->balance_processed;
+        });
+
         $workCenters = WorkCenter::orderBy('name')->get();
 
         // Cargar el creador del programa
@@ -1595,6 +1552,7 @@ class IngenieroProcesosController extends Controller
             'program' => $programData,
             'dailyPrograms' => $dailyPrograms,
             'workCenters' => $workCenters,
+            'canEditDate' => $canEditDate,
         ]);
     }
 
@@ -1609,6 +1567,7 @@ class IngenieroProcesosController extends Controller
         }
 
         $request->validate([
+            'date' => 'required|date',
             'daily_programs' => 'required|array',
             'daily_programs.*.id' => 'required|exists:daily_programs,id',
             'daily_programs.*.programmed' => 'required|integer|min:0',
@@ -1616,11 +1575,37 @@ class IngenieroProcesosController extends Controller
         ]);
 
         DB::beginTransaction();
-        
+
         try {
+            $allDailyPrograms = \App\Models\DailyProgram::where('program_id', $program->id)->get();
+            $currentDate = optional($allDailyPrograms->first())->date?->format('Y-m-d');
+            $requestedDate = \Carbon\Carbon::parse($request->date)->format('Y-m-d');
+
+            // Solo tocar la fecha si de verdad cambió: así no se bloquea guardar
+            // "Programado"/"Horas de Turno" solo porque la fecha ya esté cerrada.
+            if ($currentDate && $requestedDate !== $currentDate) {
+                $canEditDate = $allDailyPrograms->every(function ($dp) {
+                    return (int) $dp->total_produced === 0 && !$dp->operator_closed && !$dp->balance_processed;
+                });
+
+                if (!$canEditDate) {
+                    throw new \Exception('No se puede cambiar la fecha: este programa ya tiene producción registrada, el turno cerrado, o el balance procesado.');
+                }
+
+                $allDailyPrograms->each(fn ($dp) => $dp->update(['date' => $requestedDate]));
+
+                $program->update([
+                    'fecha_entrega' => $requestedDate,
+                    'fecha_fase1' => $requestedDate,
+                    'fecha_fase2' => $requestedDate,
+                    'fecha_fase3' => $requestedDate,
+                    'fecha_fase4' => $requestedDate,
+                ]);
+            }
+
             foreach ($request->daily_programs as $dpData) {
                 $dailyProgram = \App\Models\DailyProgram::findOrFail($dpData['id']);
-                
+
                 // Verificar que pertenezca a este programa
                 if ($dailyProgram->program_id !== $program->id) {
                     throw new \Exception('El DailyProgram no pertenece a este programa.');

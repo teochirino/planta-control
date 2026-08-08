@@ -49,6 +49,10 @@
                         <p class="text-lg font-medium text-orange-600">Recuperación</p>
                     </div>
                 </div>
+                <div v-if="program.observaciones" class="mt-4 pt-4 border-t border-gray-200">
+                    <span class="text-sm text-gray-500">Observaciones:</span>
+                    <p class="text-gray-800 whitespace-pre-line">{{ program.observaciones }}</p>
+                </div>
             </div>
 
             <!-- Daily Programs -->
