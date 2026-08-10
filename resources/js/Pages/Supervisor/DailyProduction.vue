@@ -30,11 +30,11 @@
             <!-- KPIs -->
             <div :class="isTVMode() ? 'gap-4 2xl:gap-6' : 'gap-2'" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 2xl:grid-cols-12">
                 <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
-                    <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">Programado</div>
+                    <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">{{ isRecovery ? 'Atraso' : 'Programado' }}</div>
                     <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(programData.programmed) }}</div>
                 </div>
                 <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
-                    <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">Atraso</div>
+                    <div :class="isTVMode() ? 'text-sm' : 'text-[11px]'" class="font-bold tracking-widest uppercase text-[#4e6070]">{{ isRecovery ? 'Programado' : 'Atraso' }}</div>
                     <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(programData.backwardness) }}</div>
                 </div>
                 <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg">
@@ -481,6 +481,10 @@ const programData = ref({
     backwardness: props.dailyProgram?.backwardness || 0,
     advanced: props.dailyProgram?.advanced || 0
 })
+
+// Un programa de recuperación reutiliza "programmed" como meta de atraso a recuperar;
+// esto solo invierte las etiquetas en pantalla, sin tocar los valores ni el balance.
+const isRecovery = computed(() => props.dailyProgram?.program?.program_type === 'recovery')
 
 const nuevoPrograma = ref({
     programmed: 0,

@@ -59,13 +59,13 @@
                     
                     <div :class="isTVMode() ? 'gap-4 2xl:gap-6' : 'gap-2'" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 2xl:grid-cols-12">
                         <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Programado</div>
-                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#0b2a40]">{{ formatNumber(centerKPIsData.programmed) }}</div>
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">{{ centerKPIsData.is_recovery ? 'Atraso' : 'Programado' }}</div>
+                            <div :class="[isTVMode() ? 'text-4xl' : 'text-2xl', 'font-extrabold', centerKPIsData.is_recovery ? 'text-[#ba2418]' : 'text-[#0b2a40]']">{{ formatNumber(centerKPIsData.programmed) }}</div>
                         </div>
-                        
+
                         <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">
-                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">Atraso</div>
-                            <div :class="isTVMode() ? 'text-4xl' : 'text-2xl'" class="font-extrabold text-[#ba2418]">{{ formatNumber(centerKPIsData.backwardness) }}</div>
+                            <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="font-bold tracking-wider uppercase text-[#4e6070] mb-1">{{ centerKPIsData.is_recovery ? 'Programado' : 'Atraso' }}</div>
+                            <div :class="[isTVMode() ? 'text-4xl' : 'text-2xl', 'font-extrabold', centerKPIsData.is_recovery ? 'text-[#0b2a40]' : 'text-[#ba2418]']">{{ formatNumber(centerKPIsData.backwardness) }}</div>
                         </div>
                         
                         <div :class="isTVMode() ? 'p-5' : 'p-3'" class="bg-white border border-[#d4dee8] rounded-lg text-center">

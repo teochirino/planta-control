@@ -40,6 +40,10 @@ class KPIService
             'saved_amount' => round($savedAmount, 2),
             'installed_capacity' => $workCenter->installed_capacity,
             'strike_minutes' => $totalStrikeMinutes,
+            // Un programa de recuperación reutiliza "programmed" como meta de atraso a
+            // recuperar; el frontend usa esta bandera solo para invertir las etiquetas
+            // "Programado"/"Atraso" en pantalla, sin tocar los valores ni el balance.
+            'is_recovery' => optional($program->program)->program_type === 'recovery',
         ];
     }
 

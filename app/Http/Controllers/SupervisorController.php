@@ -386,7 +386,12 @@ class SupervisorController extends Controller
 
         // Obtener máquinas del centro de trabajo
         $machines = \App\Models\Machine::where('id_work_center', $workCenterId)->get();
-        
+
+        // Un programa de recuperación reutiliza "programmed" como meta de atraso a
+        // recuperar; el frontend usa esta relación solo para invertir las etiquetas
+        // "Programado"/"Atraso" en pantalla, sin tocar los valores ni el balance.
+        $dailyProgram->load('program');
+
         return Inertia::render('Supervisor/DailyProduction', [
             'workCenter' => $workCenter,
             'productionLines' => $productionLines,
@@ -795,6 +800,7 @@ class SupervisorController extends Controller
             'real_vs_ideal' => $realVsIdeal,
             'saved_amount' => round($savedAmount, 2),
             'installed_capacity' => $workCenter->installed_capacity,
+            'is_recovery' => optional($program->program)->program_type === 'recovery',
         ];
     }
 

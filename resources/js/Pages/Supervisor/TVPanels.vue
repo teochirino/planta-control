@@ -155,15 +155,15 @@
                         <span class="refresh-status">Actualización automática</span>
                     </div>
                     <div class="kpi-grid">
-                        <article class="kpi-card">
-                            <div class="kpi-label">Programado</div>
+                        <article class="kpi-card" :class="{ negative: centerKPIsData?.is_recovery }">
+                            <div class="kpi-label">{{ centerKPIsData?.is_recovery ? 'Atraso' : 'Programado' }}</div>
                             <div class="kpi-value">{{ formatNumber(centerKPIsData?.programmed || 0) }}</div>
-                            <div class="kpi-meta">piezas del turno</div>
+                            <div class="kpi-meta">{{ centerKPIsData?.is_recovery ? 'piezas pendientes' : 'piezas del turno' }}</div>
                         </article>
-                        <article class="kpi-card negative">
-                            <div class="kpi-label">Atraso</div>
+                        <article class="kpi-card" :class="{ negative: !centerKPIsData?.is_recovery }">
+                            <div class="kpi-label">{{ centerKPIsData?.is_recovery ? 'Programado' : 'Atraso' }}</div>
                             <div class="kpi-value">{{ formatNumber(centerKPIsData?.backwardness || 0) }}</div>
-                            <div class="kpi-meta">piezas pendientes</div>
+                            <div class="kpi-meta">{{ centerKPIsData?.is_recovery ? 'piezas del turno' : 'piezas pendientes' }}</div>
                         </article>
                         <article class="kpi-card positive">
                             <div class="kpi-label">Adelantadas</div>
