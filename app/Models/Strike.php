@@ -62,11 +62,12 @@ class Strike extends Model
                 $strike->minutes = $minutes;
             }
             
-            // Calcular costo SIEMPRE que haya minutos
+            // Calcular costo SIEMPRE que haya minutos. production_lines.cost es un costo
+            // por HORA, así que se divide entre 60 antes de multiplicar por los minutos.
             if ($strike->minutes && $strike->id_production_lines) {
                 $productionLine = ProductionLine::find($strike->id_production_lines);
                 if ($productionLine && $productionLine->cost > 0) {
-                    $strike->cost = $strike->minutes * floatval($productionLine->cost);
+                    $strike->cost = $strike->minutes * (floatval($productionLine->cost) / 60);
                 }
             }
         });

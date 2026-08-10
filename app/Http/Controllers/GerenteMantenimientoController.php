@@ -188,10 +188,11 @@ class GerenteMantenimientoController extends Controller
                     
                     $activeStrike->update(['minutes' => $minutes]);
                     
-                    // Calcular costo
+                    // Calcular costo. productionLine.cost es un costo por HORA; se divide
+                    // entre 60 para obtener el costo por minuto.
                     $productionLine = $activeStrike->productionLine;
                     if ($productionLine && $productionLine->cost > 0) {
-                        $cost = $minutes * floatval($productionLine->cost);
+                        $cost = $minutes * (floatval($productionLine->cost) / 60);
                         $activeStrike->update(['cost' => $cost]);
                     }
                 }

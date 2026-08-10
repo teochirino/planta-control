@@ -25,9 +25,10 @@ class KPIService
         $activeMinutes = $totalMinutes - $totalStrikeMinutes;
         $realVsIdeal = $totalMinutes > 0 ? round(($activeMinutes / $totalMinutes) * 100, 2) : 0;
         
-        $avgCostPerMinute = $workCenter->productionLines->avg('cost') ?? 0;
-        $savedAmount = $avgCostPerMinute * ($totalMinutes - $totalStrikeMinutes);
-        
+        // productionLines.cost es un costo por HORA; se divide entre 60 para obtener el costo por minuto.
+        $avgCostPerHour = $workCenter->productionLines->avg('cost') ?? 0;
+        $savedAmount = ($avgCostPerHour / 60) * ($totalMinutes - $totalStrikeMinutes);
+
         return [
             'programmed' => $program->programmed,
             'backwardness' => $program->backwardness,
@@ -55,8 +56,9 @@ class KPIService
         $totalProduced = $schedules->sum('produced');
         $totalStrikeMinutes = $this->calculateTotalStrikeMinutes($strikes);
         
-        $costPerMinute = $line->cost ?? 0;
-        $strikeCost = $costPerMinute * $totalStrikeMinutes;
+        // line.cost es un costo por HORA; se divide entre 60 para obtener el costo por minuto.
+        $costPerHour = $line->cost ?? 0;
+        $strikeCost = ($costPerHour / 60) * $totalStrikeMinutes;
         
         return [
             'fabricated' => $totalProduced,
@@ -131,9 +133,10 @@ class KPIService
     public function calculateStrikeMetrics(DailyProgram $program, WorkCenter $workCenter): array
     {
         $totalStrikes = $program->strikes->count();
-        $avgCostPerMinute = $workCenter->productionLines->avg('cost') ?? 0;
+        // productionLines.cost es un costo por HORA; se divide entre 60 para obtener el costo por minuto.
+        $avgCostPerHour = $workCenter->productionLines->avg('cost') ?? 0;
         $totalStrikeMinutes = $this->calculateTotalStrikeMinutes($program->strikes);
-        $totalStrikeCost = round($avgCostPerMinute * $totalStrikeMinutes, 2);
+        $totalStrikeCost = round(($avgCostPerHour / 60) * $totalStrikeMinutes, 2);
         
         return [
             'total_strikes' => $totalStrikes,

@@ -264,10 +264,11 @@ class OperadorController extends Controller
                 $minutes += 1440;
             }
             
-            // Calcular costo manualmente
+            // Calcular costo manualmente. production_lines.cost es un costo por HORA;
+            // se divide entre 60 para obtener el costo por minuto.
             $productionLine = ProductionLine::find($strike->id_production_lines);
-            $costoPorMinuto = $productionLine ? floatval($productionLine->cost) : 0;
-            $cost = $costoPorMinuto * $minutes;
+            $costoPorHora = $productionLine ? floatval($productionLine->cost) : 0;
+            $cost = ($costoPorHora / 60) * $minutes;
             
             // Actualizar el strike con minutos, costo y end_time
             $strike->update([

@@ -785,9 +785,10 @@ class SupervisorController extends Controller
         $activeMinutes = $totalMinutes - $totalStrikeMinutes;
         $realVsIdeal = $totalMinutes > 0 ? round(($activeMinutes / $totalMinutes) * 100, 2) : 0;
         
-        // Calcular ahorro de activos (costo de paros evitados)
-        $avgCostPerMinute = $workCenter->productionLines->avg('cost') ?? 0;
-        $savedAmount = $avgCostPerMinute * ($totalMinutes - $totalStrikeMinutes);
+        // Calcular ahorro de activos (costo de paros evitados). productionLines.cost es
+        // un costo por HORA; se divide entre 60 para obtener el costo por minuto.
+        $avgCostPerHour = $workCenter->productionLines->avg('cost') ?? 0;
+        $savedAmount = ($avgCostPerHour / 60) * ($totalMinutes - $totalStrikeMinutes);
         
         return [
             'programmed' => $program->programmed,
