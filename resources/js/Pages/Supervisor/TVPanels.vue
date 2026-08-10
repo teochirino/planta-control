@@ -124,7 +124,7 @@
                             </div>
                             <div class="line-metric">
                                 <div class="line-metric-label">Costo</div>
-                                <div class="line-metric-value">${{ formatNumber(line.cost || 0) }} <small>/min</small></div>
+                                <div class="line-metric-value">${{ formatNumber(line.cost || 0) }} <small>/hrs</small></div>
                             </div>
                         </article>
                     </div>

@@ -162,7 +162,7 @@
                                 <div :class="isTVMode() ? 'text-lg' : ''" class="font-bold text-[#0b2a40]">{{ line.title }}</div>
                                 <div :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mt-1">
                                     Cap: {{ formatNumber(line.installed_capacity) }} pzs/día | 
-                                    Costo: ${{ formatNumber(line.cost) }}/min
+                                    Costo: ${{ formatNumber(line.cost) }}/hrs
                                 </div>
                             </div>
                         </div>
