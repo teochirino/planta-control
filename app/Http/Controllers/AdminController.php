@@ -9,6 +9,7 @@ use App\Models\WorkCenter;
 use App\Models\ProductionLine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -99,13 +100,17 @@ class AdminController extends Controller
                 ->with('error', 'Este usuario ya ha sido importado.');
         }
         
-        // Crear usuario en planta_control
+        // Crear usuario en planta_control. Salvo el perfil Administrador, el inicio de
+        // sesión ya no verifica esta contraseña local: se valida en vivo contra
+        // italianet_users.users (ver LoginRequest::attemptCredentials). Se guarda un
+        // valor aleatorio e inutilizable solo para satisfacer la columna, nunca se
+        // muestra ni se comunica a nadie.
         $user = User::create([
             'name' => $italianetUser->name,
             'email' => $italianetUser->email,
             'user_main_id' => $italianetUser->id,
             'id_profile' => $request->id_profile,
-            'password' => Hash::make('password123'),
+            'password' => Hash::make(Str::random(40)),
         ]);
         
         // Asignar centros de trabajo si es supervisor

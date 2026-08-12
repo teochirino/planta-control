@@ -12,13 +12,6 @@ const props = defineProps({
     search: String,
 });
 
-// Depuración
-console.log('Props recibidas:', props);
-console.log('ItalianetUsers:', props.italianetUsers);
-console.log('ItalianetUsers data:', props.italianetUsers?.data);
-console.log('ItalianetUsers data length:', props.italianetUsers?.data?.length);
-console.log('Primer usuario:', props.italianetUsers?.data?.[0]);
-
 const searchValue = ref(props.search || '');
 
 const importForm = useForm({
@@ -196,13 +189,13 @@ const clearSearch = () => {
                 </div>
                 
                 <form @submit.prevent="submitImport" class="p-6">
-                    <div class="mb-4 p-3 bg-[#fef3c7] border border-[#fde68a] rounded-md">
+                    <div class="mb-4 p-3 bg-[#eef2ff] border border-[#c7d2fe] rounded-md">
                         <div class="flex items-start gap-2">
                             <span class="text-lg">🔑</span>
                             <div>
-                                <p class="text-xs font-bold text-[#92400e]">Contraseña por defecto</p>
-                                <p class="text-xs text-[#92400e] mt-1">
-                                    El usuario será importado con la contraseña: <span class="font-bold">password123</span>
+                                <p class="text-xs font-bold text-[#3730a3]">Inicio de sesión</p>
+                                <p class="text-xs text-[#3730a3] mt-1">
+                                    El usuario iniciará sesión con la misma contraseña que ya usa en el sistema de italianet — no se le asigna ninguna contraseña nueva aquí.
                                 </p>
                             </div>
                         </div>

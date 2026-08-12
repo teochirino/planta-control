@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\ItalianetUser;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -42,7 +45,7 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (! $this->attemptCredentials()) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -51,6 +54,43 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Verificar credenciales: el perfil Administrador (id_profile=7) sigue usando la
+     * contraseña local de la tabla "users". El resto de perfiles se valida en vivo
+     * contra la contraseña real del usuario en italianet_users.users (fuente de la
+     * verdad corporativa) — un usuario sin vínculo a italianet no puede iniciar sesión.
+     */
+    protected function attemptCredentials(): bool
+    {
+        $user = User::where('email', $this->input('email'))->first();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->id_profile === 7) {
+            return Auth::attempt($this->only('email', 'password'), $this->boolean('remember'));
+        }
+
+        if (! $user->user_main_id) {
+            return false;
+        }
+
+        $italianetUser = ItalianetUser::find($user->user_main_id);
+
+        if (! $italianetUser || (int) $italianetUser->status !== 1 || ! $italianetUser->password) {
+            return false;
+        }
+
+        if (! Hash::check($this->input('password'), $italianetUser->password)) {
+            return false;
+        }
+
+        Auth::login($user, $this->boolean('remember'));
+
+        return true;
     }
 
     /**
