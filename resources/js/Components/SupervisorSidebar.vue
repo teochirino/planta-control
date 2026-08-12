@@ -1,6 +1,7 @@
 <template>
     <div>
-        <button 
+        <ImpersonationBanner />
+        <button
             v-if="!hideButton"
             @click="toggleSidebar" 
             class="fixed top-4 left-4 z-50 p-2 rounded-lg shadow-lg transition-colors"
@@ -142,6 +143,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import ImpersonationBanner from '@/Components/ImpersonationBanner.vue'
 
 const props = defineProps({
     hideButton: {

@@ -1,6 +1,7 @@
 <template>
     <div>
-        <button 
+        <ImpersonationBanner />
+        <button
             @click="toggleSidebar" 
             class="fixed top-4 left-4 z-50 p-2 rounded-lg shadow-lg transition-colors"
             style="background: #0b2a40; color: #fff;"
@@ -242,6 +243,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import ImpersonationBanner from '@/Components/ImpersonationBanner.vue'
 
 const isOpen = ref(false)
 

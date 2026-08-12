@@ -6,10 +6,11 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Lab404\Impersonate\Models\Impersonate;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, Impersonate;
 
     protected $fillable = [
         'name',
@@ -109,6 +110,18 @@ class User extends Authenticatable
     public function isGerenteMantenimiento()
     {
         return $this->id_profile === 3;
+    }
+
+    // Solo Administrador puede suplantar a otro usuario
+    public function canImpersonate()
+    {
+        return $this->isAdmin();
+    }
+
+    // Un Administrador no puede ser suplantado (evita suplantar admin -> admin)
+    public function canBeImpersonated()
+    {
+        return !$this->isAdmin();
     }
     
     // Verificar si el usuario puede ver un centro de trabajo

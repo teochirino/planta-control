@@ -43,6 +43,12 @@ const deleteUser = (user) => {
         });
     }
 };
+
+const impersonate = (user) => {
+    // Navegación normal (no router.visit de Inertia): esta acción cambia el usuario
+    // autenticado a mitad de camino, e Inertia no sigue bien esa cadena de redirecciones.
+    window.location.href = route('impersonate', user.id);
+};
 </script>
 
 <template>
@@ -133,6 +139,15 @@ const deleteUser = (user) => {
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-center gap-2">
+                                        <button v-if="user.id_profile !== 7"
+                                                @click="impersonate(user)"
+                                                title="Suplantar"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#92400e] text-white rounded-md text-xs font-bold shadow-sm hover:bg-[#78350f] transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                            </svg>
+                                            Suplantar
+                                        </button>
                                         <Link :href="route('admin.users.edit', user.id)"
                                               title="Editar"
                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#174060] text-white rounded-md text-xs font-bold shadow-sm hover:bg-[#0f2c47] transition-colors">
