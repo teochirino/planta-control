@@ -1316,6 +1316,19 @@ class IngenieroProcesosController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($program) {
+                $dailyProgramIds = \App\Models\DailyProgram::where('program_id', $program->id)->pluck('id');
+
+                $reasons = [];
+                if (\App\Models\Strike::whereIn('id_daily_program', $dailyProgramIds)->exists()) {
+                    $reasons[] = 'tiene paros registrados';
+                }
+                if (\App\Models\RejectedPiece::whereIn('id_daily_program', $dailyProgramIds)->exists()) {
+                    $reasons[] = 'tiene piezas rechazadas registradas';
+                }
+                if (\App\Models\DailyProgram::whereIn('id', $dailyProgramIds)->where('total_produced', '>', 0)->exists()) {
+                    $reasons[] = 'tiene piezas fabricadas registradas';
+                }
+
                 return [
                     'id' => $program->id,
                     'codigo' => $program->codigo,
@@ -1324,6 +1337,8 @@ class IngenieroProcesosController extends Controller
                     'created_at' => $program->created_at,
                     'created_at_formatted' => $program->created_at ? \Carbon\Carbon::parse($program->created_at)->format('d/m/Y') : null,
                     'creator' => $program->creator,
+                    'can_delete' => empty($reasons),
+                    'cannot_delete_reason' => empty($reasons) ? null : 'No se puede eliminar: ' . implode(' y ', $reasons) . '.',
                 ];
             });
 
@@ -1480,7 +1495,13 @@ class IngenieroProcesosController extends Controller
             if ($hasRejectedPieces) {
                 return back()->with('error', 'No se puede eliminar el programa porque tiene piezas rechazadas registradas.');
             }
-            
+
+            // Verificar si ya hay piezas fabricadas registradas
+            $hasProducedPieces = $dailyPrograms->contains(fn ($dp) => $dp->total_produced > 0);
+            if ($hasProducedPieces) {
+                return back()->with('error', 'No se puede eliminar el programa porque tiene piezas fabricadas registradas.');
+            }
+
             // Eliminar schedules de cada daily program
             foreach ($dailyPrograms as $dailyProgram) {
                 \App\Models\Schedule::where('id_daily_program', $dailyProgram->id)->delete();
