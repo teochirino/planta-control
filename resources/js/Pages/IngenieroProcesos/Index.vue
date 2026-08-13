@@ -33,18 +33,34 @@
                                 <td class="px-4 sm:px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <Link :href="route('ingeniero-procesos.show', program.id)"
-                                              class="px-3 py-1.5 bg-[#174060] text-white border border-[#174060] rounded text-xs font-bold hover:opacity-85 whitespace-nowrap">
-                                            👁️ Ver
+                                              title="Ver"
+                                              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#174060] text-white rounded-md text-xs font-bold shadow-sm hover:bg-[#0f2c47] transition-colors whitespace-nowrap">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                            </svg>
+                                            Ver
                                         </Link>
                                         <button
                                             @click="showEditDateDialog(program)"
-                                            class="px-3 py-1.5 bg-[#f4f7fa] text-[#0a7c3e] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#0a7c3e] hover:text-white hover:border-[#0a7c3e] whitespace-nowrap">
-                                            📅 Editar Fecha
+                                            title="Editar Fecha"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#e6f4ec] text-[#0a7c3e] border border-[#aadcc4] rounded-md text-xs font-bold shadow-sm hover:bg-[#0a7c3e] hover:text-white hover:border-[#0a7c3e] transition-colors whitespace-nowrap">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                <rect x="3" y="4" width="14" height="13" rx="2" />
+                                                <line x1="3" y1="8" x2="17" y2="8" />
+                                                <line x1="7" y1="2" x2="7" y2="5" stroke-linecap="round" />
+                                                <line x1="13" y1="2" x2="13" y2="5" stroke-linecap="round" />
+                                            </svg>
+                                            Editar Fecha
                                         </button>
                                         <button
                                             @click="showDeleteDialog(program)"
-                                            class="px-3 py-1.5 bg-[#f4f7fa] text-[#ba2418] border border-[#d4dee8] rounded text-xs font-bold hover:bg-[#ba2418] hover:text-white hover:border-[#ba2418] whitespace-nowrap">
-                                            🗑️ Borrar
+                                            title="Borrar"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#fbe6e6] text-[#ba2418] border border-[#ebbab8] rounded-md text-xs font-bold shadow-sm hover:bg-[#ba2418] hover:text-white hover:border-[#ba2418] transition-colors whitespace-nowrap">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                            Borrar
                                         </button>
                                     </div>
                                 </td>
