@@ -152,7 +152,7 @@
                             </tr>
                             <tr class="bg-[#0c1c28] text-white font-extrabold">
                                 <td :class="isTVMode() ? 'px-4 py-4 text-base' : 'px-3 py-3 text-sm'" class="tracking-widest uppercase">Total</td>
-                                <td :class="isTVMode() ? 'px-4 py-4 text-base' : 'px-3 py-3 text-sm'" class="text-center text-[#8ba4b8]">-</td>
+                                <td :class="isTVMode() ? 'px-4 py-4 text-base' : 'px-3 py-3 text-sm'" class="text-center">{{ formatNumber(totalExpectedProduction) }}</td>
                                 <td v-for="line in lineas" :key="line.id" :class="isTVMode() ? 'px-4 py-4 text-2xl' : 'px-3 py-3 text-lg'" class="text-center">{{ formatNumber(lineTotals[line.id]) }}</td>
                                 <td :class="isTVMode() ? 'px-4 py-4 text-3xl' : 'px-3 py-3 text-xl'" class="text-center bg-[#174060]">{{ formatNumber(grandTotalValue) }}</td>
                                 <td :class="isTVMode() ? 'px-4 py-4 text-base' : 'px-3 py-3 text-sm'" class="text-center bg-[#174060]">
@@ -600,6 +600,11 @@ const expectedProductionPerHour = computed(() => {
     const hours = kpis.value.hours_active || 9
     const total = kpis.value.total_to_produce || 0
     return hours > 0 ? (total / hours).toFixed(2) : '0.00'
+})
+
+const totalExpectedProduction = computed(() => {
+    const expected = parseFloat(expectedProductionPerHour.value) || 0
+    return expected * horas.value.length
 })
 
 const hourCompliance = computed(() => {
