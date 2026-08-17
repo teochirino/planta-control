@@ -638,8 +638,8 @@ onMounted(() => {
     loadVideosReproducedToday()
     // Check for videos immediately on mount
     checkForScheduledVideos()
-    // Check for videos every 5 minutes
-    videoCheckInterval.value = setInterval(checkForScheduledVideos, 300000)
+    // Check for videos every 20 seconds (hora exacta de reproducción)
+    videoCheckInterval.value = setInterval(checkForScheduledVideos, 20000)
     
     // ESC key listener for fullscreen
     document.addEventListener('keydown', handleEscKey)

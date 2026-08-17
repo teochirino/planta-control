@@ -55,7 +55,7 @@ const openEditForm = (video) => {
     formData.value = {
         nombre: video.nombre,
         video: null,
-        hora_reproduccion: video.hora_reproduccion,
+        hora_reproduccion: video.hora_reproduccion ? video.hora_reproduccion.substring(0, 5) : '',
         dias_semana: video.dias_semana || [],
         activo: video.activo,
     };

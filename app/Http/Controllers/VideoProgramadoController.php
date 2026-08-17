@@ -142,7 +142,6 @@ class VideoProgramadoController extends Controller
         $currentDay = Carbon::now($timezone)->dayOfWeek; // 0 (Sunday) to 6 (Saturday)
         $currentTime = Carbon::now($timezone)->format('H:i');
         $today = Carbon::now($timezone)->toDateString();
-        $toleranceMinutes = 5; // 5 minutes tolerance
 
         \Log::info('getScheduledVideos - Current time:', [
             'is_local' => $isLocal,
@@ -150,7 +149,6 @@ class VideoProgramadoController extends Controller
             'currentDay' => $currentDay,
             'currentTime' => $currentTime,
             'today' => $today,
-            'tolerance' => $toleranceMinutes
         ]);
 
         $allVideos = VideoProgramado::where('activo', true)
@@ -159,30 +157,28 @@ class VideoProgramadoController extends Controller
 
         \Log::info('Active videos for current day:', $allVideos->toArray());
 
-        $videos = $allVideos->filter(function ($video) use ($currentTime, $toleranceMinutes, $today, $timezone) {
-            $scheduledTime = Carbon::parse($video->hora_reproduccion, $timezone);
-            $current = Carbon::parse($currentTime, $timezone);
-            
-            // Check if current time is within tolerance window
-            $diffInMinutes = abs($scheduledTime->diffInMinutes($current));
-            $withinTolerance = $diffInMinutes <= $toleranceMinutes;
-            
+        $videos = $allVideos->filter(function ($video) use ($currentTime, $today, $timezone) {
+            $scheduledTime = Carbon::parse($video->hora_reproduccion, $timezone)->format('H:i');
+
+            // Check if current time matches the scheduled time exactly (HH:mm)
+            $isExactTime = $scheduledTime === $currentTime;
+
             // Check if video was already reproduced today
-            $notReproducedToday = !$video->ultima_reproduccion || 
+            $notReproducedToday = !$video->ultima_reproduccion ||
                 Carbon::parse($video->ultima_reproduccion, $timezone)->toDateString() !== $today;
-            
+
             \Log::info('Video filter check:', [
                 'video_id' => $video->id,
                 'video_name' => $video->nombre,
-                'scheduled_time' => $video->hora_reproduccion,
-                'diff_minutes' => $diffInMinutes,
-                'within_tolerance' => $withinTolerance,
+                'scheduled_time' => $scheduledTime,
+                'current_time' => $currentTime,
+                'is_exact_time' => $isExactTime,
                 'ultima_reproduccion' => $video->ultima_reproduccion,
                 'not_reproduced_today' => $notReproducedToday,
-                'will_play' => $withinTolerance && $notReproducedToday
+                'will_play' => $isExactTime && $notReproducedToday
             ]);
-            
-            return $withinTolerance && $notReproducedToday;
+
+            return $isExactTime && $notReproducedToday;
         })
         ->values();
 
@@ -196,8 +192,11 @@ class VideoProgramadoController extends Controller
      */
     public function registerPlayback(string $id)
     {
+        $isLocal = in_array(request()->getHost(), ['localhost', '127.0.0.1']);
+        $timezone = $isLocal ? 'America/Caracas' : 'America/Mexico_City';
+
         $video = VideoProgramado::findOrFail($id);
-        $video->ultima_reproduccion = Carbon::now();
+        $video->ultima_reproduccion = Carbon::now($timezone);
         $video->save();
 
         return response()->json(['message' => 'Playback registered']);
