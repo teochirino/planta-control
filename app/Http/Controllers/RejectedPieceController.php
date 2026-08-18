@@ -15,7 +15,7 @@ class RejectedPieceController extends Controller
     public function index(Request $request)
     {
         $workCenterId = $request->get('work_center_id');
-        $date = $request->get('date', now()->format('Y-m-d'));
+        $date = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         $status = $request->get('status', 'pendiente');
         
         $query = RejectedPiece::with(['schedule', 'dailyProgram', 'workCenter', 'productionLine', 'rejectedBy', 'resolvedBy']);
@@ -60,7 +60,7 @@ class RejectedPieceController extends Controller
             'resolution_status' => 'reparada',
             'resolution_notes' => $request->resolution_notes,
             'resolved_by' => auth()->id(),
-            'resolved_at' => now(),
+            'resolved_at' => now('America/Mexico_City'),
         ]);
         
         return response()->json([
@@ -87,7 +87,7 @@ class RejectedPieceController extends Controller
             'new_pieces_schedule_id' => $request->new_pieces_schedule_id,
             'resolution_notes' => $request->resolution_notes,
             'resolved_by' => auth()->id(),
-            'resolved_at' => now(),
+            'resolved_at' => now('America/Mexico_City'),
         ]);
         
         return response()->json([
@@ -110,7 +110,7 @@ class RejectedPieceController extends Controller
             'resolution_status' => 'desechada',
             'resolution_notes' => $request->resolution_notes,
             'resolved_by' => auth()->id(),
-            'resolved_at' => now(),
+            'resolved_at' => now('America/Mexico_City'),
         ]);
         
         return response()->json([

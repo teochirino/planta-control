@@ -69,7 +69,7 @@ class PermisosController extends Controller
                     'can_view' => $perm['can_view'] ?? false,
                     'can_edit' => $perm['can_edit'] ?? false,
                     'can_delete' => $perm['can_delete'] ?? false,
-                    'updated_at' => now(),
+                    'updated_at' => now('America/Mexico_City'),
                 ];
             }
         }
@@ -99,7 +99,7 @@ class PermisosController extends Controller
                     'can_view' => $perm['can_view'] ?? false,
                     'can_edit' => $perm['can_edit'] ?? false,
                     'can_delete' => $perm['can_delete'] ?? false,
-                    'updated_at' => now(),
+                    'updated_at' => now('America/Mexico_City'),
                 ];
             }
         }

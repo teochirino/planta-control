@@ -579,7 +579,7 @@ class SupervisorController extends Controller
                 'id_machine' => $request->id_machine,
                 'id_user' => auth()->id(),
                 'reason' => $request->description,
-                'start_date' => now(),
+                'start_date' => now('America/Mexico_City'),
             ]);
             
             // Actualizar estado de máquina a averiado
@@ -640,7 +640,7 @@ class SupervisorController extends Controller
             
             if ($breakdown) {
                 $breakdown->update([
-                    'end_date' => now(),
+                    'end_date' => now('America/Mexico_City'),
                 ]);
             }
             
@@ -1276,7 +1276,7 @@ class SupervisorController extends Controller
         $history = [];
         
         for ($i = 1; $i <= 3; $i++) {
-            $date = now()->subDays($i)->format('Y-m-d');
+            $date = now('America/Mexico_City')->subDays($i)->format('Y-m-d');
             
             $dailyProgram = DailyProgram::where('id_work_center', $workCenterId)
                 ->where('date', $date)
@@ -1292,7 +1292,7 @@ class SupervisorController extends Controller
             }
             
             $history[] = [
-                'date' => now()->subDays($i)->format('d/m/Y'),
+                'date' => now('America/Mexico_City')->subDays($i)->format('d/m/Y'),
                 'value' => $compliance
             ];
         }

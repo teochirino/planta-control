@@ -121,7 +121,7 @@ class BalanceService
         // Actualizar balance acumulado
         $balance->accumulated_backwardness = $newAccumulatedBackwardness;
         $balance->accumulated_advanced = $newAccumulatedAdvanced;
-        $balance->last_calculated_at = now();
+        $balance->last_calculated_at = now('America/Mexico_City');
         $balance->save();
 
         // Si el programa fue editado manualmente, actualizar el registro de ajuste con los nuevos valores
@@ -143,7 +143,7 @@ class BalanceService
         // Marcar programa como procesado
         $program->update([
             'balance_processed' => true,
-            'balance_processed_at' => now(),
+            'balance_processed_at' => now('America/Mexico_City'),
             'balance_processed_by' => auth()->id(),
         ]);
 

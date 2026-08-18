@@ -56,7 +56,7 @@ class GerenciaController extends Controller
         $selectedWorkCenter = WorkCenter::with('productionLines', 'machines')->findOrFail($selectedWorkCenterId);
         
         // Fecha actual
-        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedDate = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         $selectedShift = $request->get('shift');
         
         // Obtener programa diario del centro
@@ -121,8 +121,8 @@ class GerenciaController extends Controller
     
     private function getCurrentShift()
     {
-        $hour = now()->hour;
-        $minute = now()->minute;
+        $hour = now('America/Mexico_City')->hour;
+        $minute = now('America/Mexico_City')->minute;
         
         // Matutino: 08:00 - 17:00
         if ($hour >= 8 && $hour < 17) {
@@ -281,13 +281,13 @@ class GerenciaController extends Controller
         $activeStrike = $program->strikes()
             ->where(function($query) {
                 $query->whereNull('end_time')
-                      ->orWhere('end_time', '>=', now());
+                      ->orWhere('end_time', '>=', now('America/Mexico_City'));
             })
             ->first();
         
         if ($activeStrike) {
             $startTime = Carbon::parse($activeStrike->start_time);
-            $duration = $startTime->diff(now());
+            $duration = $startTime->diff(now('America/Mexico_City'));
             
             return [
                 'status' => 'stopped',
@@ -351,7 +351,7 @@ class GerenciaController extends Controller
                 'status' => 'optimal',
                 'color' => 'green',
                 'label' => 'Verde',
-                'time' => now()->format('H:i:s'),
+                'time' => now('America/Mexico_City')->format('H:i:s'),
                 'message' => 'Operación normal y estable',
             ];
         } elseif ($compliance >= 70) {
@@ -359,7 +359,7 @@ class GerenciaController extends Controller
                 'status' => 'warning',
                 'color' => 'yellow',
                 'label' => 'Amarillo',
-                'time' => now()->format('H:i:s'),
+                'time' => now('America/Mexico_City')->format('H:i:s'),
                 'message' => 'Operación con ligeras variaciones.',
             ];
         } else {
@@ -367,7 +367,7 @@ class GerenciaController extends Controller
                 'status' => 'critical',
                 'color' => 'red',
                 'label' => 'Rojo',
-                'time' => now()->format('H:i:s'),
+                'time' => now('America/Mexico_City')->format('H:i:s'),
                 'message' => 'El rendimiento está por debajo de lo esperado. Requiere atención.',
             ];
         }

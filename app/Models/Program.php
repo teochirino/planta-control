@@ -60,7 +60,7 @@ class Program extends Model
     public static function generateUniqueCode()
     {
         do {
-            $code = now()->format('d-m-Y') . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+            $code = now('America/Mexico_City')->format('d-m-Y') . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
         } while (self::where('codigo', $code)->exists());
         
         return $code;
@@ -107,7 +107,7 @@ class Program extends Model
     
     public static function validateMinDeliveryDate($date)
     {
-        $minDate = self::addWorkingDays(now(), 4);
+        $minDate = self::addWorkingDays(now('America/Mexico_City'), 4);
         return Carbon::parse($date)->gte($minDate);
     }
     

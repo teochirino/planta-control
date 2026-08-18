@@ -72,7 +72,7 @@ class ProductionAdjustment extends Model
     // Scope para ajustes recientes
     public function scopeRecent($query, $days = 7)
     {
-        return $query->where('created_at', '>=', now()->subDays($days));
+        return $query->where('created_at', '>=', now('America/Mexico_City')->subDays($days));
     }
 
     // Scope para ajustes por categoría

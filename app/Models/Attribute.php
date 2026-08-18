@@ -39,7 +39,7 @@ class Attribute extends Model
             return '0h 0m';
         }
         
-        $diff = Carbon::now()->diff($this->color_changed_at);
+        $diff = Carbon::now('America/Mexico_City')->diff($this->color_changed_at);
         
         if ($diff->days > 0) {
             return "{$diff->days}d {$diff->h}h";

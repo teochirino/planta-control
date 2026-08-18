@@ -43,7 +43,7 @@ class IngenieroProcesosController extends Controller
             ->get()
             ->groupBy('modelo');
         
-        $minDeliveryDate = Program::addWorkingDays(now(), 4);
+        $minDeliveryDate = Program::addWorkingDays(now('America/Mexico_City'), 4);
         
         return Inertia::render('IngenieroProcesos/CreateProgram', [
             'products' => $products,
@@ -55,7 +55,7 @@ class IngenieroProcesosController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'fecha_entrega' => 'required|date|after_or_equal:' . Program::addWorkingDays(now(), 4)->format('Y-m-d'),
+            'fecha_entrega' => 'required|date|after_or_equal:' . Program::addWorkingDays(now('America/Mexico_City'), 4)->format('Y-m-d'),
             'productos' => 'required|array|min:1',
             'productos.*.modelo' => 'required|string',
             'productos.*.cantidad' => 'required|integer|min:1',
@@ -1097,7 +1097,7 @@ class IngenieroProcesosController extends Controller
                 'total_produced' => $request->total_produced,
                 'total_rejected' => $request->total_rejected,
                 'manually_edited_by_engineering' => true,
-                'engineering_edited_at' => now(),
+                'engineering_edited_at' => now('America/Mexico_City'),
                 'engineering_edited_by' => auth()->id(),
             ]);
 
@@ -1405,7 +1405,7 @@ class IngenieroProcesosController extends Controller
 
             // Crear Program de recuperación
             $program = Program::create([
-                'codigo' => 'REC-' . now()->format('Ymd-His'),
+                'codigo' => 'REC-' . now('America/Mexico_City')->format('Ymd-His'),
                 'fecha_entrega' => $phaseDates['fecha_entrega'],
                 'fecha_fase1' => $phaseDates['fase1'],
                 'fecha_fase2' => $phaseDates['fase2'],
@@ -1441,7 +1441,7 @@ class IngenieroProcesosController extends Controller
             $balance = \App\Models\WorkCenterBalance::getOrCreateForWorkCenter($request->work_center_id);
             $newBackwardness = max(0, $balance->accumulated_backwardness - $request->cantidad_piezas);
             $balance->accumulated_backwardness = $newBackwardness;
-            $balance->last_calculated_at = now();
+            $balance->last_calculated_at = now('America/Mexico_City');
             $balance->save();
 
             DB::commit();

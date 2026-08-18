@@ -31,7 +31,7 @@ class GerenteMantenimientoController extends Controller
         $selectedWorkCenter = WorkCenter::with('machines')->findOrFail($selectedWorkCenterId);
         
         // Fecha actual
-        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedDate = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         
         // Obtener todas las máquinas del centro con sus breakdowns
         $machines = Machine::with(['workCenter', 'breakdowns' => function($query) use ($selectedDate) {
@@ -95,7 +95,7 @@ class GerenteMantenimientoController extends Controller
     public function getPendingBreakdowns(Request $request)
     {
         $workCenterId = $request->get('work_center_id');
-        $date = $request->get('date', now()->format('Y-m-d'));
+        $date = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         
         $breakdowns = Breakdown::with(['machine.workCenter', 'user'])
             ->whereHas('machine', function($query) use ($workCenterId) {
@@ -122,7 +122,7 @@ class GerenteMantenimientoController extends Controller
         
         $breakdown->update([
             'confirmed_by' => auth()->id(),
-            'confirmed_at' => now(),
+            'confirmed_at' => now('America/Mexico_City'),
             'confirmed_minutes' => $request->confirmed_minutes,
         ]);
         
@@ -153,7 +153,7 @@ class GerenteMantenimientoController extends Controller
             
             if ($activeBreakdown) {
                 $activeBreakdown->update([
-                    'end_date' => now(),
+                    'end_date' => now('America/Mexico_City'),
                 ]);
             }
             
@@ -168,7 +168,7 @@ class GerenteMantenimientoController extends Controller
             ]);
             
             if ($activeStrike) {
-                $endTime = now()->format('H:i');
+                $endTime = now('America/Mexico_City')->format('H:i');
                 $activeStrike->update([
                     'end_time' => $endTime,
                 ]);
@@ -210,8 +210,8 @@ class GerenteMantenimientoController extends Controller
     public function exportReport(Request $request)
     {
         $workCenterId = $request->get('work_center_id');
-        $startDate = $request->get('start_date', now()->startOfWeek()->format('Y-m-d'));
-        $endDate = $request->get('end_date', now()->endOfWeek()->format('Y-m-d'));
+        $startDate = $request->get('start_date', now('America/Mexico_City')->startOfWeek()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now('America/Mexico_City')->endOfWeek()->format('Y-m-d'));
         $format = $request->get('format', 'json'); // json, excel, csv
         
         $query = Machine::with(['workCenter', 'breakdowns' => function($query) use ($startDate, $endDate) {
@@ -272,7 +272,7 @@ class GerenteMantenimientoController extends Controller
         // Título del reporte
         $sheet->setCellValue('A1', 'Reporte de Horas Detenidas por Máquina');
         $sheet->setCellValue('A2', 'Período: ' . $summary['period']['start'] . ' a ' . $summary['period']['end']);
-        $sheet->setCellValue('A3', 'Generado: ' . now()->format('d/m/Y H:i'));
+        $sheet->setCellValue('A3', 'Generado: ' . now('America/Mexico_City')->format('d/m/Y H:i'));
         
         // Encabezados de la tabla
         $headers = ['Máquina', 'Centro de Trabajo', 'Estado', 'Total Averías', 'Minutos', 'Horas', 'Minutos Confirmados', 'Horas Confirmadas', 'Pendientes Confirmación'];
@@ -317,12 +317,12 @@ class GerenteMantenimientoController extends Controller
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, $format === 'csv' ? 'Csv' : 'Xlsx');
         
         if ($format === 'csv') {
-            $filename = 'reporte_horas_detenidas_' . now()->format('Y-m-d') . '.csv';
+            $filename = 'reporte_horas_detenidas_' . now('America/Mexico_City')->format('Y-m-d') . '.csv';
             $writer->setDelimiter(',');
             $writer->setEnclosure('"');
             $writer->setSheetIndex(0);
         } else {
-            $filename = 'reporte_horas_detenidas_' . now()->format('Y-m-d') . '.xlsx';
+            $filename = 'reporte_horas_detenidas_' . now('America/Mexico_City')->format('Y-m-d') . '.xlsx';
         }
         
         header('Content-Type: ' . ($format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));

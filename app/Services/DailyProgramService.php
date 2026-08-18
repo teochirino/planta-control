@@ -231,8 +231,8 @@ class DailyProgramService
      */
     public function getCurrentShift(): string
     {
-        $hour = now()->hour;
-        $minute = now()->minute;
+        $hour = now('America/Mexico_City')->hour;
+        $minute = now('America/Mexico_City')->minute;
         
         // Matutino: 08:00 - 17:00
         if ($hour >= 8 && $hour < 17) {

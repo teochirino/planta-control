@@ -54,7 +54,7 @@ class OperadorController extends Controller
         $selectedLine = ProductionLine::with('workCenter')->findOrFail($selectedLineId);
         
         // Forzar fecha actual
-        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedDate = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         $selectedShift = $request->get('shift', 'matutino');
         
         $dailyProgram = DailyProgram::with(['schedules', 'strikes', 'operatorLineClosures'])
@@ -200,7 +200,7 @@ class OperadorController extends Controller
                 'id_machine' => $request->id_machine,
                 'id_user' => auth()->id(),
                 'reason' => $request->description,
-                'start_date' => now(),
+                'start_date' => now('America/Mexico_City'),
             ]);
             
             // Actualizar estado de máquina a averiado
@@ -285,7 +285,7 @@ class OperadorController extends Controller
                 
                 if ($breakdown) {
                     $breakdown->update([
-                        'end_date' => now(),
+                        'end_date' => now('America/Mexico_City'),
                     ]);
                 }
                 
@@ -344,7 +344,7 @@ class OperadorController extends Controller
     public function getProductionData(Request $request)
     {
         $lineId = $request->get('production_line_id');
-        $date = $request->get('date', now()->format('Y-m-d'));
+        $date = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         $shift = $request->get('shift', 'matutino');
         
         $user = auth()->user();
@@ -432,7 +432,7 @@ class OperadorController extends Controller
             'id_daily_program' => $dailyProgram->id,
             'id_production_line' => $productionLine->id,
             'closed_by' => $user->id,
-            'closed_at' => now(),
+            'closed_at' => now('America/Mexico_City'),
         ]);
 
         // Verificar si todas las líneas del programa están cerradas
@@ -443,7 +443,7 @@ class OperadorController extends Controller
         if ($closedLines >= $totalLines) {
             $dailyProgram->update([
                 'operator_closed' => true,
-                'operator_closed_at' => now(),
+                'operator_closed_at' => now('America/Mexico_City'),
                 'operator_closed_by' => $user->id,
             ]);
         }
@@ -474,7 +474,7 @@ class OperadorController extends Controller
         
         // Obtener parámetros de selección
         $selectedWorkCenterId = $request->get('work_center_id');
-        $selectedDate = $request->get('date', now()->format('Y-m-d'));
+        $selectedDate = $request->get('date', now('America/Mexico_City')->format('Y-m-d'));
         $selectedShift = $request->get('shift', 'matutino');
         
         // Si no se seleccionó centro, usar el primero
