@@ -1299,4 +1299,165 @@ class SupervisorController extends Controller
         
         return array_reverse($history); // Mostrar en orden cronológico (más antiguo primero)
     }
+
+    // Historial por Centro de Trabajo
+    public function centerHistory(Request $request)
+    {
+        $user = auth()->user();
+        $workCenters = $user->workCenters;
+
+        if ($workCenters->isEmpty()) {
+            return Inertia::render('Supervisor/NoWorkCenters');
+        }
+
+        $selectedWorkCenterId = $request->get('work_center_id');
+        if (!$selectedWorkCenterId) {
+            $selectedWorkCenterId = $workCenters->first()->id;
+        }
+
+        $selectedWorkCenter = $workCenters->where('id', $selectedWorkCenterId)->first();
+
+        // Filtros de fecha
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+
+        \Log::info('CenterHistory filters', [
+            'work_center_id' => $selectedWorkCenterId,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'all_params' => $request->all()
+        ]);
+
+        // Query para obtener el historial
+        $query = DailyProgram::where('id_work_center', $selectedWorkCenterId);
+
+        if ($startDate) {
+            $query->where('date', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            // Incluir todo el día final agregando 1 día y usando <
+            $query->where('date', '<', Carbon::parse($endDate)->addDay()->format('Y-m-d'));
+        }
+
+        // Ordenar descendente por fecha y paginar
+        $dailyPrograms = $query->orderBy('date', 'desc')
+            ->orderBy('shift', 'desc')
+            ->paginate(15);
+
+        // Calcular faltantes a producir para cada registro
+        $dailyPrograms->getCollection()->transform(function ($program) {
+            $totalToProduce = max($program->programmed + $program->backwardness - $program->advanced, 0);
+            $missingToProduce = max($totalToProduce - ($program->total_produced ?? 0), 0);
+
+            $program->total_to_produce = $totalToProduce;
+            $program->missing_to_produce = $missingToProduce;
+
+            return $program;
+        });
+
+        return Inertia::render('Supervisor/CenterHistory', [
+            'workCenters' => $workCenters,
+            'selectedWorkCenter' => $selectedWorkCenter,
+            'dailyPrograms' => $dailyPrograms,
+            'filters' => [
+                'work_center_id' => $selectedWorkCenterId,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+        ]);
+    }
+
+    // Exportar historial a Excel
+    public function exportCenterHistoryExcel(Request $request)
+    {
+        $request->validate([
+            'work_center_id' => 'required|exists:work_centers,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+        ]);
+
+        $user = auth()->user();
+
+        // Verificar que el usuario tenga acceso a este centro
+        if (!$user->canViewWorkCenter($request->work_center_id)) {
+            return response()->json(['error' => 'No tienes acceso a este centro de trabajo'], 403);
+        }
+
+        $workCenter = WorkCenter::findOrFail($request->work_center_id);
+
+        // Query para obtener el historial
+        $query = DailyProgram::where('id_work_center', $request->work_center_id);
+
+        if ($request->start_date) {
+            $query->where('date', '>=', $request->start_date);
+        }
+
+        if ($request->end_date) {
+            // Incluir todo el día final agregando 1 día y usando <
+            $query->where('date', '<', Carbon::parse($request->end_date)->addDay()->format('Y-m-d'));
+        }
+
+        $dailyPrograms = $query->orderBy('date', 'desc')
+            ->orderBy('shift', 'desc')
+            ->get();
+
+        // Crear archivo Excel
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Encabezados
+        $sheet->setCellValue('A1', 'Fecha');
+        $sheet->setCellValue('B1', 'Turno');
+        $sheet->setCellValue('C1', 'Programado');
+        $sheet->setCellValue('D1', 'Atrasos');
+        $sheet->setCellValue('E1', 'Avance');
+        $sheet->setCellValue('F1', 'Producción Real');
+        $sheet->setCellValue('G1', 'Total a Producir');
+        $sheet->setCellValue('H1', 'Faltantes a Producir');
+
+        // Estilos para encabezados
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'color' => ['rgb' => '0B2A40']],
+        ];
+
+        $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
+
+        // Datos
+        $row = 2;
+        foreach ($dailyPrograms as $program) {
+            $totalToProduce = max($program->programmed + $program->backwardness - $program->advanced, 0);
+            $missingToProduce = max($totalToProduce - ($program->total_produced ?? 0), 0);
+
+            $sheet->setCellValue('A' . $row, \Carbon\Carbon::parse($program->date)->format('d/m/Y'));
+            $sheet->setCellValue('B' . $row, ucfirst($program->shift));
+            $sheet->setCellValue('C' . $row, $program->programmed);
+            $sheet->setCellValue('D' . $row, $program->backwardness);
+            $sheet->setCellValue('E' . $row, $program->advanced);
+            $sheet->setCellValue('F' . $row, $program->total_produced ?? 0);
+            $sheet->setCellValue('G' . $row, $totalToProduce);
+            $sheet->setCellValue('H' . $row, $missingToProduce);
+
+            $row++;
+        }
+
+        // Auto-size columnas
+        foreach (range('A', 'H') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        // Nombre del archivo
+        $fileName = 'Historial_' . str_replace(' ', '_', $workCenter->name) . '_' . now()->format('Y-m-d_His') . '.xlsx';
+
+        // Generar respuesta
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
+    }
 }

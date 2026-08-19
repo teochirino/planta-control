@@ -279,6 +279,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/attributes/{attribute}/change-color', [\App\Http\Controllers\AttributeController::class, 'changeColor'])->name('attributes.change-color');
         Route::get('/attributes/{attribute}/history', [\App\Http\Controllers\AttributeController::class, 'getHistory'])->name('attributes.history');
         Route::get('/attributes/recent-changes', [\App\Http\Controllers\AttributeController::class, 'getRecentChanges'])->name('attributes.recent-changes');
+
+        // Historial por Centro
+        Route::get('/center-history', [SupervisorController::class, 'centerHistory'])->name('center-history');
+        Route::get('/center-history/export', [SupervisorController::class, 'exportCenterHistoryExcel'])->name('center-history.export');
     });
     
     // ============================================
