@@ -211,6 +211,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/check-saturdays', [\App\Http\Controllers\IngenieroProcesosController::class, 'checkSaturdayInPhases'])->name('check-saturdays');
         Route::put('/{program}/update-delivery-date', [\App\Http\Controllers\IngenieroProcesosController::class, 'updateDeliveryDate'])->name('update-delivery-date');
 
+        // Historial de programas
+        Route::get('/historial', [\App\Http\Controllers\IngenieroProcesosController::class, 'programHistory'])->name('program-history');
+
         // ============================================
         // ROLLBACK: Eliminar estas rutas para volver al comportamiento original
         // ============================================

@@ -1650,6 +1650,37 @@ class IngenieroProcesosController extends Controller
     }
 
     // ============================================
+    // HISTORIAL DE PROGRAMAS
+    // ============================================
+
+    public function programHistory(Request $request)
+    {
+        $service = new \App\Services\ProgramHistoryService();
+        
+        $filterType = $request->input('filter_type', 'program');
+        $results = null;
+        
+        if ($request->has('filter') && $filterType === 'program') {
+            $programId = $request->input('program_id');
+            $results = $service->getByProgram($programId);
+        } elseif ($request->has('filter') && $filterType === 'work_center') {
+            $workCenterId = $request->input('work_center_id');
+            $date = $request->input('date');
+            $results = $service->getByWorkCenterAndDate($workCenterId, $date);
+        } elseif ($request->has('filter') && $filterType === 'date') {
+            $date = $request->input('date');
+            $results = $service->getByDate($date);
+        }
+
+        return Inertia::render('IngenieroProcesos/ProgramHistory', [
+            'programs' => $service->getAvailablePrograms(),
+            'workCenters' => $service->getAvailableWorkCenters(),
+            'results' => $results,
+            'filters' => $request->only(['filter_type', 'program_id', 'work_center_id', 'date']),
+        ]);
+    }
+
+    // ============================================
     // FIN CRUD DE PROGRAMAS DE RECUPERACIÓN
     // ============================================
 }
