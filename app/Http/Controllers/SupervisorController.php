@@ -1341,7 +1341,8 @@ class SupervisorController extends Controller
         }
 
         // Ordenar descendente por fecha y paginar
-        $dailyPrograms = $query->orderBy('date', 'desc')
+        $dailyPrograms = $query->with(['program', 'workCenter'])
+            ->orderBy('date', 'desc')
             ->orderBy('shift', 'desc')
             ->paginate(15);
 

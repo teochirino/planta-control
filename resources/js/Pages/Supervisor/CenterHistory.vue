@@ -90,6 +90,7 @@
                         <thead>
                             <tr class="bg-[#0b2a40] text-white">
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Fecha</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Programa</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Turno</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Programado</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Atrasos</th>
@@ -105,6 +106,17 @@
                                 ]">
                                 <td :class="[isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm', program.is_virtual ? 'text-[#999] italic' : 'font-semibold text-[#0c1c28]']">
                                     {{ formatDate(program.date) }}
+                                </td>
+                                <td :class="[isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm', 'font-semibold text-[#0c1c28]']">
+                                    <button 
+                                        v-if="program.program?.codigo"
+                                        @click="openAdjustmentModal(program)"
+                                        class="hover:text-[#0b5a7a] hover:underline cursor-pointer transition"
+                                        :title="'Registrar Ajustes: ' + program.program.codigo"
+                                    >
+                                        {{ program.program.codigo }}
+                                    </button>
+                                    <span v-else>-</span>
                                 </td>
                                 <td :class="isTVMode() ? 'px-5 py-4' : 'px-4 py-3'">
                                     <span v-if="program.is_virtual" 
@@ -138,6 +150,95 @@
                     <p :class="isTVMode() ? 'text-base' : 'text-sm'" class="text-[#6a8090]">
                         No se encontraron registros en el período seleccionado.
                     </p>
+                </div>
+
+                <!-- Modal de Registro de Ajustes -->
+                <div v-if="showAdjustmentModal" class="fixed inset-0 flex items-center justify-center z-50" style="background: rgba(11, 28, 40, 0.5);">
+                    <div class="rounded-lg p-6 w-full max-w-2xl mx-4" style="background: #fff; border: 1px solid #d4dee8; box-shadow: 0 12px 40px rgba(0,0,0,.3);">
+                        <h2 class="text-xl font-semibold mb-4" style="color: #0b2a40;">Registrar Ajustes de Producción</h2>
+
+                        <div class="mb-4 p-3 rounded" style="background: #f4f7fa; border: 1px solid #e8eff4;">
+                            <p class="text-sm font-semibold" style="color: #6a8090;">
+                                {{ formatDate(editingProgram.date) }} - {{ getTurnoLabel(editingProgram.shift) }} - {{ editingProgram.workCenter?.name }}
+                            </p>
+                            <p class="text-sm font-semibold mt-1" style="color: #0c1c28;">
+                                Programa: {{ editingProgram.program?.codigo || '-' }}
+                            </p>
+                        </div>
+
+                        <form @submit.prevent="saveAdjustment">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2" style="color: #4e6070;">Programado</label>
+                                    <input type="number" v-model.number="editForm.programmed" min="0"
+                                           class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
+                                           style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
+                                    <p class="text-xs mt-1" style="color: #6a8090;">Valor actual: {{ editingProgram.programmed }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2" style="color: #4e6070;">Atrasos</label>
+                                    <input type="number" v-model.number="editForm.backwardness" min="0"
+                                           class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
+                                           style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
+                                    <p class="text-xs mt-1" style="color: #6a8090;">Valor actual: {{ editingProgram.backwardness }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2" style="color: #4e6070;">Adelantos</label>
+                                    <input type="number" v-model.number="editForm.advanced" min="0"
+                                           class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
+                                           style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
+                                    <p class="text-xs mt-1" style="color: #6a8090;">Valor actual: {{ editingProgram.advanced }}</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2" style="color: #4e6070;">Total Fabricado</label>
+                                    <input type="number" v-model.number="editForm.total_produced" min="0"
+                                           class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
+                                           style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
+                                    <p class="text-xs mt-1" style="color: #6a8090;">Valor actual: {{ editingProgram.total_produced || 0 }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2" style="color: #4e6070;">Total Rechazado</label>
+                                    <input type="number" v-model.number="editForm.total_rejected" min="0"
+                                           class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
+                                           style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;">
+                                    <p class="text-xs mt-1" style="color: #6a8090;">Valor actual: {{ editingProgram.total_rejected || 0 }}</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold mb-2" style="color: #4e6070;">Motivo del ajuste *</label>
+                                <textarea v-model="editForm.reason" rows="3" required
+                                          class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
+                                          style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;"
+                                          placeholder="Explique el motivo del ajuste..."></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold mb-2" style="color: #4e6070;">Notas adicionales</label>
+                                <textarea v-model="editForm.notes" rows="2"
+                                          class="w-full px-4 py-2 rounded-lg font-semibold focus:outline-none"
+                                          style="background: #fff; color: #0c1c28; border: 1px solid #d4dee8;"
+                                          placeholder="Información adicional opcional..."></textarea>
+                            </div>
+
+                            <div class="flex space-x-4">
+                                <button type="submit"
+                                        :disabled="editForm.processing"
+                                        class="px-6 py-2 rounded-lg transition font-semibold text-sm disabled:opacity-50"
+                                        style="background: #0a7c3e; color: #fff;">
+                                    {{ editForm.processing ? 'Guardando...' : 'Guardar Cambios' }}
+                                </button>
+                                <button type="button" @click="closeAdjustmentModal"
+                                        class="px-6 py-2 rounded-lg transition font-semibold text-sm"
+                                        style="background: #fff; color: #0b2a40; border: 1px solid #d4dee8;">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- Paginación -->
@@ -186,7 +287,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import { router } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import SupervisorSidebar from '@/Components/SupervisorSidebar.vue'
 import DisplayModeToggle from '@/Components/DisplayModeToggle.vue'
 import { useDisplayMode } from '@/Composables/useDisplayMode'
@@ -202,6 +303,20 @@ const dailyPrograms = ref(props.dailyPrograms || { data: [] })
 const selectedWorkCenterId = ref(props.filters?.work_center_id || workCenters.value[0]?.id)
 const startDate = ref(props.filters?.start_date || '')
 const endDate = ref(props.filters?.end_date || '')
+
+// Modal de ajustes
+const showAdjustmentModal = ref(false)
+const editingProgram = ref(null)
+
+const editForm = useForm({
+    programmed: 0,
+    backwardness: 0,
+    advanced: 0,
+    total_produced: 0,
+    total_rejected: 0,
+    reason: '',
+    notes: '',
+})
 
 const totalProgramado = computed(() => {
     return dailyPrograms.value.data.reduce((sum, p) => sum + (p.programmed || 0), 0)
@@ -219,6 +334,31 @@ const formatNumber = (num) => (num || 0).toLocaleString('es-MX')
 
 const formatDate = (date) => {
     if (!date) return '-'
+    // Extraer la fecha sin conversión de zona horaria
+    const dateStr = date.toString()
+    // Manejar diferentes formatos de fecha
+    if (dateStr.includes('T')) {
+        // Formato ISO: 2026-08-17T00:00:00.000000Z
+        const parts = dateStr.split('T')[0].split('-')
+        if (parts.length === 3) {
+            const [year, month, day] = parts
+            return `${day}/${month}/${year}`
+        }
+    } else if (dateStr.includes(' ')) {
+        // Formato con espacio: 2026-08-17 00:00:00
+        const parts = dateStr.split(' ')[0].split('-')
+        if (parts.length === 3) {
+            const [year, month, day] = parts
+            return `${day}/${month}/${year}`
+        }
+    } else {
+        // Formato simple: 2026-08-17
+        const parts = dateStr.split('-')
+        if (parts.length === 3) {
+            const [year, month, day] = parts
+            return `${day}/${month}/${year}`
+        }
+    }
     return new Date(date).toLocaleDateString('es-MX', {
         day: '2-digit',
         month: '2-digit',
@@ -306,6 +446,34 @@ const exportarExcel = () => {
 
     const queryString = new URLSearchParams(params).toString()
     window.location.href = `/supervisor/center-history/export?${queryString}`
+}
+
+// Funciones del modal de ajustes
+const openAdjustmentModal = (program) => {
+    editingProgram.value = program
+    editForm.programmed = program.programmed
+    editForm.backwardness = program.backwardness
+    editForm.advanced = program.advanced
+    editForm.total_produced = program.total_produced || 0
+    editForm.total_rejected = program.total_rejected || 0
+    editForm.reason = ''
+    editForm.notes = ''
+    showAdjustmentModal.value = true
+}
+
+const closeAdjustmentModal = () => {
+    showAdjustmentModal.value = false
+    editingProgram.value = null
+    editForm.reset()
+}
+
+const saveAdjustment = () => {
+    editForm.put(route('supervisor.daily-programs.update', editingProgram.value.id), {
+        onSuccess: () => {
+            closeAdjustmentModal()
+            cargarHistorial()
+        },
+    })
 }
 
 onMounted(() => {
