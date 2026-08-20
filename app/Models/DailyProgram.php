@@ -25,7 +25,10 @@ class DailyProgram extends Model
         'program_id',
         'manually_edited_by_engineering',
         'engineering_edited_at',
-        'engineering_edited_by'
+        'engineering_edited_by',
+        'manually_edited_by_supervisor',
+        'supervisor_edited_at',
+        'supervisor_edited_by'
     ];
     
     protected $casts = [
@@ -61,6 +64,11 @@ class DailyProgram extends Model
     public function engineeringEditedBy()
     {
         return $this->belongsTo(User::class, 'engineering_edited_by');
+    }
+
+    public function supervisorEditedBy()
+    {
+        return $this->belongsTo(User::class, 'supervisor_edited_by');
     }
 
     // Calcular total a producir

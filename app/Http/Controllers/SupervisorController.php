@@ -356,8 +356,8 @@ class SupervisorController extends Controller
             }
             
             // Si el programa ya existe pero no ha sido procesado, actualizar con el balance acumulado
-            // SOLO si no fue editado manualmente por ingeniería
-            if (!$dailyProgram->balance_processed && !$dailyProgram->manually_edited_by_engineering) {
+            // SOLO si no fue editado manualmente por ingeniería ni por supervisor
+            if (!$dailyProgram->balance_processed && !$dailyProgram->manually_edited_by_engineering && !$dailyProgram->manually_edited_by_supervisor) {
                 $dailyProgram->update([
                     'backwardness' => $accumulatedBackwardness,
                     'advanced' => $accumulatedAdvanced,
@@ -429,8 +429,8 @@ class SupervisorController extends Controller
             // Calcular valores de backwardness y advanced
             if ($existingProgram) {
                 // Si el programa ya existe pero no ha sido procesado, usar el balance acumulado del centro
-                // SOLO si no fue editado manualmente por ingeniería
-                if (!$existingProgram->balance_processed && !$existingProgram->manually_edited_by_engineering) {
+                // SOLO si no fue editado manualmente por ingeniería ni por supervisor
+                if (!$existingProgram->balance_processed && !$existingProgram->manually_edited_by_engineering && !$existingProgram->manually_edited_by_supervisor) {
                     $workCenterBalance = \App\Models\WorkCenterBalance::where('id_work_center', $request->id_work_center)->first();
                     $backwardness = $workCenterBalance ? $workCenterBalance->accumulated_backwardness : 0;
                     $advanced = $workCenterBalance ? $workCenterBalance->accumulated_advanced : 0;
@@ -1178,6 +1178,9 @@ class SupervisorController extends Controller
                 'advanced' => $request->advanced,
                 'total_produced' => $request->total_produced,
                 'total_rejected' => $request->total_rejected,
+                'manually_edited_by_supervisor' => true,
+                'supervisor_edited_at' => now('America/Mexico_City'),
+                'supervisor_edited_by' => auth()->id(),
             ]);
 
             // Registrar ajustes si hubo cambios

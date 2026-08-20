@@ -78,7 +78,7 @@ class BalanceService
         // Obtener o crear balance del centro
         $balance = WorkCenterBalance::getOrCreateForWorkCenter($program->id_work_center);
 
-        // Si el programa fue editado manualmente por ingeniería, registrar este hecho
+        // Si el programa fue editado manualmente por ingeniería o supervisor, registrar este hecho
         // y usar los valores manuales para el cálculo del balance
         if ($program->manually_edited_by_engineering) {
             // Registrar ajuste de balance indicando que se usaron valores manuales
@@ -94,6 +94,21 @@ class BalanceService
                 'reason' => 'Balance calculado con valores manuales de ingeniería (backwardness: ' . $program->backwardness . ', advanced: ' . $program->advanced . ')',
                 'adjusted_by' => auth()->id(),
                 'notes' => 'El programa fue editado manualmente por ingeniería el ' . $program->engineering_edited_at,
+            ]);
+        } elseif ($program->manually_edited_by_supervisor) {
+            // Registrar ajuste de balance indicando que se usaron valores manuales del supervisor
+            ProductionAdjustment::create([
+                'id_daily_program' => $program->id,
+                'id_work_center' => $program->id_work_center,
+                'adjustment_type' => 'correction',
+                'field_adjusted' => 'backwardness',
+                'previous_value' => $balance->accumulated_backwardness,
+                'new_value' => $balance->accumulated_backwardness, // Se actualizará después
+                'difference' => 0,
+                'adjustment_category' => 'correction',
+                'reason' => 'Balance calculado con valores manuales de supervisor (backwardness: ' . $program->backwardness . ', advanced: ' . $program->advanced . ')',
+                'adjusted_by' => auth()->id(),
+                'notes' => 'El programa fue editado manualmente por supervisor el ' . $program->supervisor_edited_at,
             ]);
         }
 
@@ -126,6 +141,19 @@ class BalanceService
 
         // Si el programa fue editado manualmente, actualizar el registro de ajuste con los nuevos valores
         if ($program->manually_edited_by_engineering) {
+            $lastAdjustment = ProductionAdjustment::where('id_daily_program', $program->id)
+                ->where('field_adjusted', 'backwardness')
+                ->where('adjustment_type', 'correction')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($lastAdjustment) {
+                $lastAdjustment->update([
+                    'new_value' => $newAccumulatedBackwardness,
+                    'difference' => $newAccumulatedBackwardness - $lastAdjustment->previous_value,
+                ]);
+            }
+        } elseif ($program->manually_edited_by_supervisor) {
             $lastAdjustment = ProductionAdjustment::where('id_daily_program', $program->id)
                 ->where('field_adjusted', 'backwardness')
                 ->where('adjustment_type', 'correction')

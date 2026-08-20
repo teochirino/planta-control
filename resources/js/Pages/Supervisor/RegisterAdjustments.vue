@@ -64,6 +64,11 @@
                                           class="rounded font-semibold bg-[#e8f4f8] text-[#0b5a7a] border border-[#b8dce8]">
                                         Editado por Ingeniería
                                     </span>
+                                    <span v-if="dailyProgram.manually_edited_by_supervisor"
+                                          :class="isTVMode() ? 'px-3 py-1 text-sm' : 'px-2 py-1 text-xs'"
+                                          class="rounded font-semibold bg-[#f0f7e8] text-[#5a7a0b] border border-[#b8dce8]">
+                                        Editado por Supervisor
+                                    </span>
                                 </div>
                                 <button @click="editDailyProgram(dailyProgram)"
                                         :class="isTVMode() ? 'px-5 py-2 text-base' : 'px-3 py-1 text-sm'"
