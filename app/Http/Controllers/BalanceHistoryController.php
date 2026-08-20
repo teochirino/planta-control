@@ -18,11 +18,11 @@ class BalanceHistoryController extends Controller
         if ($user->id_profile === 5) { // Supervisor de área
             $userWorkCenterIds = $user->workCenters()->pluck('work_center_id')->toArray();
             $query->whereIn('id_work_center', $userWorkCenterIds);
-            
+
             // También filtrar el select de centros
             $workCenters = WorkCenter::whereIn('id', $userWorkCenterIds)->orderBy('name')->get();
         } else {
-            // Para otros perfiles (ingeniero, admin, etc.), mostrar todos los centros
+            // Para otros perfiles (ingeniero, admin, gerencia, etc.), mostrar todos los centros
             $workCenters = WorkCenter::orderBy('name')->get();
         }
 
@@ -40,6 +40,16 @@ class BalanceHistoryController extends Controller
         }
 
         $history = $query->orderBy('processed_at', 'desc')->paginate(50);
+
+        // Debug
+        \Log::info('BalanceHistory filter', [
+            'user_profile' => $user->id_profile,
+            'requested_work_center_id' => $request->work_center_id,
+            'all_params' => $request->all(),
+            'sql' => $query->toSql(),
+            'history_count' => $history->count(),
+            'history_data' => $history->items()
+        ]);
 
         return Inertia::render('BalanceHistory/Index', [
             'history' => $history,

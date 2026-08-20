@@ -95,8 +95,8 @@
                                 </svg>
                                 <span>Historial de Ajustes</span>
                             </Link>
-                            <Link 
-                                :href="route('supervisor.balance-history')" 
+                            <Link
+                                href="/supervisor/balance-history"
                                 class="sidebar-link"
                                 :class="{ 'active': route().current('supervisor.balance-history') }"
                             >

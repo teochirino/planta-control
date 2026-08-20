@@ -18,7 +18,10 @@ const filters = ref({
 })
 
 const applyFilters = () => {
-    router.get(route('balance-history.index'), filters.value, {
+    const currentUrl = window.location.pathname
+    console.log('Applying filters:', filters.value)
+    console.log('Current URL:', currentUrl)
+    router.get(currentUrl, filters.value, {
         preserveState: true,
         preserveScroll: true
     })
@@ -30,7 +33,8 @@ const clearFilters = () => {
         date_from: '',
         date_to: ''
     }
-    router.get(route('balance-history.index'), filters.value, {
+    const currentUrl = window.location.pathname
+    router.get(currentUrl, filters.value, {
         preserveState: true,
         preserveScroll: true
     })
@@ -74,7 +78,8 @@ const isIngeniero = () => {
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Centro de Trabajo</label>
                         <select 
-                            v-model="filters.work_center_id" 
+                            v-model="filters.work_center_id"
+                            @change="applyFilters"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Todos</option>

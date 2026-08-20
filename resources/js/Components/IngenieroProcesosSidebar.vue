@@ -220,8 +220,8 @@
                                 </svg>
                                 <span>Registrar Ajustes</span>
                             </Link>
-                            <Link 
-                                :href="route('ingeniero-procesos.balance-history')" 
+                            <Link
+                                href="/ingeniero-procesos/balance-history"
                                 class="sidebar-link"
                                 :class="{ 'active': route().current('ingeniero-procesos.balance-history') }"
                             >

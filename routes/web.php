@@ -213,9 +213,9 @@ Route::middleware('auth')->group(function () {
 
         // Historial de programas
         Route::get('/historial', [\App\Http\Controllers\IngenieroProcesosController::class, 'programHistory'])->name('program-history');
-        
+
         // Historial de Procesar Balance
-        Route::get('/balance-history', [\App\Http\Controllers\BalanceHistoryController::class, 'index'])->name('balance-history');
+        Route::get('/balance-history', [\App\Http\Controllers\BalanceHistoryController::class, 'index'])->name('ingeniero.balance-history');
 
         // ============================================
         // ROLLBACK: Eliminar estas rutas para volver al comportamiento original
@@ -270,9 +270,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/process-balance', [SupervisorController::class, 'processShiftBalance'])->name('process-balance');
         Route::post('/manual-adjustment', [SupervisorController::class, 'registerManualAdjustment'])->name('manual-adjustment');
         Route::post('/extend-to-vespertino', [SupervisorController::class, 'extendToVespertino'])->name('extend-to-vespertino');
-        
+
         // Historial de Procesar Balance
-        Route::get('/balance-history', [\App\Http\Controllers\BalanceHistoryController::class, 'index'])->name('balance-history');
+        Route::get('/balance-history', [\App\Http\Controllers\BalanceHistoryController::class, 'index'])->name('supervisor.balance-history');
         Route::get('/adjustments-history', [SupervisorController::class, 'getAdjustmentsHistory'])->name('adjustments-history');
         
         // Ajustes de producción (vistas)
