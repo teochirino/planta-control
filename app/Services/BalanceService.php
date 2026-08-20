@@ -6,6 +6,7 @@ use App\Models\DailyProgram;
 use App\Models\WorkCenterBalance;
 use App\Models\ProductionAdjustment;
 use App\Models\RejectedPiece;
+use App\Models\BalanceHistory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -138,6 +139,22 @@ class BalanceService
         $balance->accumulated_advanced = $newAccumulatedAdvanced;
         $balance->last_calculated_at = now('America/Mexico_City');
         $balance->save();
+
+        // Registrar historial de procesamiento de balance
+        BalanceHistory::create([
+            'id_work_center' => $program->id_work_center,
+            'id_daily_program' => $program->id,
+            'processed_by' => auth()->id(),
+            'programmed' => $program->programmed,
+            'backwardness' => $program->backwardness,
+            'advanced' => $program->advanced,
+            'total_to_produce' => $totalToProduce,
+            'total_produced' => $totalProduced,
+            'total_rejected' => $totalRejected,
+            'final_backwardness' => $newAccumulatedBackwardness,
+            'final_advanced' => $newAccumulatedAdvanced,
+            'processed_at' => now('America/Mexico_City'),
+        ]);
 
         // Si el programa fue editado manualmente, actualizar el registro de ajuste con los nuevos valores
         if ($program->manually_edited_by_engineering) {

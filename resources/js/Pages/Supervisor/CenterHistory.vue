@@ -94,6 +94,7 @@
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Turno</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Programado</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Atrasos</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Adelantos</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Producción Real</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Faltantes a Producir</th>
                             </tr>
@@ -133,6 +134,9 @@
                                 </td>
                                 <td :class="[isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm', program.is_virtual ? 'text-center text-[#999]' : 'text-center font-semibold text-[#f59e0b]']">
                                     {{ formatNumber(program.backwardness) }}
+                                </td>
+                                <td :class="[isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm', program.is_virtual ? 'text-center text-[#999]' : 'text-center font-semibold text-[#0a7c3e]']">
+                                    {{ formatNumber(program.advanced) }}
                                 </td>
                                 <td :class="[isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm', program.is_virtual ? 'text-center text-[#999]' : 'text-center font-semibold text-[#0b8a3d]']">
                                     {{ formatNumber(program.total_produced) }}

@@ -1214,6 +1214,12 @@ class SupervisorController extends Controller
                     'adjusted_by' => auth()->id(),
                     'notes' => $request->notes,
                 ]);
+
+                // Actualizar balance acumulado del centro de trabajo
+                $workCenterBalance = \App\Models\WorkCenterBalance::getOrCreateForWorkCenter($dailyProgram->id_work_center);
+                $workCenterBalance->accumulated_backwardness = $request->backwardness;
+                $workCenterBalance->last_calculated_at = now('America/Mexico_City');
+                $workCenterBalance->save();
             }
 
             if ($previousAdvanced != $request->advanced) {
@@ -1230,6 +1236,12 @@ class SupervisorController extends Controller
                     'adjusted_by' => auth()->id(),
                     'notes' => $request->notes,
                 ]);
+
+                // Actualizar balance acumulado del centro de trabajo
+                $workCenterBalance = \App\Models\WorkCenterBalance::getOrCreateForWorkCenter($dailyProgram->id_work_center);
+                $workCenterBalance->accumulated_advanced = $request->advanced;
+                $workCenterBalance->last_calculated_at = now('America/Mexico_City');
+                $workCenterBalance->save();
             }
 
             if ($previousProduced != $request->total_produced) {
@@ -1351,8 +1363,24 @@ class SupervisorController extends Controller
 
         // Calcular faltantes a producir para cada registro
         $dailyPrograms->getCollection()->transform(function ($program) {
+            // Total a producir: programado + atrasos - adelantos
             $totalToProduce = max($program->programmed + $program->backwardness - $program->advanced, 0);
+
+            // Faltantes a producir: total a producir - producido
+            // Si hay adelantos, no se restan de los faltantes porque ya se restaron del total a producir
             $missingToProduce = max($totalToProduce - ($program->total_produced ?? 0), 0);
+
+            // Debug
+            \Log::info('CenterHistory calculation', [
+                'program_id' => $program->id,
+                'date' => $program->date,
+                'programmed' => $program->programmed,
+                'backwardness' => $program->backwardness,
+                'advanced' => $program->advanced,
+                'total_produced' => $program->total_produced,
+                'total_to_produce' => $totalToProduce,
+                'missing_to_produce' => $missingToProduce
+            ]);
 
             $program->total_to_produce = $totalToProduce;
             $program->missing_to_produce = $missingToProduce;

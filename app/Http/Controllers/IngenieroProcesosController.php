@@ -1132,6 +1132,12 @@ class IngenieroProcesosController extends Controller
                     'adjusted_by' => auth()->id(),
                     'notes' => $request->notes,
                 ]);
+
+                // Actualizar balance acumulado del centro de trabajo
+                $workCenterBalance = \App\Models\WorkCenterBalance::getOrCreateForWorkCenter($dailyProgram->id_work_center);
+                $workCenterBalance->accumulated_backwardness = $request->backwardness;
+                $workCenterBalance->last_calculated_at = now('America/Mexico_City');
+                $workCenterBalance->save();
             }
 
             if ($previousAdvanced != $request->advanced) {
@@ -1148,6 +1154,12 @@ class IngenieroProcesosController extends Controller
                     'adjusted_by' => auth()->id(),
                     'notes' => $request->notes,
                 ]);
+
+                // Actualizar balance acumulado del centro de trabajo
+                $workCenterBalance = \App\Models\WorkCenterBalance::getOrCreateForWorkCenter($dailyProgram->id_work_center);
+                $workCenterBalance->accumulated_advanced = $request->advanced;
+                $workCenterBalance->last_calculated_at = now('America/Mexico_City');
+                $workCenterBalance->save();
             }
 
             if ($previousProduced != $request->total_produced) {

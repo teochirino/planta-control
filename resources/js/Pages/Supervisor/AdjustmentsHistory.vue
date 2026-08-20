@@ -51,6 +51,7 @@
                             <tr class="bg-[#0b2a40] text-white">
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Fecha</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Tipo</th>
+                                <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-left font-bold uppercase">Campo Ajustado</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Valor Anterior</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Valor Nuevo</th>
                                 <th :class="isTVMode() ? 'px-5 py-4 text-sm' : 'px-4 py-3 text-xs'" class="text-center font-bold uppercase">Diferencia</th>
@@ -67,6 +68,9 @@
                                     <span :class="[isTVMode() ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs', 'rounded font-bold', getTipoClass(adjustment.adjustment_type)]">
                                         {{ getTipoLabel(adjustment.adjustment_type) }}
                                     </span>
+                                </td>
+                                <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="font-semibold text-[#0c1c28]">
+                                    {{ getFieldLabel(adjustment.field_adjusted) }}
                                 </td>
                                 <td :class="isTVMode() ? 'px-5 py-4 text-base' : 'px-4 py-3 text-sm'" class="text-center font-semibold text-[#0c1c28]">
                                     {{ formatNumber(adjustment.previous_value) }}
@@ -143,6 +147,17 @@ const getTipoLabel = (type) => {
         'inventory_adjustment': 'Ajuste Inventario'
     }
     return labels[type] || type
+}
+
+const getFieldLabel = (field) => {
+    const labels = {
+        'programmed': 'Programado',
+        'backwardness': 'Atrasos',
+        'advanced': 'Adelantos',
+        'total_produced': 'Fabricado',
+        'total_rejected': 'Rechazado'
+    }
+    return labels[field] || field
 }
 
 const getTipoClass = (type) => {
