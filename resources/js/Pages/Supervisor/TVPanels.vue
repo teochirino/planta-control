@@ -356,6 +356,7 @@ const currentVideo = ref(null)
 const videoPlayerRef = ref(null)
 const videosReproducedToday = ref([])
 const videoCheckInterval = ref(null)
+const todayVideos = ref([]) // Videos del día cargados una sola vez
 
 // Detectar zona horaria según entorno
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -636,10 +637,12 @@ onMounted(() => {
     
     // Initialize video RRHH system
     loadVideosReproducedToday()
-    // Check for videos immediately on mount
-    checkForScheduledVideos()
-    // Check for videos every 20 seconds (hora exacta de reproducción)
-    videoCheckInterval.value = setInterval(checkForScheduledVideos, 20000)
+    // Load today's videos once from backend
+    loadTodayVideos()
+    // Check for videos immediately on mount (local check)
+    checkForScheduledVideosLocal()
+    // Check for videos every 1 second (local time comparison, no HTTP request)
+    videoCheckInterval.value = setInterval(checkForScheduledVideosLocal, 1000)
     
     // ESC key listener for fullscreen
     document.addEventListener('keydown', handleEscKey)
@@ -699,33 +702,42 @@ function saveVideosReproducedToday() {
     localStorage.setItem('videos_reproduced_' + today, JSON.stringify(videosReproducedToday.value))
 }
 
-async function checkForScheduledVideos() {
+async function loadTodayVideos() {
     try {
-        const now = new Date()
-        console.log('Checking for scheduled videos at:', now.toLocaleTimeString())
-        
-        const response = await window.axios.get('/api/videos-programados/scheduled')
-        const videos = response.data
-        
-        console.log('Scheduled videos from API:', videos)
-        console.log('Videos already reproduced today:', videosReproducedToday.value)
-        
-        // Filter out videos already reproduced today
-        const newVideos = videos.filter(video => {
-            const notInLocalStorage = !videosReproducedToday.value.includes(video.id)
-            const notReproducedToday = !wasReproducedToday(video.ultima_reproduccion)
-            console.log(`Video ${video.id}: localStorage=${notInLocalStorage}, backend=${notReproducedToday}, ultima_reproduccion=${video.ultima_reproduccion}`)
-            return notInLocalStorage && notReproducedToday
-        })
-        
-        console.log('New videos to play:', newVideos)
-        
-        if (newVideos.length > 0) {
-            // Play the first video
-            await playVideo(newVideos[0])
-        }
+        const response = await window.axios.get('/api/videos-programados/today')
+        todayVideos.value = response.data
+        console.log('Today videos loaded:', todayVideos.value)
     } catch (error) {
-        console.error('Error checking for scheduled videos:', error)
+        console.error('Error loading today videos:', error)
+    }
+}
+
+function checkForScheduledVideosLocal() {
+    const now = new Date()
+    const currentTime = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+    const currentSeconds = now.getSeconds()
+    
+    // Only check at the start of each minute (00 seconds) to avoid multiple checks
+    if (currentSeconds !== 0) return
+    
+    console.log('Checking for scheduled videos at:', currentTime)
+    
+    // Filter videos that should play now (local check, no HTTP request)
+    const videosToPlay = todayVideos.value.filter(video => {
+        const notInLocalStorage = !videosReproducedToday.value.includes(video.id)
+        const notReproducedToday = !video.was_reproduced_today
+        const isExactTime = video.hora_reproduccion === currentTime
+        
+        console.log(`Video ${video.id}: time=${video.hora_reproduccion}, current=${currentTime}, match=${isExactTime}, localStorage=${notInLocalStorage}, backend=${notReproducedToday}`)
+        
+        return isExactTime && notInLocalStorage && notReproducedToday
+    })
+    
+    console.log('Videos to play:', videosToPlay)
+    
+    if (videosToPlay.length > 0) {
+        // Play the first video
+        playVideo(videosToPlay[0])
     }
 }
 
@@ -744,6 +756,12 @@ async function playVideo(video) {
         // Update localStorage
         videosReproducedToday.value.push(video.id)
         saveVideosReproducedToday()
+        
+        // Update local video status
+        const videoIndex = todayVideos.value.findIndex(v => v.id === video.id)
+        if (videoIndex !== -1) {
+            todayVideos.value[videoIndex].was_reproduced_today = true
+        }
         
         // Set current video and show modal
         currentVideo.value = video

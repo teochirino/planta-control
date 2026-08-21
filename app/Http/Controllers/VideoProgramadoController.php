@@ -201,4 +201,27 @@ class VideoProgramadoController extends Controller
 
         return response()->json(['message' => 'Playback registered']);
     }
+
+    /**
+     * Get all videos scheduled for today (loaded once on page load)
+     */
+    public function getTodayVideos()
+    {
+        $isLocal = in_array(request()->getHost(), ['localhost', '127.0.0.1']);
+        $timezone = $isLocal ? 'America/Caracas' : 'America/Mexico_City';
+        
+        $currentDay = Carbon::now($timezone)->dayOfWeek; // 0 (Sunday) to 6 (Saturday)
+        $today = Carbon::now($timezone)->toDateString();
+
+        $videos = VideoProgramado::where('activo', true)
+            ->whereJsonContains('dias_semana', $currentDay)
+            ->get()
+            ->map(function ($video) use ($today, $timezone) {
+                $video->was_reproduced_today = $video->ultima_reproduccion &&
+                    Carbon::parse($video->ultima_reproduccion, $timezone)->toDateString() === $today;
+                return $video;
+            });
+
+        return response()->json($videos);
+    }
 }

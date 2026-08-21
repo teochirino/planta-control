@@ -63,6 +63,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Videos Programados
     Route::get('/videos-programados', [VideoProgramadoController::class, 'index']);
     Route::post('/videos-programados', [VideoProgramadoController::class, 'store']);
+    Route::get('/videos-programados/today', [VideoProgramadoController::class, 'getTodayVideos']);
     Route::get('/videos-programados/scheduled', [VideoProgramadoController::class, 'getScheduledVideos']);
     Route::get('/videos-programados/{id}', [VideoProgramadoController::class, 'show']);
     Route::put('/videos-programados/{id}', [VideoProgramadoController::class, 'update']);
