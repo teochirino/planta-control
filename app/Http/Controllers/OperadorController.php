@@ -109,33 +109,39 @@ class OperadorController extends Controller
             'schedule_id' => 'required|exists:schedules,id',
             'produced' => 'required|integer|min:0',
         ]);
-        
+
         $schedule = Schedule::findOrFail($request->schedule_id);
         $user = auth()->user();
-        
+
         if (!$user->canEditProductionLine($schedule->id_production_line)) {
             return response()->json(['success' => false, 'message' => 'No tienes permiso para editar esta línea'], 403);
         }
-        
+
+        // Verificar que el programa no haya sido procesado
+        $dailyProgram = DailyProgram::find($schedule->id_daily_program);
+        if ($dailyProgram && $dailyProgram->balance_processed) {
+            return response()->json(['success' => false, 'message' => 'No se puede modificar la producción de un programa que ya ha sido procesado.'], 403);
+        }
+
         $schedule->update(['produced' => $request->produced]);
-        
+
         $this->dailyProgramService->updateTotalProduced($schedule->id_daily_program);
-        
+
         $dailyProgram = DailyProgram::with(['schedules', 'strikes', 'workCenter'])
             ->findOrFail($schedule->id_daily_program);
-        
+
         $productionLine = ProductionLine::findOrFail($schedule->id_production_line);
-        
+
         $schedules = $dailyProgram->schedules()
             ->where('id_production_line', $schedule->id_production_line)
             ->get();
-        
+
         $strikes = $dailyProgram->strikes()
             ->where('id_production_lines', $schedule->id_production_line)
             ->get();
-        
+
         $kpis = $this->kpiService->calculateLineKPIs($dailyProgram, $productionLine, $schedules, $strikes);
-        
+
         return response()->json([
             'success' => true,
             'kpis' => $kpis,

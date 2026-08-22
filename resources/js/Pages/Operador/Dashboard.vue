@@ -100,12 +100,12 @@
                                         {{ formatTime(schedule.start_time) }} - {{ formatTime(schedule.end_time) }}
                                     </td>
                                     <td :class="isTVMode() ? 'px-5 py-4' : 'px-4 py-3'" class="text-center">
-                                        <input type="number" 
-                                               min="0" 
+                                        <input type="number"
+                                               min="0"
                                                v-model="produccionValues[schedule.id]"
                                                @input="guardarProduccion(schedule.id)"
-                                               :class="isTVMode() ? 'w-32 px-4 py-3 text-base' : 'w-24 px-3 py-2 text-sm'"
-                                               class="border border-[#d4dee8] rounded-md text-center font-bold text-[#0b2a40] focus:outline-none focus:border-[#174060]">
+                                               :disabled="dailyProgram?.balance_processed"
+                                               :class="[isTVMode() ? 'w-32 px-4 py-3 text-base' : 'w-24 px-3 py-2 text-sm', 'border border-[#d4dee8] rounded-md text-center font-bold text-[#0b2a40] focus:outline-none focus:border-[#174060]', dailyProgram?.balance_processed ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '']">
                                     </td>
                                 </tr>
                                 <tr class="bg-[#f4f7fa] font-bold">

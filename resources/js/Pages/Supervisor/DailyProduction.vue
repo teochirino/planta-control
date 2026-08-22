@@ -140,7 +140,7 @@
                                 <td :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'" class="font-bold text-[#0c1c28] whitespace-nowrap">{{ hora.start }} - {{ hora.end }}</td>
                                 <td :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'" class="text-center font-bold text-[#174060] bg-[#f4f7fa] whitespace-nowrap">{{ expectedProductionPerHour }}</td>
                                 <td v-for="line in lineas" :key="line.id" :class="isTVMode() ? 'px-3 py-3' : 'px-2 py-2'">
-                                    <input type="number" v-model="productionValues[getKey(line.id, hora.start)]" @input="autoSave(line.id, hora.start)" min="0" :class="isTVMode() ? 'px-3 py-2 text-base' : 'px-2 py-1 text-sm'" class="w-full border border-[#d4dee8] rounded text-center font-semibold focus:border-[#174060] focus:outline-none">
+                                    <input type="number" v-model="productionValues[getKey(line.id, hora.start)]" @input="autoSave(line.id, hora.start)" min="0" :disabled="programData.balance_processed" :class="[isTVMode() ? 'px-3 py-2 text-base' : 'px-2 py-1 text-sm', 'w-full border border-[#d4dee8] rounded text-center font-semibold focus:border-[#174060] focus:outline-none', programData.balance_processed ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '']">
                                 </td>
                                 <td :class="isTVMode() ? 'px-4 py-3 text-2xl' : 'px-3 py-2 text-sm'" class="text-center font-extrabold text-[#0b2a40] bg-[#f4f7fa]">{{ formatNumber(hourTotals[hora.start]) }}</td>
                                 <td :class="isTVMode() ? 'px-4 py-3 text-base' : 'px-3 py-2 text-sm'" class="text-center font-bold bg-[#f4f7fa] whitespace-nowrap">
@@ -196,14 +196,14 @@
                     <div :class="isTVMode() ? 'p-6' : 'p-4'" class="bg-[#f8f9fb] border border-[#d4dee8] rounded-lg">
                         <h3 :class="isTVMode() ? 'text-base' : 'text-sm'" class="font-bold text-[#0b2a40] mb-2">📊 Procesar Balance</h3>
                         <p :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#6a8090] mb-3">Calcula y guarda el balance de atrasos/adelantos para el siguiente día.</p>
-                        <button 
+                        <button
                             @click="procesarBalance"
-                            :disabled="procesandoBalance || props.dailyProgram?.balance_processed"
+                            :disabled="procesandoBalance || programData.balance_processed"
                             :class="isTVMode() ? 'px-6 py-3 text-base' : 'px-4 py-2 text-xs'"
                             class="w-full bg-[#0b2a40] text-white rounded-md font-bold hover:opacity-85 transition disabled:opacity-50">
-                            {{ procesandoBalance ? 'Procesando...' : (props.dailyProgram?.balance_processed ? '✓ Balance Procesado' : 'Procesar Balance') }}
+                            {{ procesandoBalance ? 'Procesando...' : (programData.balance_processed ? '✓ Balance Procesado' : 'Procesar Balance') }}
                         </button>
-                        <p v-if="props.dailyProgram?.balance_processed" :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#0b8a3d] mt-2">
+                        <p v-if="programData.balance_processed" :class="isTVMode() ? 'text-sm' : 'text-xs'" class="text-[#0b8a3d] mt-2">
                             Procesado el {{ formatDateTime(props.dailyProgram.balance_processed_at) }}
                         </p>
                     </div>
@@ -479,7 +479,8 @@ const showBalanceConfirmModal = ref(false)
 const programData = ref({
     programmed: props.dailyProgram?.programmed || 0,
     backwardness: props.dailyProgram?.backwardness || 0,
-    advanced: props.dailyProgram?.advanced || 0
+    advanced: props.dailyProgram?.advanced || 0,
+    balance_processed: props.dailyProgram?.balance_processed || false
 })
 
 // Un programa de recuperación reutiliza "programmed" como meta de atraso a recuperar;
@@ -913,6 +914,8 @@ const confirmProcesarBalance = async () => {
 
         if (response.data.success) {
             toast.success('Balance procesado correctamente')
+            // Actualizar estado local inmediatamente
+            programData.value.balance_processed = true
             router.reload()
         } else {
             toast.error('Error: ' + response.data.message)

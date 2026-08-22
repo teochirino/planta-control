@@ -516,22 +516,30 @@ class SupervisorController extends Controller
             'schedules.*.id' => 'required|exists:schedules,id',
             'schedules.*.produced' => 'required|integer|min:0',
         ]);
-        
+
         DB::beginTransaction();
         try {
             $dailyProgramIds = [];
-            
+
             foreach ($request->schedules as $scheduleData) {
                 $schedule = Schedule::findOrFail($scheduleData['id']);
+
+                // Verificar que el programa no haya sido procesado
+                $dailyProgram = DailyProgram::find($schedule->id_daily_program);
+                if ($dailyProgram && $dailyProgram->balance_processed) {
+                    DB::rollBack();
+                    return response()->json(['success' => false, 'message' => 'No se puede modificar la producción de un programa que ya ha sido procesado.'], 403);
+                }
+
                 $schedule->update(['produced' => $scheduleData['produced']]);
                 $dailyProgramIds[$schedule->id_daily_program] = true;
             }
-            
+
             // Actualizar totales de todos los daily_programs afectados
             foreach (array_keys($dailyProgramIds) as $dpId) {
                 $this->updateDailyProgramTotal($dpId);
             }
-            
+
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Producción guardada correctamente']);
         } catch (\Exception $e) {
@@ -662,20 +670,27 @@ class SupervisorController extends Controller
             'schedule_id' => 'required|exists:schedules,id',
             'produced' => 'required|integer|min:0',
         ]);
-        
+
         try {
             $schedule = Schedule::findOrFail($request->schedule_id);
+
+            // Verificar que el programa no haya sido procesado
+            $dailyProgram = DailyProgram::find($schedule->id_daily_program);
+            if ($dailyProgram && $dailyProgram->balance_processed) {
+                return response()->json(['success' => false, 'message' => 'No se puede modificar la producción de un programa que ya ha sido procesado.'], 403);
+            }
+
             $schedule->update(['produced' => $request->produced]);
-            
+
             // Actualizar total_produced en daily_program
             $this->updateDailyProgramTotal($schedule->id_daily_program);
-            
+
             // Obtener programa actualizado con KPIs
             $dailyProgram = DailyProgram::with(['schedules', 'strikes', 'workCenter'])
                 ->findOrFail($schedule->id_daily_program);
-            
+
             $kpis = $this->calculateCenterKPIs($dailyProgram, $dailyProgram->workCenter);
-            
+
             return response()->json([
                 'success' => true,
                 'kpis' => $kpis,

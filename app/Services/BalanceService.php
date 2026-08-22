@@ -113,26 +113,33 @@ class BalanceService
             ]);
         }
 
-        // Nueva lógica de cálculo de balance acumulado
-        // Calcular cuánto del atraso inicial se cumplió hoy (exceso de producción sobre lo programado)
-        $excessProduction = max(0, $netProduced - $program->programmed);
+        // Lógica simple de cálculo de balance acumulado
+        // Nuevo atraso acumulado = faltante del día
+        $faltante = max(0, $totalToProduce - $netProduced);
+        $newAccumulatedBackwardness = $faltante;
 
-        // Nuevo atraso acumulado = atraso inicial - exceso de producción
-        $newAccumulatedBackwardness = max(0, $balance->accumulated_backwardness - $excessProduction);
+        // Nuevo adelanto acumulado = exceso del día
+        $exceso = max(0, $netProduced - $totalToProduce);
+        $newAccumulatedAdvanced = $exceso;
 
-        // Si aún falta producción después de cubrir el atraso inicial, agregarlo
-        $remainingShortfall = max(0, $totalToProduce - $netProduced);
-        $newAccumulatedBackwardness += $remainingShortfall;
-
-        // Calcular cuánto del adelanto inicial se consumió hoy (déficit de producción sobre lo programado)
-        $productionDeficit = max(0, $program->programmed - $netProduced);
-
-        // Nuevo adelanto acumulado = adelanto inicial - déficit de producción
-        $newAccumulatedAdvanced = max(0, $balance->accumulated_advanced - $productionDeficit);
-
-        // Si hay exceso de producción después de consumir el adelanto inicial, agregarlo
-        $remainingExcess = max(0, $netProduced - $totalToProduce);
-        $newAccumulatedAdvanced += $remainingExcess;
+        // Log de depuración
+        \Log::info('BalanceService - Cálculo simple de balance', [
+            'program_id' => $program->id,
+            'work_center_id' => $program->id_work_center,
+            'programmed' => $program->programmed,
+            'backwardness' => $program->backwardness,
+            'advanced' => $program->advanced,
+            'total_to_produce' => $totalToProduce,
+            'net_produced' => $netProduced,
+            'total_produced' => $totalProduced,
+            'total_rejected' => $totalRejected,
+            'faltante' => $faltante,
+            'exceso' => $exceso,
+            'new_accumulated_backwardness' => $newAccumulatedBackwardness,
+            'new_accumulated_advanced' => $newAccumulatedAdvanced,
+            'old_accumulated_backwardness' => $balance->accumulated_backwardness,
+            'old_accumulated_advanced' => $balance->accumulated_advanced,
+        ]);
 
         // Actualizar balance acumulado
         $balance->accumulated_backwardness = $newAccumulatedBackwardness;
