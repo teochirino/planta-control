@@ -508,16 +508,22 @@ const productionHours = computed(() => {
             ? (isLowVolume ? (index < totalToProduce ? 1 : 0) : Math.round(expectedPerHour))
             : 0
         
-        let compliance = 0
+        let rawCompliance = 0
         let isAdvance = false
         
         if (displayExpected > 0) {
-            compliance = expectedPerHour > 0 ? (total / expectedPerHour) * 100 : 0
+            rawCompliance = expectedPerHour > 0 ? (total / expectedPerHour) * 100 : 0
+            isAdvance = total > displayExpected
         } else if (total > 0) {
             // Producción en una hora sin meta asignada: se marca como adelanto
-            compliance = 100
+            rawCompliance = 100
             isAdvance = true
         }
+        
+        // Se tope el cumplimiento por hora a 100% para evitar porcentajes
+        // extremos (p.e. 1200%) en TV; el badge "Adelantos" indica que se
+        // superó la meta de la fila.
+        const compliance = Math.min(rawCompliance, 100)
         
         hours.push({
             time: hora.start,
