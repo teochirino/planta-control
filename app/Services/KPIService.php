@@ -22,8 +22,6 @@ class KPIService
         $totalStrikeMinutes = $this->calculateTotalStrikeMinutes($program->strikes);
         
         $totalMinutes = ($program->shift_hours ?? 9) * 60;
-        $activeMinutes = $totalMinutes - $totalStrikeMinutes;
-        $realVsIdeal = $totalMinutes > 0 ? round(($activeMinutes / $totalMinutes) * 100, 2) : 0;
         
         // productionLines.cost es un costo por HORA; se divide entre 60 para obtener el costo por minuto.
         $avgCostPerHour = $workCenter->productionLines->avg('cost') ?? 0;
@@ -37,7 +35,6 @@ class KPIService
             'fabricated' => $totalProduced,
             'difference' => $difference,
             'compliance' => $compliance,
-            'real_vs_ideal' => $realVsIdeal,
             'saved_amount' => round($savedAmount, 2),
             'installed_capacity' => $workCenter->installed_capacity,
             'strike_minutes' => $totalStrikeMinutes,

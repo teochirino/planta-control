@@ -103,12 +103,6 @@
                     </div>
                 </div>
                 
-                {{-- Real vs Ideal --}}
-                <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
-                    <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Real vs Ideal</div>
-                    <div class="text-2xl font-extrabold text-[#0b2a40]">{{ number_format($kpis['real_vs_ideal'], 1) }}%</div>
-                </div>
-                
                 {{-- Capacidad Instalada --}}
                 <div class="p-3 bg-white border border-[#d4dee8] rounded-lg text-center">
                     <div class="text-xs font-bold tracking-wider uppercase text-[#4e6070] mb-1">Cap. Instalada</div>
