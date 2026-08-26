@@ -795,10 +795,7 @@ class SupervisorController extends Controller
         // Calcular total de minutos de paros
         $totalStrikeMinutes = $program->strikes->sum('minutes');
         
-        // Calcular Real vs Ideal (horas activas)
         $totalMinutes = ($program->shift_hours ?? 9) * 60;
-        $activeMinutes = $totalMinutes - $totalStrikeMinutes;
-        $realVsIdeal = $totalMinutes > 0 ? round(($activeMinutes / $totalMinutes) * 100, 2) : 0;
         
         // Calcular ahorro de activos (costo de paros evitados). productionLines.cost es
         // un costo por HORA; se divide entre 60 para obtener el costo por minuto.
@@ -813,7 +810,6 @@ class SupervisorController extends Controller
             'fabricated' => $totalProduced,
             'difference' => $difference,
             'compliance' => $compliance,
-            'real_vs_ideal' => $realVsIdeal,
             'saved_amount' => round($savedAmount, 2),
             'installed_capacity' => $workCenter->installed_capacity,
             'is_recovery' => optional($program->program)->program_type === 'recovery',
