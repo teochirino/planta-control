@@ -105,21 +105,27 @@
                     </div>
                 </section>
 
-                <section class="panel overtime-panel">
+                <section class="panel line-panel">
                     <div class="panel-heading">
                         <div>
-                            <h2 class="panel-title">Horas Extras</h2>
-                            <span class="panel-kicker">Requerimiento del turno</span>
+                            <h2 class="panel-title">Líneas de producción</h2>
+                            <span class="panel-kicker">Rendimiento actual por equipo</span>
                         </div>
                     </div>
-                    <div class="overtime-list">
-                        <article class="overtime-card">
-                            <div class="overtime-title">Horas Extras</div>
-                            <div class="overtime-state" :class="overtimeRequired ? 'state-yes' : 'state-no'">{{ overtimeRequired ? 'Sí' : 'No' }}</div>
-                        </article>
-                        <article class="overtime-card">
-                            <div class="overtime-title">Horas extras requeridas</div>
-                            <div class="overtime-value">{{ formatNumber(overtimeHours) }}</div>
+                    <div class="line-list">
+                        <article v-for="line in productionLinesForCenterData" :key="line.id" class="line-card">
+                            <div>
+                                <div class="line-name">{{ line.title }}</div>
+                                <div class="line-state" :class="{ 'state-stopped': getLineState(line.id) === 'En paro' }">{{ getLineState(line.id) }}</div>
+                            </div>
+                            <div class="line-metric">
+                                <div class="line-metric-label">Capacidad</div>
+                                <div class="line-metric-value">{{ formatNumber(line.installed_capacity || 0) }} <small>pzs/día</small></div>
+                            </div>
+                            <div class="line-metric">
+                                <div class="line-metric-label">Costo</div>
+                                <div class="line-metric-value">${{ formatNumber(line.cost || 0) }} <small>/hrs</small></div>
+                            </div>
                         </article>
                     </div>
                 </section>
@@ -361,20 +367,6 @@ const selectedWorkCenterData = computed(() => props.selectedWorkCenter)
 const productionLinesForCenterData = computed(() => props.productionLinesForCenter)
 const centerKPIsData = computed(() => props.centerKPIs)
 const dailyProgramData = computed(() => props.dailyProgram)
-
-const overtimeRequired = computed(() => {
-    if (!centerKPIsData.value) return false
-    const remaining = (centerKPIsData.value.total_to_produce || 0) - (centerKPIsData.value.fabricated || 0)
-    return remaining > 0
-})
-
-const overtimeHours = computed(() => {
-    if (!centerKPIsData.value) return 0
-    const remaining = (centerKPIsData.value.total_to_produce || 0) - (centerKPIsData.value.fabricated || 0)
-    if (remaining <= 0) return 0
-    const capacityPerHour = (centerKPIsData.value.installed_capacity || 0) / 8.5
-    return capacityPerHour > 0 ? remaining / capacityPerHour : 0
-})
 
 const turnoLabel = computed(() => {
     const labels = {
@@ -1405,21 +1397,21 @@ function getVideoUrl(path) {
   color: var(--red);
 }
 
-.overtime-panel {
+.line-panel {
   padding-bottom: 14px;
 }
 
-.overtime-list {
+.line-list {
   padding: 0 14px;
   display: grid;
   gap: 8px;
 }
 
-.overtime-card {
+.line-card {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(120px, 1fr) minmax(72px, 0.7fr) minmax(82px, 0.85fr);
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-height: 54px;
   padding: 9px 11px;
   border: 1px solid var(--line);
@@ -1427,51 +1419,65 @@ function getVideoUrl(path) {
   background: var(--panel-soft);
 }
 
-.overtime-title {
+.line-name {
   font-size: 12px;
   font-weight: 820;
   white-space: nowrap;
 }
 
-.overtime-state {
+.line-state {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  margin-top: 5px;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 9px;
+  font-weight: 700;
 }
 
-.overtime-state::before {
+.line-state::before {
   content: "";
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--green);
 }
 
-.overtime-state.state-yes {
+.line-state.state-stopped {
   color: var(--red);
 }
 
-.overtime-state.state-yes::before {
+.line-state.state-stopped::before {
   background: var(--red);
 }
 
-.overtime-state.state-no {
-  color: var(--green);
+.line-metric {
+  min-width: 0;
+  padding-left: 9px;
+  border-left: 1px solid var(--line);
 }
 
-.overtime-state.state-no::before {
-  background: var(--green);
+.line-metric-label {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
 }
 
-.overtime-value {
+.line-metric-value {
+  margin-top: 3px;
   color: var(--navy);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 840;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.line-metric-value small {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
 }
 
 .history-panel {
@@ -1856,7 +1862,7 @@ tbody td:last-child {
   }
 
   .status-list,
-  .overtime-list {
+  .line-list {
     padding: 0 10px 10px;
     gap: 5px;
   }
@@ -1866,11 +1872,11 @@ tbody td:last-child {
     padding: 6px 9px;
   }
 
-  .overtime-panel {
+  .line-panel {
     padding-bottom: 10px;
   }
 
-  .overtime-card {
+  .line-card {
     min-height: 44px;
     padding: 6px 9px;
   }
@@ -1991,7 +1997,7 @@ tbody td:last-child {
   }
 
   .status-list,
-  .overtime-list {
+  .line-list {
     padding: 0 8px 8px;
     gap: 4px;
   }
@@ -2005,12 +2011,12 @@ tbody td:last-child {
     margin-top: 2px;
   }
 
-  .overtime-card {
+  .line-card {
     min-height: 38px;
     padding: 4px 8px;
   }
 
-  .overtime-state {
+  .line-state {
     margin-top: 3px;
   }
 
