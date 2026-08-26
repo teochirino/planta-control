@@ -221,7 +221,10 @@
                                     <td class="compliance-cell">
                                         <div class="compliance-top">
                                             <span class="compliance-value">{{ hour.compliance.toFixed(1) }}%</span>
-                                            <span class="mini-status" :class="getComplianceStatus(hour.compliance)"></span>
+                                            <span class="compliance-indicators">
+                                                <span class="mini-status" :class="getComplianceStatus(hour.compliance)"></span>
+                                                <span v-if="hour.isAdvance" class="advance-badge">Adelantos</span>
+                                            </span>
                                         </div>
                                         <div class="mini-progress">
                                             <span :class="getComplianceStatus(hour.compliance)" :style="'width:' + Math.min(hour.compliance, 100) + '%'"></span>
@@ -475,11 +478,17 @@ const productionHours = computed(() => {
         { start: '16:00', end: '17:00' }
     ]
     
-    const expectedPerHour = centerKPIsData.value?.total_to_produce > 0 
-        ? (centerKPIsData.value.total_to_produce / hoursData.length).toFixed(2) 
+    const totalToProduce = centerKPIsData.value?.total_to_produce || 0
+    const hourCount = hoursData.length
+    const expectedPerHour = totalToProduce > 0 && hourCount > 0
+        ? totalToProduce / hourCount
         : 0
     
-    hoursData.forEach(hora => {
+    // Cuando la meta es menor al número de horas del turno se distribuye
+    // una pieza por hora en las primeras filas y cero en el resto.
+    const isLowVolume = totalToProduce > 0 && totalToProduce < hourCount
+    
+    hoursData.forEach((hora, index) => {
         const hourStart = parseInt(hora.start.split(':')[0])
         const isCurrent = hourStart === currentHour
         
@@ -495,15 +504,28 @@ const productionHours = computed(() => {
             total += lineProduction
         })
         
-        const expected = parseFloat(expectedPerHour) || 0
-        const compliance = expected > 0 ? (total / expected) * 100 : 0
+        const displayExpected = totalToProduce > 0
+            ? (isLowVolume ? (index < totalToProduce ? 1 : 0) : Math.round(expectedPerHour))
+            : 0
+        
+        let compliance = 0
+        let isAdvance = false
+        
+        if (displayExpected > 0) {
+            compliance = expectedPerHour > 0 ? (total / expectedPerHour) * 100 : 0
+        } else if (total > 0) {
+            // Producción en una hora sin meta asignada: se marca como adelanto
+            compliance = 100
+            isAdvance = true
+        }
         
         hours.push({
             time: hora.start,
-            expected: Math.round(expected),
+            expected: displayExpected,
             production,
             total,
             compliance,
+            isAdvance,
             isCurrent
         })
     })
@@ -532,7 +554,7 @@ const totalCompliance = computed(() => {
 })
 
 function getHourValueClass(value, expected) {
-    if (value >= expected) return 'best'
+    if (value > 0 && value >= expected) return 'best'
     return ''
 }
 
@@ -1704,6 +1726,26 @@ tbody td:last-child {
 
 .mini-progress > span.warning {
   background: var(--yellow);
+}
+
+.compliance-indicators {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.advance-badge {
+  display: inline-block;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--green);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
 }
 
 .table-total {
