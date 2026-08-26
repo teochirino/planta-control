@@ -512,7 +512,10 @@ const productionHours = computed(() => {
         let isAdvance = false
         
         if (displayExpected > 0) {
-            compliance = expectedPerHour > 0 ? (total / expectedPerHour) * 100 : 0
+            // En volúmenes bajos se usa el esperado entero mostrado en tabla
+            // para que 1 producido / 1 esperado sea 100%, no el valor fraccionario.
+            const complianceBase = isLowVolume ? displayExpected : expectedPerHour
+            compliance = complianceBase > 0 ? (total / complianceBase) * 100 : 0
         } else if (total > 0) {
             // Producción en una hora sin meta asignada: se marca como adelanto
             compliance = 100
