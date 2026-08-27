@@ -367,15 +367,19 @@ const dailyProgramData = computed(() => props.dailyProgram)
 
 const overtimeRequired = computed(() => {
     if (!centerKPIsData.value) return false
-    const remaining = (centerKPIsData.value.total_to_produce || 0) - (centerKPIsData.value.fabricated || 0)
-    return remaining > 0
+    const totalToProduce = centerKPIsData.value.total_to_produce || 0
+    const installedCapacity = centerKPIsData.value.installed_capacity || 0
+    return totalToProduce > installedCapacity
 })
 
 const overtimeHours = computed(() => {
     if (!centerKPIsData.value) return 0
-    const remaining = (centerKPIsData.value.total_to_produce || 0) - (centerKPIsData.value.fabricated || 0)
-    if (remaining <= 0) return 0
-    const capacityPerHour = (centerKPIsData.value.installed_capacity || 0) / 8.5
+    const totalToProduce = centerKPIsData.value.total_to_produce || 0
+    const fabricated = centerKPIsData.value.fabricated || 0
+    const installedCapacity = centerKPIsData.value.installed_capacity || 0
+    if (totalToProduce <= installedCapacity) return 0
+    const remaining = Math.max(totalToProduce - fabricated, 0)
+    const capacityPerHour = installedCapacity / 8.5
     return capacityPerHour > 0 ? remaining / capacityPerHour : 0
 })
 
