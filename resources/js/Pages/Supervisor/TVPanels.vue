@@ -90,7 +90,7 @@
                     <div class="panel-heading">
                         <div>
                             <h2 class="panel-title">Semáforos de área</h2>
-                            <span class="panel-kicker">Tiempo de respuesta y disponibilidad</span>
+                           <!-- <span class="panel-kicker">Tiempo de respuesta y disponibilidad</span> -->
                         </div>
                     </div>
                     <div class="status-list">
@@ -1130,7 +1130,8 @@ function getVideoUrl(path) {
 
 .panel-title {
   margin: 0;
-  font-size: clamp(15px, 1.05vw, 19px);
+  /*font-size: clamp(15px, 1.05vw, 19px);*/
+  font-size: clamp(18px, 1.8vw, 36px);
   font-weight: 820;
   letter-spacing: -0.25px;
   color: var(--navy);
@@ -1197,7 +1198,8 @@ function getVideoUrl(path) {
 
 .kpi-label {
   color: var(--muted);
-  font-size: 9px;
+  /*font-size: 9px;*/
+  font-size: clamp(10px, 0.7vw, 16px);
   font-weight: 850;
   letter-spacing: 1.1px;
   text-transform: uppercase;
@@ -1216,7 +1218,8 @@ function getVideoUrl(path) {
 .kpi-meta {
   margin-top: 9px;
   color: var(--muted);
-  font-size: 10px;
+  /*font-size: 10px;*/
+  font-size: clamp(8px, 0.55vw, 13px);
   font-weight: 650;
 }
 
@@ -1288,8 +1291,8 @@ function getVideoUrl(path) {
 }
 
 .summary-block.date-block .summary-value {
-  font-size: clamp(16px, 1.15vw, 21px);
-  letter-spacing: -0.55px;
+ font-size: clamp(16px, 1.15vw, 21px); 
+ letter-spacing: -0.55px;
   white-space: nowrap;
 }
 
@@ -1309,7 +1312,8 @@ function getVideoUrl(path) {
 .summary-value {
   margin-top: 5px;
   color: var(--navy);
-  font-size: clamp(20px, 1.55vw, 28px);
+  /*font-size: clamp(20px, 1.55vw, 28px);*/
+  font-size: clamp(18px, 1.8vw, 36px);
   font-weight: 840;
   line-height: 1;
   font-variant-numeric: tabular-nums;
