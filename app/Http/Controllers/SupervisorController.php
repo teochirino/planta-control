@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\WorkCenter;
 use App\Models\ProductionLine;
 use App\Models\DailyProgram;
+use App\Models\WorkCenterBalance;
 use App\Models\Schedule;
 use App\Models\Strike;
 use App\Models\ProductionAdjustment;
@@ -356,8 +357,8 @@ class SupervisorController extends Controller
             }
             
             // Si el programa ya existe pero no ha sido procesado, actualizar con el balance acumulado
-            // SOLO si no fue editado manualmente por ingeniería ni por supervisor
-            if (!$dailyProgram->balance_processed && !$dailyProgram->manually_edited_by_engineering && !$dailyProgram->manually_edited_by_supervisor) {
+            // SOLO si no fue editado manualmente por ingeniería ni por supervisor, y no fue creado por extension del matutino
+            if (!$dailyProgram->balance_processed && !$dailyProgram->manually_edited_by_engineering && !$dailyProgram->manually_edited_by_supervisor && !$dailyProgram->extended_from_matutino) {
                 $dailyProgram->update([
                     'backwardness' => $accumulatedBackwardness,
                     'advanced' => $accumulatedAdvanced,
@@ -953,11 +954,20 @@ class SupervisorController extends Controller
                 'advanced' => 0,
                 'shift_hours' => 9.0, // Vespertino: 17:00 - 01:40 (aprox 8h 40min, redondeado a 9)
                 'program_id' => $dailyProgram->program_id,
+                'extended_from_matutino' => true,
             ]);
             
             // Generar schedules para el programa vespertino
             $productionLines = ProductionLine::where('id_work_center', $dailyProgram->id_work_center)->get();
             $this->generateSchedulesForProgram($vespertinoProgram, $productionLines);
+            
+            // Reiniciar el balance acumulado del centro para que el vespertino arranque limpio
+            $workCenterBalance = WorkCenterBalance::getOrCreateForWorkCenter($dailyProgram->id_work_center);
+            $workCenterBalance->update([
+                'accumulated_backwardness' => 0,
+                'accumulated_advanced' => 0,
+                'last_calculated_at' => now('America/Mexico_City'),
+            ]);
             
             DB::commit();
             

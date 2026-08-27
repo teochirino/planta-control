@@ -23,6 +23,7 @@ class DailyProgram extends Model
         'balance_processed_at',
         'balance_processed_by',
         'program_id',
+        'extended_from_matutino',
         'manually_edited_by_engineering',
         'engineering_edited_at',
         'engineering_edited_by',

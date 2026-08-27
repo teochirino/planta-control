@@ -402,6 +402,9 @@
                     <p :class="isTVMode() ? 'text-sm mt-2' : 'text-xs mt-1'" class="text-[#6a8090]">
                         Máximo disponible: {{ maxPiecesToExtend }} piezas
                     </p>
+                    <p :class="isTVMode() ? 'text-sm mt-2' : 'text-xs mt-1'" class="text-[#6a8090]">
+                        Faltante o atraso actual: {{ currentShortage }} piezas
+                    </p>
                 </div>
                 
                 <div class="flex gap-3 justify-end">
@@ -528,6 +531,12 @@ const maxPiecesToExtend = computed(() => {
     if (!programData.value) return 0
     return programData.value.programmed + programData.value.backwardness - programData.value.advanced
 })
+
+const currentShortage = computed(() => {
+    if (!kpis.value) return 0
+    return Math.max(0, (kpis.value.total_to_produce || 0) - (kpis.value.fabricated || 0))
+})
+
 const formattedDate = computed(() => {
     if (!selectedDate.value) return ''
     const [year, month, day] = selectedDate.value.split('-')
