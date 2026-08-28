@@ -663,11 +663,19 @@ function getLineState(lineId) {
 let clockInterval = null
 let dataRefreshInterval = null
 
+const REFRESH_INTERVAL = 300000 // 5 minutos
+const REFRESH_JITTER_MAX = 30000 // 30 segundos de desfase inicial
+
 onMounted(() => {
     updateClock()
     clockInterval = setInterval(updateClock, 1000)
-    // Actualizar datos completos (incluyendo semáforos) cada 1 minuto
-    dataRefreshInterval = setInterval(refreshData, 60000)
+    // Actualizar datos completos (incluyendo semáforos) cada 5 minutos,
+    // con un desfase aleatorio para evitar que todas las TVs disparen a la vez
+    const initialDelay = Math.floor(Math.random() * REFRESH_JITTER_MAX)
+    setTimeout(() => {
+        refreshData()
+        dataRefreshInterval = setInterval(refreshData, REFRESH_INTERVAL)
+    }, initialDelay)
     
     // Initialize video RRHH system
     loadVideosReproducedToday()
