@@ -367,7 +367,11 @@ class IngenieroProcesosController extends Controller
             $phasesWithSaturday = [];
 
             foreach ($phaseDates as $phaseName => $dateWithoutSaturday) {
-                $dateWithSaturday = $phaseDatesWithSaturdays[$phaseName];
+                $dateWithSaturday = $phaseDatesWithSaturdays[$phaseName] ?? null;
+
+                if (!$dateWithoutSaturday instanceof \DateTimeInterface || !$dateWithSaturday instanceof \DateTimeInterface) {
+                    throw new \Exception("No se pudieron calcular las fechas de la fase {$phaseName}.");
+                }
 
                 if ($dateWithoutSaturday->format('Y-m-d') !== $dateWithSaturday->format('Y-m-d')) {
                     $hasSaturdayInPhases = true;
@@ -401,7 +405,7 @@ class IngenieroProcesosController extends Controller
                 'phases_with_saturday' => $phasesWithSaturday,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('checkSaturdayInPhases error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -662,18 +666,14 @@ class IngenieroProcesosController extends Controller
             // Detectar si hay sábados entre las fases (solo si todos los productos existen)
             $hasSaturdayInPhases = false;
             $phasesWithSaturday = [];
+            $fechaEntrega = null;
             
             if ($noCoincidencias === 0 && !empty($data)) {
                 // Obtener la fecha de vencimiento del primer registro
                 $fechaVencimiento = $data[0]['fecha_vencimiento'];
                 
                 // Convertir la fecha de Excel a formato Y-m-d
-                if (is_numeric($fechaVencimiento)) {
-                    $fechaEntrega = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($fechaVencimiento)
-                        ->format('Y-m-d');
-                } else {
-                    $fechaEntrega = \Carbon\Carbon::parse($fechaVencimiento)->format('Y-m-d');
-                }
+                $fechaEntrega = $this->parseExcelDate($fechaVencimiento);
                 
                 // Calcular fases sin incluir sábados (comportamiento actual)
                 $phaseDates = Program::calculatePhaseDates($fechaEntrega, false);
@@ -683,8 +683,12 @@ class IngenieroProcesosController extends Controller
                 
                 // Comparar las dos calculaciones para detectar sábados que se están saltando
                 foreach ($phaseDates as $phaseName => $dateWithoutSaturday) {
-                    $dateWithSaturday = $phaseDatesWithSaturdays[$phaseName];
+                    $dateWithSaturday = $phaseDatesWithSaturdays[$phaseName] ?? null;
                     
+                    if (!$dateWithoutSaturday instanceof \DateTimeInterface || !$dateWithSaturday instanceof \DateTimeInterface) {
+                        throw new \Exception("No se pudieron calcular las fechas de la fase {$phaseName}. Verifica la celda de fecha de vencimiento.");
+                    }
+
                     // Si las fechas son diferentes, significa que hay sábados en medio
                     if ($dateWithoutSaturday->format('Y-m-d') !== $dateWithSaturday->format('Y-m-d')) {
                         $hasSaturdayInPhases = true;
@@ -725,15 +729,12 @@ class IngenieroProcesosController extends Controller
                     'data' => $data,
                     'has_saturday_in_phases' => $hasSaturdayInPhases,
                     'phases_with_saturday' => $phasesWithSaturday,
-                    'fecha_entrega' => $noCoincidencias === 0 && !empty($data) ? 
-                        (is_numeric($data[0]['fecha_vencimiento']) ? 
-                            \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data[0]['fecha_vencimiento'])->format('Y-m-d') :
-                            \Carbon\Carbon::parse($data[0]['fecha_vencimiento'])->format('Y-m-d')) : null,
+                    'fecha_entrega' => $fechaEntrega,
                 ],
                 'program_created' => null,
             ]);
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return back()->with('error', 'Error al procesar el archivo Excel: ' . $e->getMessage());
         }
     }
@@ -770,14 +771,7 @@ class IngenieroProcesosController extends Controller
             \Log::info('Fecha vencimiento from Excel:', ['fecha' => $fechaVencimiento]);
             
             // Convertir la fecha de Excel a formato Y-m-d
-            if (is_numeric($fechaVencimiento)) {
-                // Excel stores dates as serial numbers (base date is 1900-01-01 for Windows)
-                $fechaEntrega = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($fechaVencimiento)
-                    ->format('Y-m-d');
-            } else {
-                // Try to parse as string
-                $fechaEntrega = \Carbon\Carbon::parse($fechaVencimiento)->format('Y-m-d');
-            }
+            $fechaEntrega = $this->parseExcelDate($fechaVencimiento);
             \Log::info('Fecha entrega converted:', ['fecha' => $fechaEntrega]);
             
             // NOTA: No validamos fecha mínima para importación desde Excel
@@ -900,10 +894,31 @@ class IngenieroProcesosController extends Controller
                 ],
             ]);
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Error creating program:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             DB::rollBack();
             return back()->with('error', 'Error al crear el programa: ' . $e->getMessage());
+        }
+    }
+    
+    private function parseExcelDate($value): string
+    {
+        try {
+            if (is_numeric($value)) {
+                $dateObj = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $value);
+                if (!$dateObj instanceof \DateTimeInterface) {
+                    throw new \Exception('La celda de fecha de vencimiento no es una fecha Excel válida: ' . $value);
+                }
+                return $dateObj->format('Y-m-d');
+            }
+
+            if (empty($value)) {
+                throw new \Exception('La celda de fecha de vencimiento está vacía.');
+            }
+
+            return \Carbon\Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            throw new \Exception('La celda de fecha de vencimiento no tiene un formato de fecha válido: ' . $value . ' - ' . $e->getMessage());
         }
     }
     
