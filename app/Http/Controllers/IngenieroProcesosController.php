@@ -715,7 +715,10 @@ class IngenieroProcesosController extends Controller
                 ]);
             }
             
-            return back()->with([
+            // El resultado se devuelve como JSON directo, NO por flash de sesión:
+            // este payload contiene todas las filas del Excel y desbordaba el
+            // límite de ~4 KB del driver de sesión "cookie", tumbando la sesión.
+            return response()->json([
                 'success' => 'Archivo procesado exitosamente.',
                 'import_data' => [
                     'total' => $total,
@@ -725,16 +728,17 @@ class IngenieroProcesosController extends Controller
                     'data' => $data,
                     'has_saturday_in_phases' => $hasSaturdayInPhases,
                     'phases_with_saturday' => $phasesWithSaturday,
-                    'fecha_entrega' => $noCoincidencias === 0 && !empty($data) ? 
-                        (is_numeric($data[0]['fecha_vencimiento']) ? 
+                    'fecha_entrega' => $noCoincidencias === 0 && !empty($data) ?
+                        (is_numeric($data[0]['fecha_vencimiento']) ?
                             \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($data[0]['fecha_vencimiento'])->format('Y-m-d') :
                             \Carbon\Carbon::parse($data[0]['fecha_vencimiento'])->format('Y-m-d')) : null,
                 ],
-                'program_created' => null,
             ]);
-            
+
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al procesar el archivo Excel: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al procesar el archivo Excel: ' . $e->getMessage(),
+            ], 422);
         }
     }
     

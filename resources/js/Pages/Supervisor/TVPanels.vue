@@ -662,21 +662,33 @@ function getLineState(lineId) {
 // Reloj de bloques
 let clockInterval = null
 let dataRefreshInterval = null
+let versionPollInterval = null
 
-const REFRESH_INTERVAL = 300000 // 5 minutos
+const REFRESH_INTERVAL = 300000 // 5 minutos: red de seguridad
 const REFRESH_JITTER_MAX = 30000 // 30 segundos de desfase inicial
+const VERSION_POLL_INTERVAL = 5000 // 5 segundos: sondeo ligero de cambios
+
+// Última versión conocida del centro de trabajo. Mientras no cambie, no se
+// recarga nada.
+let lastKnownVersion = null
+let isRefreshing = false
 
 onMounted(() => {
     updateClock()
     clockInterval = setInterval(updateClock, 1000)
-    // Actualizar datos completos (incluyendo semáforos) cada 5 minutos,
-    // con un desfase aleatorio para evitar que todas las TVs disparen a la vez
+    // Sondeo ligero: pregunta cada 5 s si hubo algún cambio en el centro y sólo
+    // entonces dispara la recarga completa. Así el dato capturado en "Registro
+    // Diario" aparece en la TV casi al instante sin recalcular KPIs en balde.
+    checkForUpdates()
+    versionPollInterval = setInterval(checkForUpdates, VERSION_POLL_INTERVAL)
+    // Recarga completa cada 5 minutos como red de seguridad, con un desfase
+    // aleatorio para evitar que todas las TVs disparen a la vez
     const initialDelay = Math.floor(Math.random() * REFRESH_JITTER_MAX)
     setTimeout(() => {
         refreshData()
         dataRefreshInterval = setInterval(refreshData, REFRESH_INTERVAL)
     }, initialDelay)
-    
+
     // Initialize video RRHH system
     loadVideosReproducedToday()
     // Load today's videos once from backend
@@ -699,6 +711,9 @@ onUnmounted(() => {
     if (dataRefreshInterval) {
         clearInterval(dataRefreshInterval)
     }
+    if (versionPollInterval) {
+        clearInterval(versionPollInterval)
+    }
     if (videoCheckInterval.value) {
         clearInterval(videoCheckInterval.value)
     }
@@ -719,15 +734,70 @@ function handleFullscreenChange() {
     isFullscreen.value = !!document.fullscreenElement
 }
 
+// Consulta el sello de versión del centro: una marca de tiempo, sin datos de
+// producción y sin tocar MySQL.
+async function fetchVersion() {
+    const centerId = props.selectedWorkCenter?.id
+    if (!centerId) {
+        return null
+    }
+
+    try {
+        const { data } = await window.axios.get(`/api/tv-panel-version/${centerId}`)
+        return { centerId, v: data.v }
+    } catch (error) {
+        // Un fallo de red aquí no debe romper el panel: la recarga completa de
+        // los 5 minutos sigue funcionando como respaldo.
+        console.warn('No fue posible consultar la versión del panel', error)
+        return null
+    }
+}
+
+// Sondeo ligero: sólo recarga cuando el sello cambió respecto al último visto.
+async function checkForUpdates() {
+    if (isRefreshing) {
+        return
+    }
+
+    const current = await fetchVersion()
+    if (!current) {
+        return
+    }
+
+    // Primera lectura, o el usuario cambió de centro de trabajo: sólo se toma
+    // como referencia, no hay nada que recargar.
+    if (!lastKnownVersion || lastKnownVersion.centerId !== current.centerId) {
+        lastKnownVersion = current
+        return
+    }
+
+    if (current.v !== lastKnownVersion.v) {
+        await refreshData()
+    }
+}
+
 async function refreshData() {
+    if (isRefreshing) {
+        return
+    }
+
+    isRefreshing = true
+    // El sello se toma ANTES de recargar, para que lo que quede en pantalla
+    // corresponda al menos a esta versión y no se dispare una recarga repetida.
+    const version = await fetchVersion()
     try {
         await router.reload({
             only: ['dailyProgram', 'allKPIs', 'centerKPIs', 'attributes', 'existingSchedules', 'recentHistory'],
             preserveState: true,
             preserveScroll: true
         })
+        if (version) {
+            lastKnownVersion = version
+        }
     } catch (error) {
         console.error('Error al actualizar datos:', error)
+    } finally {
+        isRefreshing = false
     }
 }
 

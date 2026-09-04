@@ -17,6 +17,18 @@ Route::get('/test-simple', function() {
     return response()->json(['status' => 'ok', 'message' => 'Ruta de prueba funcionando']);
 });
 
+/*
+ * Sello de versión de los paneles de TV.
+ *
+ * Es el endpoint que cada televisor consulta cada pocos segundos, así que a
+ * propósito queda fuera de sesión y de auth y no toca MySQL: lee la caché de
+ * archivo y devuelve una marca de tiempo. No expone ningún dato de producción,
+ * sólo permite saber si algo cambió para disparar la recarga completa.
+ */
+Route::get('/tv-panel-version/{workCenter}', function (int $workCenter) {
+    return response()->json(['v' => \App\Support\PanelVersion::stamp($workCenter)]);
+})->whereNumber('workCenter');
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });

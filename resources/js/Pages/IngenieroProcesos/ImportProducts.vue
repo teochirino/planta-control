@@ -34,6 +34,10 @@
                     >
                         {{ processing ? 'Procesando...' : 'Validar Archivo' }}
                     </button>
+
+                    <p v-if="importError" class="mt-4 px-4 py-3 rounded-lg text-sm font-semibold" style="background: #fdecec; color: #9b1c1c; border: 1px solid #f5c2c2;">
+                        {{ importError }}
+                    </p>
                 </form>
             </div>
             
@@ -254,18 +258,13 @@ const programCreated = ref(page.props.flash?.program_created || null);
 const showSaturdayModal = ref(false);
 const includeSaturdays = ref(false);
 
-// Obtener datos de importación del flash message
-const importData = ref(page.props.flash?.import_data || null);
+// El resultado de la validación llega como JSON desde el servidor, no por flash
+// de sesión: el listado completo del Excel no cabe en la sesión.
+const importData = ref(null);
+const importError = ref(null);
 
 // Watch for changes in flash data
 watch(() => page.props.flash, (newFlash) => {
-    if (newFlash?.import_data) {
-        importData.value = newFlash.import_data;
-        // Mostrar modal automáticamente si hay sábados detectados
-        if (newFlash.import_data.has_saturday_in_phases) {
-            showSaturdayModal.value = true;
-        }
-    }
     if (newFlash?.program_created) {
         programCreated.value = newFlash.program_created;
     }
@@ -275,38 +274,44 @@ function handleFileChange(event) {
     file.value = event.target.files[0];
 }
 
-function submit() {
-    console.log('submit called');
-    console.log('file.value:', file.value);
-    
+async function submit() {
     if (!file.value) {
-        console.log('No file selected');
         return;
     }
-    
+
     processing.value = true;
-    
+    importError.value = null;
+
     const formData = new FormData();
     formData.append('archivo', file.value);
-    
-    console.log('Sending request to:', route('ingeniero-procesos.import.products.store'));
-    
-    router.post(route('ingeniero-procesos.import.products.store'), formData, {
-        onSuccess: () => {
-            console.log('Request successful');
-            processing.value = false;
-            importData.value = page.props.flash?.import_data || null;
-            console.log('importData:', importData.value);
-            file.value = null;
-            if (fileInput.value) {
-                fileInput.value.value = '';
-            }
-        },
-        onError: (errors) => {
-            console.log('Request failed with errors:', errors);
-            processing.value = false;
-        },
-    });
+
+    try {
+        const { data } = await window.axios.post(
+            route('ingeniero-procesos.import.products.store'),
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+
+        importData.value = data.import_data;
+
+        // Mostrar modal automáticamente si hay sábados detectados
+        if (data.import_data?.has_saturday_in_phases) {
+            showSaturdayModal.value = true;
+        }
+
+        file.value = null;
+        if (fileInput.value) {
+            fileInput.value.value = '';
+        }
+    } catch (error) {
+        const response = error.response;
+        importError.value = response?.data?.error
+            || response?.data?.errors?.archivo?.[0]
+            || response?.data?.message
+            || 'No fue posible procesar el archivo. Verifica que sea un .xlsx válido y menor a 10 MB.';
+    } finally {
+        processing.value = false;
+    }
 }
 
 function createProgram() {
