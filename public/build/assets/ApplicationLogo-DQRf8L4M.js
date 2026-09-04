@@ -1,0 +1,1 @@
+import{D as e,u as t}from"./runtime-core.esm-bundler-D3Hard0z.js";import{t as n}from"./_plugin-vue_export-helper-CXTkFu_Z.js";var r={},i={src:`/logo-cliente.png`,alt:`Logo del cliente`};function a(n,r){return e(),t(`img`,i)}var o=n(r,[[`render`,a]]);export{o as t};
