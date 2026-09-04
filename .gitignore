@@ -14,7 +14,7 @@
 /.zed
 /auth.json
 /node_modules
-# /public/build  -- versionado a proposito: el deploy a cPanel es por git pull y el servidor no compila assets
+/public/build
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage

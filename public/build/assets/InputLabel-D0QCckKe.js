@@ -1,1 +1,0 @@
-import{A as e,D as t,pt as n,u as r}from"./runtime-core.esm-bundler-D3Hard0z.js";var i={class:`block text-sm font-medium text-gray-700`},a={key:0},o={key:1},s={__name:`InputLabel`,props:{value:{type:String}},setup(s){return(c,l)=>(t(),r(`label`,i,[s.value?(t(),r(`span`,a,n(s.value),1)):(t(),r(`span`,o,[e(c.$slots,`default`)]))]))}};export{s as t};
